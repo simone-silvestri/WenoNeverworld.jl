@@ -51,7 +51,7 @@ using Oceananigans.Grids: xnode, ynode, znode
 
 @inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
     
-    b = field.b[i, j, grid.Nz]
+    b = fields.b[i, j, grid.Nz]
     x = xnode(Center, i, grid)
     y = ynode(Center, j, grid)
     z = znode(Center, grid.Nz, grid)
