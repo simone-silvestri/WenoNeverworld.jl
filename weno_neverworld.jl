@@ -47,14 +47,12 @@ v_bcs = FieldBoundaryConditions(bottom = v_bottom_drag_bc, immersed = v_immersed
 Δz_top = CUDA.@allowscalar Δzᶜᶜᶜ(1, 1, grid.Nz, grid)
 λ = Δz_top / 7days
 
-using Oceananigans.Grids: xnode, ynode, znode
+using Oceananigans.Grids: node
 
 @inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
     
     b = fields.b[i, j, grid.Nz]
-    x = xnode(Center, i, grid)
-    y = ynode(Center, j, grid)
-    z = znode(Center, grid.Nz, grid)
+    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
 
     return @inbounds p.λ * (b - p.initial_bouyancy(x, y, z))
 end
