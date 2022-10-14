@@ -39,18 +39,14 @@ function check_zeros(grid, old_array, loc; max_passes = 10)
     return old_array
 end
 
-function interpolate_per_level(old_vector, old_degree, new_degree, loc, H, H_orig)
+function interpolate_per_level(old_vector, old_degree, new_degree, loc, H)
     
-    Bλ_old = (H_orig + 2) * old_degree
-    Bλ_new = (H      + 2) * new_degree
-
-    Nx_old = Int((60 + 2Bλ_old)  / old_degree)
-    Ny_old = Int(70 / old_degree)
-    Nx_new = Int((60 + 2Bλ_new)  / new_degree)
+   
+    Nx_new = Int(72 / new_degree)
     Ny_new = Int(70 / new_degree)
     Nz = 48
 
-    loc[3] == Face ? k_final = Nz + 1 : k_final = Nz
+    loc[3] == Face ? k_final = Nz + 1     : k_final = Nz
     loc[2] == Face ? j_final = Ny_new + 1 : j_final = Ny_new
     
     if loc[3] == Nothing
@@ -59,7 +55,7 @@ function interpolate_per_level(old_vector, old_degree, new_degree, loc, H, H_ori
     end
     old_grid = LatitudeLongitudeGrid(CPU(), size = (Nx_old, Ny_old, 1),
                                             latitude  = (-70, 0),
-                                            longitude = (-Bλ_old, 60+Bλ_old),
+                                            longitude = (-6, 66),
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
                                             z = (0, 1))
@@ -67,7 +63,7 @@ function interpolate_per_level(old_vector, old_degree, new_degree, loc, H, H_ori
 
     new_grid = LatitudeLongitudeGrid(CPU(), size = (Nx_new, Ny_new, 1),
                                             latitude  = (-70, 0),
-                                            longitude = (-Bλ_new, 60+Bλ_new),
+                                            longitude = (-6, 66),
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
                                             z = (0, 1))
@@ -97,7 +93,7 @@ function neverworld_grid(arch, degree; H = 5)
     Ny = Int(70 / degree)
     Nz = 44
 
-    @show underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
+    underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
                                             latitude  = (-70, 0),
                                             longitude = (-6, 66),
                                             halo = (H, H, H),

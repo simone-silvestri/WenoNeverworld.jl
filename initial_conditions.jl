@@ -142,4 +142,4 @@ const ΔB   = 6.0e-2
 const fact = 5.0
 
 @inline atan_scaling(y) = (atan(fact*((Ly + y)/Ly - 0.5)) / atan(fact * 0.5) + 1) /2
-@inline initial_buoyancy(x, y, z) = (ΔB * (exp(z / h) - exp( - Lz / h)) / (1 - exp( - Lz / h)) ) * atan_scaling(y)
+@inline initial_buoyancy(x, y, z) = ( ΔB * (exp(z / h) - exp( - Lz / h)) / (1 - exp( - Lz / h)) ) * atan_scaling(y)

@@ -56,7 +56,7 @@ using Oceananigans.Grids: node
     b = fields.b[i, j, grid.Nz]
     x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
 
-    return @inbounds p.λ * (b - p.initial_bouyancy(x, y, z))
+    return @inbounds p.λ * (b - p.initial_buoyancy(x, y, z))
 end
 
 b_top_relaxation_bc = FluxBoundaryCondition(buoyancy_top_relaxation, discrete_form=true, parameters = (; λ, initial_buoyancy))

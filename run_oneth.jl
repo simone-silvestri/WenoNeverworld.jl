@@ -9,10 +9,11 @@ output_prefix = "files_one/neverworld_oneth"
 
 H = 5
 
-arch   = GPU()
+arch   = CPU()
 old_degree = 1
 new_degree = 1
-grid      = neverworld_grid(arch, new_degree; H)
+
+@show grid = neverworld_grid(arch, new_degree; H)
 orig_grid = neverworld_grid(arch, old_degree; H)
 
 # initialize from scratch (or interpolated) - true, from file - false
