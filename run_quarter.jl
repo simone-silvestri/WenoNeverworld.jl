@@ -5,7 +5,7 @@ device!(2)
 include("initial_conditions.jl")
 include("neverworld_utils.jl")
 
-output_prefix = "files_one/neverworld_oneth"
+output_prefix = "files_four/neverworld_quarter"
 
 H = 5
 
@@ -16,16 +16,14 @@ new_degree = 1/4
 grid      = neverworld_grid(arch, new_degree; H)
 orig_grid = neverworld_grid(arch, old_degree; H)
 
-@show grid
-
 # initialize from scratch (or interpolated) - true, from file - false
-init        = true
+init = true
 
 # interpolate from old coarser solution - true (in combination with init = true)
 interp_init = false
 
 # file to initialize the simulation with or interpolate 
-init_file   = "files_one/neverworld_oneth_chekcpointer_iteration0.jld2" 
+init_file = "files_one/neverworld_oneth_chekcpointer_iteration0.jld2" 
 
 Δt        = 20minutes
 stop_time = 100years

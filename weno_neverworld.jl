@@ -99,7 +99,7 @@ model = HydrostaticFreeSurfaceModel(grid = grid,
 #####
 
 if !interp_init
-    set!(model, b = initial_buoyancy)
+    set!(model, b=initial_buoyancy)
 else
     set!(model, b=b_init, u=u_init, v=v_init, w=w_init, η=η_init) 
 end

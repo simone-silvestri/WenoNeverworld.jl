@@ -16,8 +16,6 @@ new_degree = 1
 grid      = neverworld_grid(arch, new_degree; H)
 orig_grid = neverworld_grid(arch, old_degree; H)
 
-@show grid
-
 # initialize from scratch (or interpolated) - true, from file - false
 init        = true
 
