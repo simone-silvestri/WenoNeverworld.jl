@@ -10,8 +10,8 @@ output_prefix = "files_twentyfour/neverworld_twentyfourth"
 H = 5
 
 arch   = GPU()
-old_degree = 1/24
-new_degree = 1/24
+old_degree = 1/16
+new_degree = 1/16
 
 grid      = neverworld_grid(arch, new_degree; H)
 orig_grid = neverworld_grid(arch, old_degree; H)
@@ -23,7 +23,7 @@ init = true
 interp_init = false
 
 # file to initialize the simulation with or interpolate 
-init_file = "files_one/neverworld_oneth_checkpointer_iteration0.jld2" 
+init_file = "files_sixteenth/neverworld_oneth_checkpointer_iteration0.jld2" 
 
 Δt        = 6minutes
 stop_time = 100years
