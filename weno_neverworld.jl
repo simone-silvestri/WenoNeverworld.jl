@@ -145,8 +145,6 @@ function progress(sim)
     return nothing
 end
 
-wizard = TimeStepWizard(cfl=0.1, max_change=1.1, max_Δt=20minutes)
-simulation.callbacks[:wizard]   = Callback(wizard, IterationInterval(50))
 simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
 
 ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = (u, v))
