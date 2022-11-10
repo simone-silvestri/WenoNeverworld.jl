@@ -5,7 +5,7 @@ device!(2)
 include("initial_conditions.jl")
 include("neverworld_utils.jl")
 
-output_prefix = "files_twentyfour/neverworld_twentyfourth"
+output_prefix = "files_sixteen/neverworld_sixteenth"
 
 H = 5
 
