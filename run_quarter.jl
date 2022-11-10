@@ -23,9 +23,9 @@ init = true
 interp_init = false
 
 # file to initialize the simulation with or interpolate 
-init_file = "files_one/neverworld_oneth_chekcpointer_iteration0.jld2" 
+init_file = "files_one/neverworld_oneth_checkpointer_iteration0.jld2" 
 
-Δt        = 20minutes
+Δt        = 6minutes
 stop_time = 100years
 
 if interp_init

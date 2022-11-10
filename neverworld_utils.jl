@@ -85,20 +85,29 @@ z_faces = [-3740.0, -3422.0, -3126.0, -2854.0, -2604.0, -2378.0, -2174.0, -1993.
  -1461.0, -1356.0, -1255.0, -1155.0, -1056.0, -958.0, -861.0, -767.0, -677.0, -592.0, -513.0, -441.0, -378.0, -323.0, -276.0, -238.0,
  -207.0, -182.0, -162.0, -146.0, -133.0, -121.0, -110.0, -100.0, -90.0, -80.0, -70.0, -60.0, -50.0, -40.0, -30.0, -20.0, -10.0, 0.0]
 
+all_z_faces = zeros(length(z_faces)*2-1) 
+for (i, z) in enumerate(all_z_faces)
+    if mod(i, 2) == 0
+        all_z_faces[i] = 0.5 * (z_faces[i ÷ 2] + z_faces[i ÷ 2 + 1])
+    else
+        all_z_faces[i] = z_faces[Int(i ÷ 2) + 1]
+    end
+end
+
 using Oceananigans.ImmersedBoundaries: PartialCellBottom
 
 function neverworld_grid(arch, degree; H = 5)
 
     Nx = Int(72  / degree)
     Ny = Int(70 / degree)
-    Nz = 44
+    Nz = length(all_z_faces) - 1
 
     underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
                                             latitude  = (-70, 0),
                                             longitude = (-6, 66),
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
-                                            z = z_faces)
+                                            z = all_z_faces)
 
     λ_grid = underlying_grid.λᶜᵃᵃ[1:Nx]
     φ_grid = underlying_grid.φᵃᶜᵃ[1:Ny]
@@ -108,9 +117,5 @@ function neverworld_grid(arch, degree; H = 5)
         bathy[i, j] = bathymetry(λ, φ)
     end
 
-    return ImmersedBoundaryGrid(underlying_grid, PartialCellBottom(bathy, minimum_fractional_Δz=0.2))
+    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))
 end
-
-# σ = 1.04 # linear stretching factor
-# Δz_center_linear(k) = Lz * (σ - 1) * σ^(Nz - k) / (σ^Nz - 1) # k=1 is the bottom-most cell, k=Nz is the top cell
-# linearly_spaced_faces(k) = k==1 ? -Lz : - Lz + sum(Δz_center_linear.(1:k-1))

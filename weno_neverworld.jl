@@ -124,15 +124,17 @@ vb = Field(v * b)
 ub = Field(u * b)
 wb = Field(w * b)
 
+using Statistics: mean
+
 function progress(sim)
     wall_time = (time_ns() - start_time[1]) * 1e-9
 
     u = sim.model.velocities.u
     compute!(ke)
 
-    @info @sprintf("Time: % 12s, iteration: %d, max(|u|, |v|, |w|): (%.2e, %.2e , %.2e) ms⁻¹ max(ke): %.2e m²s⁻², Δt: %.2e s, wall time: %s", 
+    @info @sprintf("Time: % 12s, it: %d, max(|u|, |v|, |w|): (%.2e, %.2e , %.2e) ms⁻¹ ⟨ke⟩: %.2e m²s⁻², Δt: %.2e s, wall time: %s", 
                     prettytime(sim.model.clock.time),
-                    sim.model.clock.iteration, maximum(abs, u), maximum(abs, v), maximum(abs, w), maximum(ke), sim.Δt,
+                    sim.model.clock.iteration, maximum(abs, u), maximum(abs, v), maximum(abs, w), mean(ke), sim.Δt,
                     prettytime(wall_time))
 
     start_time[1] = time_ns()
