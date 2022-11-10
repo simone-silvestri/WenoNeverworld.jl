@@ -1,4 +1,3 @@
-
 using Oceananigans.Fields: interpolate
 using Oceananigans.Grids: xnode, ynode
 using Oceananigans.Utils: instantiate
@@ -102,7 +101,7 @@ function neverworld_grid(arch, degree; H = 5)
 
     Nx = Int(72 / degree)
     Ny = Int(70 / degree)
-    Nz = length(all_z_faces) - 1
+    Nz = length(new_z_faces) - 1
 
     underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
                                             latitude  = (-70, 0),
