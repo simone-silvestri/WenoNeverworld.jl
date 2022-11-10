@@ -120,15 +120,10 @@ b = model.tracers.b
 
 output_fields = (; u, v, w, b)
 
-ke = Field(u^2 + v^2)
-u2 = Field(u^2)
-v2 = Field(v^2)
-η2 = Field(η^2)
-b2 = Field(b^2)
-w2 = Field(w^2)
-vb = Field(v * b)
-ub = Field(u * b)
-wb = Field(w * b)
+u2 = u^2
+v2 = v^2
+b2 = b^2
+w2 = w^2
 
 using Statistics: mean
 
@@ -154,43 +149,43 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
 
 using Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
 
-ζ  = VerticalVorticityField(model)
-ζ2 = Field(ζ^2)
+ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = (u, v))
+ζ2 = ζ^2
 
-averaged_fields = (; u, v, w, b, η, ke, ζ, ζ2, u2, v2, w2, η2, b2, vb, ub, wb)
+averaged_fields = (; u, v, w, b, ζ, ζ2, u2, v2, w2, b2)
 
-simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields,
-                                                              schedule = TimeInterval(30days),
-                                                              filename = output_prefix * "_snapshot",
-                                                              overwrite_existing = true)
+# simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields,
+#                                                               schedule = TimeInterval(30days),
+#                                                               filename = output_prefix * "_snapshot",
+#                                                               overwrite_existing = true)
 
-simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, (u, v, w, b),
-                                                              schedule = TimeInterval(5days),
-                                                              filename = output_prefix * "_snapshot",
-                                                              indices = (:, :, grid.Nz),
-                                                              overwrite_existing = true)
+# simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, (u, v, w, b),
+#                                                               schedule = TimeInterval(5days),
+#                                                               filename = output_prefix * "_snapshot",
+#                                                               indices = (:, :, grid.Nz),
+#                                                               overwrite_existing = true)
 
-simulation.output_writers[:averaged_fields] = JLD2OutputWriter(model, averaged_fields,
-                                                               schedule = AveragedTimeInterval(30days, window=30days, stride = 4),
-                                                               filename = output_prefix * "_averaged",
-                                                               overwrite_existing = true)
+# simulation.output_writers[:averaged_fields] = JLD2OutputWriter(model, averaged_fields,
+#                                                                schedule = AveragedTimeInterval(30days, window=30days, stride = 4),
+#                                                                filename = output_prefix * "_averaged",
+#                                                                overwrite_existing = true)
 
-simulation.output_writers[:checkpointer] = Checkpointer(model,
-                                                        schedule = TimeInterval(1year),
-                                                        prefix = output_prefix * "_checkpoint",
-                                                        overwrite_existing = true)
+# simulation.output_writers[:checkpointer] = Checkpointer(model,
+#                                                         schedule = TimeInterval(1year),
+#                                                         prefix = output_prefix * "_checkpoint",
+#                                                         overwrite_existing = true)
 
-# Let's goo!
-@info "Running with Δt = $(prettytime(simulation.Δt))"
+# # Let's goo!
+# @info "Running with Δt = $(prettytime(simulation.Δt))"
 
-if init
-    run!(simulation)
-else
-    run!(simulation, pickup=init_file)
-end
+# if init
+#     run!(simulation)
+# else
+#     run!(simulation, pickup=init_file)
+# end
 
-@info """
-    Simulation took $(prettytime(simulation.run_wall_time))
-    Free surface: $(typeof(model.free_surface).name.wrapper)
-    Time step: $(prettytime(Δt))
-"""
+# @info """
+#     Simulation took $(prettytime(simulation.run_wall_time))
+#     Free surface: $(typeof(model.free_surface).name.wrapper)
+#     Time step: $(prettytime(Δt))
+# """
