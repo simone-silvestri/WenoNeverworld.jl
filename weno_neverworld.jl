@@ -80,7 +80,8 @@ include("horizontal_visc.jl")
 vertical_diffusivity  = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 convective_adjustment = RiBasedVerticalDiffusivity()
 
-biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=νhb, discrete_form=true)
+# biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=νhb, discrete_form=true)
+biharmonic_viscosity  = leith_viscosity(HorizontalDivergenceFormulation, C_vort = 2.0, C_div = 3.0)
 
 closures = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment)
 
