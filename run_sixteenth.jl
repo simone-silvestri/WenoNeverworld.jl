@@ -1,7 +1,3 @@
-using CUDA: device!
-using CUDA
-device!(2)
-
 include("initial_conditions.jl")
 include("neverworld_utils.jl")
 
@@ -23,7 +19,7 @@ init = true
 interp_init = false
 
 # file to initialize the simulation with or interpolate 
-init_file = "files_sixteen/neverworld_oneth_checkpointer_iteration0.jld2" 
+init_file = "" 
 
 Δt        = 6minutes
 stop_time = 100years

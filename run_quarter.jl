@@ -1,6 +1,3 @@
-using CUDA: device!
-using CUDA
-
 include("initial_conditions.jl")
 include("neverworld_utils.jl")
 

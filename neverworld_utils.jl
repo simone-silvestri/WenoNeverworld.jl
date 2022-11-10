@@ -81,7 +81,7 @@ function interpolate_per_level(old_vector, old_degree, new_degree, loc, H)
     return new_vector
 end
 
-z_faces = [-3740.0, -3422.0, -3126.0, -2854.0, -2604.0, -2378.0, -2174.0, -1993.0, -1834.0, -1695.0, -1572.0,
+z_faces = [-4000.0, -3740.0, -3422.0, -3126.0, -2854.0, -2604.0, -2378.0, -2174.0, -1993.0, -1834.0, -1695.0, -1572.0,
  -1461.0, -1356.0, -1255.0, -1155.0, -1056.0, -958.0, -861.0, -767.0, -677.0, -592.0, -513.0, -441.0, -378.0, -323.0, -276.0, -238.0,
  -207.0, -182.0, -162.0, -146.0, -133.0, -121.0, -110.0, -100.0, -90.0, -80.0, -70.0, -60.0, -50.0, -40.0, -30.0, -20.0, -10.0, 0.0]
 
@@ -94,11 +94,13 @@ for (i, z) in enumerate(all_z_faces)
     end
 end
 
+new_z_faces = vcat(z_faces[1:22], all_z_faces[44:end])
+
 using Oceananigans.ImmersedBoundaries: PartialCellBottom
 
 function neverworld_grid(arch, degree; H = 5)
 
-    Nx = Int(72  / degree)
+    Nx = Int(72 / degree)
     Ny = Int(70 / degree)
     Nz = length(all_z_faces) - 1
 
@@ -107,7 +109,7 @@ function neverworld_grid(arch, degree; H = 5)
                                             longitude = (-6, 66),
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
-                                            z = all_z_faces)
+                                            z = new_z_faces)
 
     λ_grid = underlying_grid.λᶜᵃᵃ[1:Nx]
     φ_grid = underlying_grid.φᵃᶜᵃ[1:Ny]
