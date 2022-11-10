@@ -69,11 +69,15 @@ b_bcs = FieldBoundaryConditions(top = b_top_relaxation_bc)
 
 using Oceananigans.Operators: Δx, Δy
 using Oceananigans.TurbulenceClosures
+using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation
 
 @inline νhb(i, j, k, grid, lx, ly, lz, clock, fields) = (1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2 ))^2 / 5days
 
+include("horizontal_visc.jl")
+
 vertical_diffusivity  = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 convective_adjustment = RiBasedVerticalDiffusivity()
+
 biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=νhb, discrete_form=true)
 
 closures = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment)
@@ -112,7 +116,7 @@ u, v, w = model.velocities
 b = model.tracers.b
 η = model.free_surface.η
 
-output_fields = (; u, v, w, b, η)
+output_fields = (; u, v, w, b)
 
 ke = Field(u^2 + v^2)
 u2 = Field(u^2)
@@ -153,9 +157,15 @@ using Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
 
 averaged_fields = (; u, v, w, b, η, ke, ζ, ζ2, u2, v2, w2, η2, b2, vb, ub, wb)
 
-simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, output_fields,
+simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields,
                                                               schedule = TimeInterval(30days),
                                                               filename = output_prefix * "_snapshot",
+                                                              overwrite_existing = true)
+
+simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, (u, v, w, b),
+                                                              schedule = TimeInterval(5days),
+                                                              filename = output_prefix * "_snapshot",
+                                                              indices = (:, :, grid.Nz),
                                                               overwrite_existing = true)
 
 simulation.output_writers[:averaged_fields] = JLD2OutputWriter(model, averaged_fields,

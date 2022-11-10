@@ -1,5 +1,5 @@
 import Pkg
-Pkg.activate("/home/ssilvest/Oceananigans.jl/")
+Pkg.activate("/home/ssilvest/development/Oceananigans.jl/")
 
 using Printf
 using JLD2

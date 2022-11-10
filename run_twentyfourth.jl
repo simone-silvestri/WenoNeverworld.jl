@@ -1,16 +1,17 @@
 using CUDA: device!
 using CUDA
+device!(2)
 
 include("initial_conditions.jl")
 include("neverworld_utils.jl")
 
-output_prefix = "files_four/neverworld_quarter"
+output_prefix = "files_twentyfour/neverworld_twentyfourth"
 
 H = 5
 
 arch   = GPU()
-old_degree = 1/4
-new_degree = 1/4
+old_degree = 1/24
+new_degree = 1/24
 
 grid      = neverworld_grid(arch, new_degree; H)
 orig_grid = neverworld_grid(arch, old_degree; H)
