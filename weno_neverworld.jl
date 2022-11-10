@@ -119,8 +119,9 @@ u, v, w = model.velocities
 b = model.tracers.b
 η = model.free_surface.η
 
-output_fields = (; u, v, w, b)
+output_fields = (; u, v, w, b, η)
 
+η2 = η^2
 u2 = u^2
 v2 = v^2
 b2 = b^2
@@ -151,7 +152,7 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
 ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = (u, v))
 ζ2 = ζ^2
 
-averaged_fields = (; u, v, w, b, ζ, ζ2, u2, v2, w2, b2)
+averaged_fields = (; u, v, w, b, η, η2, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)
 
 simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields,
                                                               schedule = TimeInterval(30days),
@@ -170,21 +171,6 @@ simulation.output_writers[:averaged_fields] = JLD2OutputWriter(model, averaged_f
                                                                overwrite_existing = true)
 
 simulation.output_writers[:checkpointer] = Checkpointer(model,
-                                                        schedule = TimeInterval(1year),
+                                                        schedule = TimeInterval(0.5years),
                                                         prefix = output_prefix * "_checkpoint",
                                                         overwrite_existing = true)
-
-# Let's goo!
-@info "Running with Δt = $(prettytime(simulation.Δt))"
-
-if init
-    run!(simulation)
-else
-    run!(simulation, pickup=init_file)
-end
-
-@info """
-    Simulation took $(prettytime(simulation.run_wall_time))
-    Free surface: $(typeof(model.free_surface).name.wrapper)
-    Time step: $(prettytime(Δt))
-"""

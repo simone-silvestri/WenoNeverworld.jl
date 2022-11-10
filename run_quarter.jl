@@ -42,3 +42,26 @@ if interp_init
 end
 
 include("weno_neverworld.jl")
+
+function increase_Δt(simulation)
+    if simulation.model.clock.time > 90days
+        simulation.Δt = 10minutes
+    end
+end
+
+simulation.callbacks[:change_Δt] = Callback(increase_Δt, TimeInterval(90days))
+
+# Let's goo!
+@info "Running with Δt = $(prettytime(simulation.Δt))"
+
+if init
+    run!(simulation)
+else
+    run!(simulation, pickup=init_file)
+end
+
+@info """
+    Simulation took $(prettytime(simulation.run_wall_time))
+    Free surface: $(typeof(model.free_surface).name.wrapper)
+    Time step: $(prettytime(Δt))
+"""
