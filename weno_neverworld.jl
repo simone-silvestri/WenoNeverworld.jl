@@ -2,6 +2,8 @@
 ##### Boundary conditions
 #####
 
+using CUDA
+
 underlying_grid = grid.underlying_grid
 
 Nx, Ny, Nz = size(grid)
