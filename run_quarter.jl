@@ -22,7 +22,7 @@ interp_init = false
 init_file = "files_four/neverworld_quarter_checkpointer_iteration0.jld2" 
 
 Δt        = 6minutes
-stop_time = 100years
+stop_time = 15years
 
 if interp_init
     b_init = jldopen(init_file)["b"][H+1:end-H, H+1:end-H, H+1:end-H]

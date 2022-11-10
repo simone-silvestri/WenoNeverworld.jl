@@ -22,7 +22,7 @@ interp_init = false
 init_file = "" 
 
 Δt        = 2minutes
-stop_time = 100years
+stop_time = 0.5years
 
 if interp_init
     b_init = jldopen(init_file)["b"][H+1:end-H, H+1:end-H, H+1:end-H]
