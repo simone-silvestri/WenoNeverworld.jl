@@ -134,7 +134,6 @@ function progress(sim)
     wall_time = (time_ns() - start_time[1]) * 1e-9
 
     u = sim.model.velocities.u
-    compute!(ke)
 
     @info @sprintf("Time: % 12s, it: %d, max(|u|, |v|, |w|): (%.2e, %.2e , %.2e) ms⁻¹, Δt: %.2e s, wall time: %s", 
                     prettytime(sim.model.clock.time),
@@ -149,8 +148,6 @@ end
 wizard = TimeStepWizard(cfl=0.1, max_change=1.1, max_Δt=20minutes)
 simulation.callbacks[:wizard]   = Callback(wizard, IterationInterval(50))
 simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
-
-using Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
 
 ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = (u, v))
 ζ2 = ζ^2
