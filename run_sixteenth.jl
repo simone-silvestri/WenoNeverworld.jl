@@ -19,7 +19,7 @@ init = true
 interp_init = false
 
 # file to initialize the simulation with or interpolate 
-init_file = "" 
+init_file = "files_four/neverworld_quarter_checkpoint_iteration96120.jld2" 
 
 Δt        = 1minutes
 stop_time = 0.5years
@@ -57,6 +57,10 @@ simulation.callbacks[:change_Δt] = Callback(increase_Δt, TimeInterval(90days))
 if init
     run!(simulation)
 else
+    clock = jldopen(init_file)["clock"]
+    model.clock.time      = clock.time
+    model.clock.iteration = clock.iteartion
+
     run!(simulation, pickup=init_file)
 end
 

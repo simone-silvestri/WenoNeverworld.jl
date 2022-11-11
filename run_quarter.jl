@@ -57,6 +57,10 @@ simulation.callbacks[:change_Δt] = Callback(increase_Δt, TimeInterval(90days))
 if init
     run!(simulation)
 else
+    clock = jldopen(init_file)["clock"]
+    model.clock.time      = clock.time
+    model.clock.iteration = clock.iteartion
+
     run!(simulation, pickup=init_file)
 end
 

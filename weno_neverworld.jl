@@ -100,7 +100,7 @@ model = HydrostaticFreeSurfaceModel(grid = grid,
                                     buoyancy = BuoyancyTracer(),
                                     tracers = :b,
                                     tracer_advection = WENO(underlying_grid))
-
+        
 #####
 ##### Model initialization
 #####
@@ -157,18 +157,18 @@ averaged_fields = (; u, v, w, b, η, η2, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)
 simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields,
                                                               schedule = TimeInterval(30days),
                                                               filename = output_prefix * "_snapshots",
-                                                              overwrite_existing = true)
+                                                              overwrite_existing = false)
 
 simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, (u, v, w, b),
                                                               schedule = TimeInterval(5days),
                                                               filename = output_prefix * "_surface",
                                                               indices = (:, :, grid.Nz),
-                                                              overwrite_existing = true)
+                                                              overwrite_existing = false)
 
 simulation.output_writers[:averaged_fields] = JLD2OutputWriter(model, averaged_fields,
                                                                schedule = AveragedTimeInterval(30days, window=30days, stride = 10),
                                                                filename = output_prefix * "_averages",
-                                                               overwrite_existing = true)
+                                                               overwrite_existing = false)
 
 simulation.output_writers[:checkpointer] = Checkpointer(model,
                                                         schedule = TimeInterval(0.5years),
