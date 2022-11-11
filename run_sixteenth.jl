@@ -21,7 +21,7 @@ interp_init = false
 # file to initialize the simulation with or interpolate 
 init_file = "" 
 
-Δt        = 2minutes
+Δt        = 1minutes
 stop_time = 0.5years
 
 if interp_init
