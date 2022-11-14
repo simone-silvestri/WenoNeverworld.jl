@@ -97,6 +97,12 @@ end
 
 function bathymetry(x, y) 
     if x < 5 || x > 55
+        if x < 0 
+           x = 0.0
+        end
+        if x > 60
+           x = 60.0
+        end
         if y > -59 && y < -41 
             return  max(scotia_arc(x, y), 
                        coastal_ridge_x(sqrt(x^2 + (y + 59)^2)),

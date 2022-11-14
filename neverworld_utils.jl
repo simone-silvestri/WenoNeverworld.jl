@@ -41,11 +41,14 @@ end
 function interpolate_per_level(old_vector, old_degree, new_degree, loc, H)
     
    
-    Nx_new = Int(72 / new_degree)
+    Nx_new = Int(64 / new_degree)
     Ny_new = Int(70 / new_degree)
-    Nz = 48
+    Nx_old = Int(64 / old_degree)
+    Ny_old = Int(70 / old_degree)
+    Nz = size(old_vector)[3]
 
-    loc[3] == Face ? k_final = Nz + 1     : k_final = Nz
+    k_final = Nz
+
     loc[2] == Face ? j_final = Ny_new + 1 : j_final = Ny_new
     
     if loc[3] == Nothing
@@ -54,7 +57,7 @@ function interpolate_per_level(old_vector, old_degree, new_degree, loc, H)
     end
     old_grid = LatitudeLongitudeGrid(CPU(), size = (Nx_old, Ny_old, 1),
                                             latitude  = (-70, 0),
-                                            longitude = (-6, 66),
+                                            longitude = (-2, 62),
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
                                             z = (0, 1))
@@ -62,7 +65,7 @@ function interpolate_per_level(old_vector, old_degree, new_degree, loc, H)
 
     new_grid = LatitudeLongitudeGrid(CPU(), size = (Nx_new, Ny_new, 1),
                                             latitude  = (-70, 0),
-                                            longitude = (-6, 66),
+                                            longitude = (-2, 62),
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
                                             z = (0, 1))
@@ -99,13 +102,13 @@ using Oceananigans.ImmersedBoundaries: PartialCellBottom
 
 function neverworld_grid(arch, degree; H = 5)
 
-    Nx = Int(72 / degree)
+    Nx = Int(64 / degree)
     Ny = Int(70 / degree)
     Nz = length(new_z_faces) - 1
 
     underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
                                             latitude  = (-70, 0),
-                                            longitude = (-6, 66),
+                                            longitude = (-2, 62),
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
                                             z = new_z_faces)

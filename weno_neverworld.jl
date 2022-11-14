@@ -39,8 +39,10 @@ using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
 drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ)
 drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ)
 
-u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u)
-v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v)
+no_slip = FluxBoundaryCondition(0.0)
+
+u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u) #, north = no_slip, south = no_slip, west = no_slip, east = no_slip)
+v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v) #, north = no_slip, south = no_slip, west = no_slip, east = no_slip)
 
 u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ)
 v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ)
@@ -108,7 +110,21 @@ model = HydrostaticFreeSurfaceModel(grid = grid,
 if !interp_init
     set!(model, b=initial_buoyancy)
 else
-    set!(model, b=b_init, u=u_init, v=v_init, w=w_init, η=η_init) 
+    b_init = jldopen(init_file)["b"][H+1:end-H, H+1:end-H, H+1:end-H]
+    u_init = jldopen(init_file)["u"][H+1:end-H, H+1:end-H, H+1:end-H]
+    v_init = jldopen(init_file)["v"][H+1:end-H, H+1:end-H, H+1:end-H]
+    η_init = jldopen(init_file)["η"][H+1:end-H, H+1:end-H, H+1:end-H]
+    if !(grid == orig_grid)
+         @info "interpolating b field"
+         b_init = interpolate_per_level(b_init, old_degree, new_degree, (Center, Center, Center), H)
+         @info "interpolating u field"
+         u_init = interpolate_per_level(u_init, old_degree, new_degree, (Face, Center, Center), H)
+         @info "interpolating v field"
+         v_init = interpolate_per_level(v_init, old_degree, new_degree, (Center, Face, Center), H)
+         @info "interpolating w field"
+         η_init = interpolate_per_level(η_init, old_degree, new_degree, (Center, Center, Face), H)
+    end
+    set!(model, b=b_init, u=u_init, v=v_init) 
 end
 
 simulation = Simulation(model; Δt, stop_time)
@@ -119,7 +135,7 @@ u, v, w = model.velocities
 b = model.tracers.b
 η = model.free_surface.η
 
-output_fields = (; u, v, w, b, η)
+output_fields = (; u, v, w, b)
 
 η2 = η^2
 u2 = u^2
@@ -152,25 +168,25 @@ simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
 ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = (u, v))
 ζ2 = ζ^2
 
-averaged_fields = (; u, v, w, b, η, η2, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)
+averaged_fields = (; u, v, w, b, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)
 
 simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields,
                                                               schedule = TimeInterval(30days),
                                                               filename = output_prefix * "_snapshots",
-                                                              overwrite_existing = true)
+                                                              overwrite_existing = false)
 
 simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, (u, v, w, b),
                                                               schedule = TimeInterval(5days),
                                                               filename = output_prefix * "_surface",
                                                               indices = (:, :, grid.Nz),
-                                                              overwrite_existing = true)
+                                                              overwrite_existing = false)
 
 simulation.output_writers[:averaged_fields] = JLD2OutputWriter(model, averaged_fields,
                                                                schedule = AveragedTimeInterval(30days, window=30days, stride = 10),
                                                                filename = output_prefix * "_averages",
-                                                               overwrite_existing = true)
+                                                               overwrite_existing = false)
 
 simulation.output_writers[:checkpointer] = Checkpointer(model,
-                                                        schedule = TimeInterval(0.5years),
+                                                        schedule = TimeInterval(checkpoint_time),
                                                         prefix = output_prefix * "_checkpoint",
                                                         overwrite_existing = true)
