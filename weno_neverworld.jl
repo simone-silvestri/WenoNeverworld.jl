@@ -102,7 +102,7 @@ model = HydrostaticFreeSurfaceModel(grid = grid,
                                     buoyancy = BuoyancyTracer(),
                                     tracers = :b,
                                     tracer_advection = WENO(underlying_grid))
-
+        
 #####
 ##### Model initialization
 #####
