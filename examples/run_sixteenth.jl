@@ -17,10 +17,9 @@ grid      = neverworld_grid(arch, new_degree; H)
 # Remember to pass init file if we want to interpolate!
 interp_init = true
 init_file   = "files_four/neverworld_quarter_checkpoint_iteration119920.jld2"
-init        = true
 
-# init always has to be true with interp_init
-init = interp_init ? true : init
+# init always has to be true with interp_init, otherwise it depends if we start from a file or not
+init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
 Δt        = 1minutes
