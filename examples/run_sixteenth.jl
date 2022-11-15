@@ -36,15 +36,5 @@ increase_simulation_Δt!(simulation, cutoff_time = 50days, new_Δt = 2minutes)
 checkpoint_time = 50days
 standard_outputs!(simulation, output_prefix; checkpoint_time)
 
-if init
-    run!(simulation)
-else
-    update_simulation_clock!(simulation, init_file)
-    run!(simulation, pickup=init_file)
-end
-
-@info """
-    Simulation took $(prettytime(simulation.run_wall_time))
-    Free surface: $(typeof(model.free_surface).name.wrapper)
-    Time step: $(prettytime(Δt))
-"""
+# initializing the time for wall_time calculation
+run_simulation!(simulation; init, init_file)

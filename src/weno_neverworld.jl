@@ -168,3 +168,24 @@ function weno_neverworld_simulation(; grid, orig_grid,
 
     return simulation
 end
+
+function run_simulation!(simulation; init = true, init_file = nothing) 
+    
+    Δt    = simulation.Δt
+    model = simulation.model 
+    
+    start_time = [time_ns()]
+    
+    if init
+        run!(simulation)
+    else
+        update_simulation_clock!(simulation, init_file)
+        run!(simulation, pickup=init_file)
+    end
+    
+    @info """
+        Simulation took $(prettytime(simulation.run_wall_time))
+        Free surface: $(typeof(model.free_surface).name.wrapper)
+        Time step: $(prettytime(Δt))
+    """
+end
