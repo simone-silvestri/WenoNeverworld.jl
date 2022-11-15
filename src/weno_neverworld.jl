@@ -2,6 +2,8 @@
 ##### Boundary conditions
 #####
 
+using Oceananigans.Grids: node
+
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
 @inline speedᶠᶜᶜ(i, j, k, grid, fields) = (fields.u[i, j, k]^2 + ℑxyᶠᶜᵃ(i, j, k, grid, ϕ², fields.v))^0.5
@@ -15,10 +17,6 @@
 
 @inline surface_wind_stress(i, j, grid, clock, fields, τ) = τ[j]
 
-@inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, p) = Az(i, j, k, grid, lx, ly, lz)^2 / p.λ
-
-using Oceananigans.Grids: node
-
 @inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
 
     b = fields.b[i, j, grid.Nz]
@@ -26,6 +24,8 @@ using Oceananigans.Grids: node
 
     return @inbounds p.λ * (b - p.initial_buoyancy(x, y, z))
 end
+
+@inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, p) = Az(i, j, k, grid, lx, ly, lz)^2 / p.λ
 
 default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 0.2, convective_νz = 0.5)
 default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 5days)
@@ -56,7 +56,8 @@ function weno_neverworld_simulation(; grid, orig_grid,
 
     # Initializing boundary conditions
 
-    @info "defining boundary conditions"
+    @info "specifying boundary conditions..."
+
     τw = zeros(Ny)
     for (j, φ) in enumerate(φ_grid)
         τw[j] = wind_stress(φ, 0.0) ./ 1000
@@ -90,6 +91,8 @@ function weno_neverworld_simulation(; grid, orig_grid,
     ##### Closures
     #####
 
+    @info "specifying closures..."
+
     if gm_redi_diffusivities isa Nothing
         closure = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment)
     else
@@ -102,6 +105,8 @@ function weno_neverworld_simulation(; grid, orig_grid,
     ##### Model setup
     #####
 
+    @info "building model..."
+    
     free_surface = ImplicitFreeSurface(solver_method=:HeptadiagonalIterativeSolver)
 
     model = HydrostaticFreeSurfaceModel(; grid, free_surface, coriolis, closure, momentum_advection,
@@ -113,6 +118,8 @@ function weno_neverworld_simulation(; grid, orig_grid,
     #####
     ##### Model initialization
     #####
+
+    @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
 
     if !interp_init
         set!(model, b=initial_buoyancy)

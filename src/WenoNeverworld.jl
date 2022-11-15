@@ -21,7 +21,6 @@ using Oceananigans.Units
 using Oceananigans.Architectures: arch_array
 using Oceananigans.Grids: peripheral_node, inactive_node, on_architecture
 using Oceananigans.ImmersedBoundaries: ImmersedBoundaryGrid, ImmersedBoundaryCondition, GridFittedBottom
-using Oceananigans.Advection: VelocityStencil, VorticityStencil
 
 include("weno_neverworld_utils.jl")
 include("initial_conditions.jl")
