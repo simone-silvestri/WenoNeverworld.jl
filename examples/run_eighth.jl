@@ -19,6 +19,9 @@ interp_init = false
 init_file   = nothing
 init        = true
 
+# init always has to be true with interp_init
+init = inter_init ? true : init
+
 # Simulation parameters
 Δt        = 2.5minutes
 stop_time = 2years

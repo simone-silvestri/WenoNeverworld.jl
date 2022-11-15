@@ -2,6 +2,20 @@ using Oceananigans.Fields: interpolate
 using Oceananigans.Grids: xnode, ynode, halo_size
 using Oceananigans.Utils: instantiate
 
+function set_model_from_file(model, file)
+
+    grid = model.grid
+    H = halo_size(grid)[1]
+
+    u = file["u/data"][H+1:end-H, H+1:end-H, H+1:end-H]
+    v = file["v/data"][H+1:end-H, H+1:end-H, H+1:end-H]
+    b = file["b/data"][H+1:end-H, H+1:end-H, H+1:end-H]
+
+    set!(model, u=u, v=v, b=b)
+
+    return nothing
+end
+
 
 function update_simulation_clock!(simulation, init_file)
     clock = jldopen(init_file)["clock"]

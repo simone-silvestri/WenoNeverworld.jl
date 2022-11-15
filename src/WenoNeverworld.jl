@@ -17,6 +17,7 @@ using Oceananigans.ImmersedBoundaries
 
 include("weno_neverworld_utils.jl")
 include("initial_conditions.jl")
+include("horizontal_visc.jl")
 include("weno_neverworld.jl")
 include("weno_neverworld_outputs.jl")
 
