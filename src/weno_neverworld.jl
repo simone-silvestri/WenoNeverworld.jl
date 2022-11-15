@@ -3,6 +3,14 @@
 #####
 
 using Oceananigans.Grids: node
+using Oceananigans.TurbulenceClosures: FluxTapering
+using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
+using Oceananigans.Operators: Δx, Δy, Az 
+using Oceananigans.TurbulenceClosures
+using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization
+using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
+using Oceananigans.Coriolis: WetCellEnstrophyConservingScheme
+using Oceananigans.Advection: VorticityStencil, VelocityStencil
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
@@ -30,7 +38,7 @@ end
 default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 0.2, convective_νz = 0.5)
 default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 5days)
 default_vertical_diffusivity  = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
-deafult_slope_limiter         = FluxTapering(1e-2)
+default_slope_limiter         = FluxTapering(1e-2)
 
 function weno_neverworld_simulation(; grid, orig_grid,
                                       μ_drag = 0.003,  
@@ -129,11 +137,11 @@ function weno_neverworld_simulation(; grid, orig_grid,
         v_init = jldopen(init_file)["v/data"][H+1:end-H, H+1:end-H, H+1:end-H]
         if !(grid == orig_grid)
              @info "interpolating b field"
-             b_init = interpolate_per_level(b_init, old_degree, new_degree, (Center, Center, Center), H)
+             b_init = interpolate_per_level(b_init, orig_grid, grid, (Center, Center, Center))
              @info "interpolating u field"
-             u_init = interpolate_per_level(u_init, old_degree, new_degree, (Face, Center, Center), H)
+             u_init = interpolate_per_level(u_init, orig_grid, grid, (Face, Center, Center))
              @info "interpolating v field"
-             v_init = interpolate_per_level(v_init, old_degree, new_degree, (Center, Face, Center), H)
+             v_init = interpolate_per_level(v_init, orig_grid, grid, (Center, Face, Center))
         end
         set!(model, b=b_init, u=u_init, v=v_init) 
     end

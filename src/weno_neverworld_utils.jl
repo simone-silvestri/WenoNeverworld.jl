@@ -1,5 +1,5 @@
 using Oceananigans.Fields: interpolate
-using Oceananigans.Grids: xnode, ynode
+using Oceananigans.Grids: xnode, ynode, halo_size
 using Oceananigans.Utils: instantiate
 
 
@@ -60,12 +60,13 @@ function check_zeros(grid, old_array, loc; max_passes = 10)
     return old_array
 end
 
-function interpolate_per_level(old_vector, old_degree, new_degree, loc, H)
-   
-    Nx_new = Int(64 / new_degree)
-    Ny_new = Int(70 / new_degree)
-    Nx_old = Int(64 / old_degree)
-    Ny_old = Int(70 / old_degree)
+function interpolate_per_level(old_vector, old_grid, new_grid, loc)
+
+    H_new = halo_size(new_grid)
+    H_old = halo_size(old_grid)
+
+    Nx_new, Ny_new, _ = size(new_grid)
+    Nx_old, Ny_old, _ = size(old_grid)
     Nz = size(old_vector)[3]
 
     k_final = Nz
@@ -79,7 +80,7 @@ function interpolate_per_level(old_vector, old_degree, new_degree, loc, H)
     old_grid = LatitudeLongitudeGrid(CPU(), size = (Nx_old, Ny_old, 1),
                                             latitude  = (-70, 0),
                                             longitude = (-2, 62),
-                                            halo = (H, H, H),
+                                            halo = H_old,
                                             topology = (Periodic, Bounded, Bounded),
                                             z = (0, 1))
 
@@ -87,7 +88,7 @@ function interpolate_per_level(old_vector, old_degree, new_degree, loc, H)
     new_grid = LatitudeLongitudeGrid(CPU(), size = (Nx_new, Ny_new, 1),
                                             latitude  = (-70, 0),
                                             longitude = (-2, 62),
-                                            halo = (H, H, H),
+                                            halo = H_new,
                                             topology = (Periodic, Bounded, Bounded),
                                             z = (0, 1))
 

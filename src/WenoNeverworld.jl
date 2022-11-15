@@ -4,14 +4,6 @@ export neverworld_grid, weno_neverworld_simulation, standard_outputs!
 export increase_simulation_Δt!, update_simulation_clock!
 
 using CUDA
-using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
-using Oceananigans.Operators: Δx, Δy, Az 
-using Oceananigans.TurbulenceClosures
-using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization
-using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
-using Oceananigans.Coriolis: WetCellEnstrophyConservingScheme
-using Oceananigans.Advection: VorticityStencil, VelocityStencil
-
 using Printf
 using JLD2
 using Oceananigans
