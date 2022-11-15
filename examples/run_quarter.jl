@@ -4,6 +4,7 @@ using WenoNeverworld
 
 output_prefix = joinpath(@__DIR__, "files_four/neverworld_quarter")
 
+@info "output_prefix is $output_prefix"
 H = 5
 
 arch   = GPU()
