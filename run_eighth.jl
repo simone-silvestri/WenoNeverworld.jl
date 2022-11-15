@@ -16,7 +16,7 @@ orig_grid = neverworld_grid(arch, old_degree; H)
 init = true
 
 # interpolate from old coarser solution - true (in combination with init = true)
-interp_init = true
+interp_init = false
 
 # file to initialize the simulation with or interpolate 
 init_file = "files_four/neverworld_quarter_checkpoint_iteration2671560.jld2"
@@ -25,6 +25,10 @@ init_file = "files_four/neverworld_quarter_checkpoint_iteration2671560.jld2"
 stop_time       = 2years
 checkpoint_time = 0.5years
 
+# Parameter for the biharmonic viscosity
+
+λ = 5days
+
 include("weno_neverworld.jl")
 
 # Let's goo!
@@ -32,7 +36,7 @@ include("weno_neverworld.jl")
 
 function increase_Δt!(simulation)
     if simulation.model.clock.time > 20days
-	    simulation.model.clock.time = 5minutes
+	    simulation.Δt = 4minutes
     end
 end
 

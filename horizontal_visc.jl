@@ -2,20 +2,28 @@ using Oceananigans.TurbulenceClosures
 using Oceananigans.Grids: min_Δx, min_Δy
 using Oceananigans.Operators: Δxᶜᶜᶜ, Δyᶜᶜᶜ, ℑxyᶜᶜᵃ, ζ₃ᶠᶠᶜ, div_xyᶜᶜᶜ
 using Oceananigans.Operators: Δx, Δy
+using Oceananigans.Operators: ℑxyz
 using CUDA: @allowscalar
 
-@inline Dₜ(i, j, k, grid, u, v) = ∂xᶠᶠᶜ(i, j, k, grid, v) + ∂yᶠᶠᶜ(i, j, k, grid, u)
 @inline Dₛ(i, j, k, grid, u, v) = ∂xᶜᶜᶜ(i, j, k, grid, u) - ∂yᶜᶜᶜ(i, j, k, grid, v)
-@inline Δ²ᶜᶜᶜ(i, j, k, grid)    = (1 / (1 / Δxᶜᶜᶜ(i, j, k, grid)^2 + 1 / Δyᶜᶜᶜ(i, j, k, grid)^2))
+@inline Dₜ(i, j, k, grid, u, v) = ∂xᶠᶠᶜ(i, j, k, grid, v) + ∂yᶠᶠᶜ(i, j, k, grid, u)
 @inline Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz) =  (1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2))
 
-@inline function νhb_smagorinski_final(i, j, k, grid, clock, fields, C₄) 
-   δ₁ = Dₛ(i, j, k, grid, fields.u, fields.v)    
-   δ₂ = ℑxyᶜᶜᵃ(i, j, k, grid, Dₜ, fields.u, fields.v)    
-   return Δ²ᶜᶜᶜ(i, j, k, grid)^2 * C₄ * sqrt(δ₁^2 + δ₂^2)
+@inline function νhb_smagorinski_final(i, j, k, grid, lx, ly, lz, clock, fields, p)
+
+   location = (lx, ly, lz)
+   from_Dₛ = (Center(), Center(), Center()) 
+   from_Dₜ = (Face(),   Face(),   Center()) 
+	
+   δ₁ = ℑxz(i, j, k, grid, from_Dₛ, location, Dₛ, fields.u, fields.v)    
+   δ₂ = ℑxz(i, j, k, grid, from_Dₜ, location, Dₛ, fields.u, fields.v)    
+
+   dynamic_visc = max(p.C * sqrt(δ₁^2 + δ₂^2), 1/p.λ)
+
+   return Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz)^2 * dynamic_visc
 end
 
-function smagorinsky_viscosity(formulation, grid; Cₛₘ = 4.0)
+function smagorinski_viscosity(formulation, grid; Cₛₘ = 2.0, λ = 5days)
 
     dx_min = min_Δx(grid.underlying_grid)
     dy_min = min_Δy(grid.underlying_grid)
@@ -24,18 +32,15 @@ function smagorinsky_viscosity(formulation, grid; Cₛₘ = 4.0)
     timescale_max = 100days
     timescale_min = 0.2days
 
-    @show C₄    = (Cₛₘ / π)^2 / 8
+    @show C     = (Cₛₘ / π)^2 / 8
     @show min_ν = (1 / (1 / dx_min^2 + 1 / dy_min^2))^2 / timescale_max
     @show max_ν = (1 / (1 / dx_max^2 + 1 / dy_max^2))^2 / timescale_min
 
-    loc = (Center, Center, Center)
-
     return ScalarBiharmonicDiffusivity(formulation; 
-                                       ν=νhb_smagorinski_final, discrete_form=true, loc, 
-				       parameters = C₄)
+                                       ν=νhb_smagorinski_final, discrete_form=true,  
+				       parameters = (; C, λ))
 end
 
-using Oceananigans.Operators: ℑxyz
 
 @inline function νhb_leith_final(i, j, k, grid, lx, ly, lz, clock, fields, p)
     
@@ -50,23 +55,23 @@ using Oceananigans.Operators: ℑxyz
     ∂xδ = ℑxyz(i, j, k, grid, from_∂xδ, location, ∂xᶠᶜᶜ, div_xyᶜᶜᶜ, fields.u, fields.v)
     ∂yδ = ℑxyz(i, j, k, grid, from_∂yδ, location, ∂yᶜᶠᶜ, div_xyᶜᶜᶜ, fields.u, fields.v)
    
-    dynamic_visc = sqrt( p.C₄ * (∂xζ^2 + ∂yζ^2) + p.C₄ₙ * (∂xδ^2 + ∂yδ^2) )
+    dynamic_visc = sqrt( p.C₁ * (∂xζ^2 + ∂yζ^2) + p.C₂ * (∂xδ^2 + ∂yδ^2) ) / 8
  
     Δ = Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz)
-    visc = dynamic_visc * Δ^2.5
+    visc₁ = dynamic_visc * Δ^2.5
+    visc₂ = Δ^2 / p.λ
 
-
-    return visc 
+    return max(visc₁, visc₂) 
 end
 
-function leith_viscosity(formulation, grid; C_vort = 3.0, C_div = 3.0)
+function leith_viscosity(formulation, grid; C_vort = 2.0, C_div = 2.0, λ = 5days)
 
-    @show C₄  = (C_vort / π)^6 / 8
-    @show C₄ₙ = (C_div  / π)^6 / 8
+    @show C₁ = (C_vort / π)^6 
+    @show C₂ = (C_div  / π)^6 
 
     visc = ScalarBiharmonicDiffusivity(formulation; 
                                        ν=νhb_leith_final, discrete_form=true,  
-                                       parameters = (; C₄, C₄ₙ))
+                                       parameters = (; C₁, C₂, λ))
 
     @show typeof(visc.ν)
 

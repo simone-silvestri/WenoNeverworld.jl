@@ -71,18 +71,21 @@ b_bcs = FieldBoundaryConditions(top = b_top_relaxation_bc)
 ##### Closures
 #####
 
-using Oceananigans.Operators: Δx, Δy
+using Oceananigans.Operators: Δx, Δy, Az
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
 
-@inline νhb(i, j, k, grid, lx, ly, lz, clock, fields) = (1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2 ))^2 / 5days
-
 include("horizontal_visc.jl")
 
+@inline νhb_old(i, j, k, grid, lx, ly, lz, clock, fields, λ) =
+                (1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2))^2 / λ
+
+@inline νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Az(i, j, k, grid, lx, ly, lz)^2 / λ
+
+biharmonic_viscosity   = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=νhb, discrete_form=true, parameters = λ)
+
 vertical_diffusivity  = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
-convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.1)
-# biharmonic_viscosity  = leith_viscosity(HorizontalDivergenceFormulation(), grid; C_vort = 2.0, C_div = 3.0)
-biharmonic_viscosity = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = νhb, discrete_form = true)
+convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 0.2, convective_νz = 0.5)
 
 closure = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment)
 
@@ -93,17 +96,11 @@ closure = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment)
 using Oceananigans.Coriolis: WetCellEnstrophyConservingScheme
 using Oceananigans.Advection: VorticityStencil, VelocityStencil
 
-coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme())
+coriolis = HydrostaticSphericalCoriolis()
 
 free_surface = ImplicitFreeSurface(solver_method=:HeptadiagonalIterativeSolver)
 
-if advection_scheme == :Centered
-    momentum_advection = VectorInvariant()
-elseif advection_schem == :VectorInvariantVorticity
-    momentum_advection = WENO(vector_invariant = VorticityStencil())
-else
-    momentum_advection = WENO(vector_invariant = VelocityStencil())
-end
+momentum_advection = WENO(vector_invariant = VelocityStencil())
 
 model = HydrostaticFreeSurfaceModel(; grid, free_surface, coriolis, closure, momentum_advection,
                                     boundary_conditions = (; u = u_bcs, v = v_bcs, b = b_bcs),
@@ -178,18 +175,18 @@ averaged_fields = (; u, v, w, b, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)
 simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields,
                                                               schedule = TimeInterval(30days),
                                                               filename = output_prefix * "_snapshots",
-                                                              overwrite_existing = false)
+                                                              overwrite_existing = true)
 
 simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, (u, v, w, b),
                                                               schedule = TimeInterval(5days),
                                                               filename = output_prefix * "_surface",
                                                               indices = (:, :, grid.Nz),
-                                                              overwrite_existing = false)
+                                                              overwrite_existing = true)
 
 simulation.output_writers[:averaged_fields] = JLD2OutputWriter(model, averaged_fields,
                                                                schedule = AveragedTimeInterval(30days, window=30days, stride = 10),
                                                                filename = output_prefix * "_averages",
-                                                               overwrite_existing = false)
+                                                               overwrite_existing = true)
 
 simulation.output_writers[:checkpointer] = Checkpointer(model,
                                                         schedule = TimeInterval(checkpoint_time),
