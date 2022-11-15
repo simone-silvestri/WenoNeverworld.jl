@@ -27,7 +27,7 @@ stop_time = 20years
 ## Changing parameterizations
 using WenoNeverworld: geometric_νhb
 
-biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(geometric_νhb, discrete_form=true, parameters = 5days)
+biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 momentum_advection   = VectorInvariant()
 
 # Construct the neverworld simulation
