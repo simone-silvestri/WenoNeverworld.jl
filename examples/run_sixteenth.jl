@@ -1,7 +1,7 @@
 using Oceananigans
 using WenoNeverworld
 
-output_prefix = "files_sixteen/neverworld_sixteenth"
+output_prefix = joinpath(@__DIR__, "files_sixteen/neverworld_sixteenth")
 
 H = 5
 
