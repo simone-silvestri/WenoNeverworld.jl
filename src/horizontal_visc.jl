@@ -20,7 +20,7 @@ using CUDA: @allowscalar
 
    dynamic_visc = max(p.C * sqrt(δ₁^2 + δ₂^2), 1/p.λ)
 
-   return Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz)^2 * dynamic_visc
+   return p.Area(i, j, k, grid, lx, ly, lz)^2 * dynamic_visc
 end
 
 function smagorinski_viscosity(formulation, grid; Cₛₘ = 2.0, λ = 5days, Area = Δ²ᵃᵃᵃ)
