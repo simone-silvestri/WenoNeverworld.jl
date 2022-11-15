@@ -23,7 +23,7 @@ using CUDA: @allowscalar
    return Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz)^2 * dynamic_visc
 end
 
-function smagorinski_viscosity(formulation, grid; Cₛₘ = 2.0, λ = 5days)
+function smagorinski_viscosity(formulation, grid; Cₛₘ = 2.0, λ = 5days, Area = Δ²ᵃᵃᵃ)
 
     dx_min = min_Δx(grid.underlying_grid)
     dy_min = min_Δy(grid.underlying_grid)
@@ -38,7 +38,7 @@ function smagorinski_viscosity(formulation, grid; Cₛₘ = 2.0, λ = 5days)
 
     return ScalarBiharmonicDiffusivity(formulation; 
                                        ν=νhb_smagorinski_final, discrete_form=true,  
-				       parameters = (; C, λ))
+				                       parameters = (; C, λ, Area))
 end
 
 
@@ -57,27 +57,26 @@ end
    
     dynamic_visc = sqrt( p.C₁ * (∂xζ^2 + ∂yζ^2) + p.C₂ * (∂xδ^2 + ∂yδ^2) ) / 8
  
-    Δ = Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz)
-    visc₁ = dynamic_visc * Δ^2.5
-    visc₂ = Δ^2 / p.λ
+    A = Area(i, j, k, grid, lx, ly, lz)
+    visc₁ = dynamic_visc * A^2.5
+    visc₂ = A^2 / p.λ
 
     return max(visc₁, visc₂) 
 end
 
-function leith_viscosity(formulation, grid; C_vort = 2.0, C_div = 2.0, λ = 5days)
+function leith_viscosity(formulation, grid; C_vort = 2.0, C_div = 2.0, λ = 5days, Area = Δ²ᵃᵃᵃ)
 
     @show C₁ = (C_vort / π)^6 
     @show C₂ = (C_div  / π)^6 
 
     visc = ScalarBiharmonicDiffusivity(formulation; 
                                        ν=νhb_leith_final, discrete_form=true,  
-                                       parameters = (; C₁, C₂, λ))
+                                       parameters = (; C₁, C₂, λ, Area))
 
     @show typeof(visc.ν)
 
     return visc
 end
-
 
 @inline νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) =
 		(1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2))^2 / λ

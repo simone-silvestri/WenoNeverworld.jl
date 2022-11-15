@@ -1,5 +1,5 @@
-using Oceananigans.AbstractOperations
 using Oceananigans.Operators: ζ₃ᶠᶠᶜ
+using Oceananigans.AbstractOperations: KernelFunctionOperation
 
 function standard_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)
 
