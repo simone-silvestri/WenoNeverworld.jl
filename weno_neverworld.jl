@@ -73,29 +73,39 @@ b_bcs = FieldBoundaryConditions(top = b_top_relaxation_bc)
 
 using Oceananigans.Operators: Δx, Δy
 using Oceananigans.TurbulenceClosures
-using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation
+using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
 
 @inline νhb(i, j, k, grid, lx, ly, lz, clock, fields) = (1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2 ))^2 / 5days
 
 include("horizontal_visc.jl")
 
 vertical_diffusivity  = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
-convective_adjustment = ConvectoveAdjustmentVerticalDiffusivity(convective_κ = 0.1)
-biharmonic_viscosity  = leith_viscosity(HorizontalDivergenceFormulation(), grid; C_vort = 2.0, C_div = 3.0)
+convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.1)
+# biharmonic_viscosity  = leith_viscosity(HorizontalDivergenceFormulation(), grid; C_vort = 2.0, C_div = 3.0)
+biharmonic_viscosity = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = νhb, discrete_form = true)
 
-closures = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment)
+closure = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment)
 
 #####
 ##### Model setup
 #####
 
+using Oceananigans.Coriolis: WetCellEnstrophyConservingScheme
+using Oceananigans.Advection: VorticityStencil, VelocityStencil
+
+coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme())
+
 free_surface = ImplicitFreeSurface(solver_method=:HeptadiagonalIterativeSolver)
 
-model = HydrostaticFreeSurfaceModel(grid = grid,
-                                    free_surface = free_surface,
-                                    momentum_advection = WENO(vector_invariant = VelocityStencil()),
-                                    coriolis = HydrostaticSphericalCoriolis(),
-                                    closure = closures,
+if advection_scheme == :Centered
+    momentum_advection = VectorInvariant()
+elseif advection_schem == :VectorInvariantVorticity
+    momentum_advection = WENO(vector_invariant = VorticityStencil())
+else
+    momentum_advection = WENO(vector_invariant = VelocityStencil())
+end
+
+model = HydrostaticFreeSurfaceModel(; grid, free_surface, coriolis, closure, momentum_advection,
                                     boundary_conditions = (; u = u_bcs, v = v_bcs, b = b_bcs),
                                     buoyancy = BuoyancyTracer(),
                                     tracers = :b,
@@ -108,10 +118,9 @@ model = HydrostaticFreeSurfaceModel(grid = grid,
 if !interp_init
     set!(model, b=initial_buoyancy)
 else
-    b_init = jldopen(init_file)["b"][H+1:end-H, H+1:end-H, H+1:end-H]
-    u_init = jldopen(init_file)["u"][H+1:end-H, H+1:end-H, H+1:end-H]
-    v_init = jldopen(init_file)["v"][H+1:end-H, H+1:end-H, H+1:end-H]
-    η_init = jldopen(init_file)["η"][H+1:end-H, H+1:end-H, H+1:end-H]
+    b_init = jldopen(init_file)["b/data"][H+1:end-H, H+1:end-H, H+1:end-H]
+    u_init = jldopen(init_file)["u/data"][H+1:end-H, H+1:end-H, H+1:end-H]
+    v_init = jldopen(init_file)["v/data"][H+1:end-H, H+1:end-H, H+1:end-H]
     if !(grid == orig_grid)
          @info "interpolating b field"
          b_init = interpolate_per_level(b_init, old_degree, new_degree, (Center, Center, Center), H)
@@ -119,8 +128,6 @@ else
          u_init = interpolate_per_level(u_init, old_degree, new_degree, (Face, Center, Center), H)
          @info "interpolating v field"
          v_init = interpolate_per_level(v_init, old_degree, new_degree, (Center, Face, Center), H)
-         @info "interpolating w field"
-         η_init = interpolate_per_level(η_init, old_degree, new_degree, (Center, Center, Face), H)
     end
     set!(model, b=b_init, u=u_init, v=v_init) 
 end

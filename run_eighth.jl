@@ -1,34 +1,42 @@
 include("initial_conditions.jl")
 include("neverworld_utils.jl")
 
-output_prefix = "files_sixteen/neverworld_sixteenth"
+output_prefix = "files_eight/neverworld_eighth"
 
 H = 5
 
 arch   = GPU()
 old_degree = 1/4
-new_degree = 1/16
+new_degree = 1/8
 
 grid      = neverworld_grid(arch, new_degree; H)
 orig_grid = neverworld_grid(arch, old_degree; H)
 
 # initialize from scratch (or interpolated) - true, from file - false
-init = false
+init = true
 
 # interpolate from old coarser solution - true (in combination with init = true)
-interp_init = false
+interp_init = true
 
 # file to initialize the simulation with or interpolate 
-init_file = "files_sixteen/neverworld_sixteenth_checkpoint_iteration252000.jld2" 
+init_file = "files_four/neverworld_quarter_checkpoint_iteration2671560.jld2"
 
-Δt              = 2minutes
-stop_time       = 300days
-checkpoint_time = 50days
+Δt              = 2.5minutes
+stop_time       = 2years
+checkpoint_time = 0.5years
 
 include("weno_neverworld.jl")
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
+
+function increase_Δt!(simulation)
+    if simulation.model.clock.time > 20days
+	    simulation.model.clock.time = 5minutes
+    end
+end
+
+simulation.callbacks[:increase_dt] = Callback(increase_Δt!, IterationInterval(1000))
 
 if init
     run!(simulation)
