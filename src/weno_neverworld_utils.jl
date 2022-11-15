@@ -61,7 +61,6 @@ function check_zeros(grid, old_array, loc; max_passes = 10)
 end
 
 function interpolate_per_level(old_vector, old_degree, new_degree, loc, H)
-    
    
     Nx_new = Int(64 / new_degree)
     Ny_new = Int(70 / new_degree)

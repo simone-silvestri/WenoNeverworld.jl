@@ -25,7 +25,7 @@ using Oceananigans.Grids: node
     return @inbounds p.λ * (b - p.initial_buoyancy(x, y, z))
 end
 
-@inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, p) = Az(i, j, k, grid, lx, ly, lz)^2 / p.λ
+@inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Az(i, j, k, grid, lx, ly, lz)^2 / λ
 
 default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 0.2, convective_νz = 0.5)
 default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 5days)

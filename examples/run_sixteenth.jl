@@ -1,4 +1,5 @@
 using Oceananigans
+using Oceananigans.Units
 using WenoNeverworld
 
 output_prefix = joinpath(@__DIR__, "files_sixteen/neverworld_sixteenth")
