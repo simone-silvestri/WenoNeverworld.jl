@@ -2,9 +2,8 @@ using Oceananigans
 using Oceananigans.Units
 using WenoNeverworld
 
-output_dir    = joinpath(@__DIR__, "files_four")
-output_prefix = output_dir * "neverworld_quarter"
-@info "output_prefix is $output_prefix"
+output_dir    = joinpath(@__DIR__, "../files_four")
+output_prefix = output_dir * "/neverworld_quarter"
 
 H = 5
 
