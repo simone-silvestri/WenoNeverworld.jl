@@ -20,7 +20,7 @@ init_file   = nothing
 Δt        = 2.5minutes
 stop_time = 2years
 
-# Parameter for the biharmonic viscosity
+# Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_file, init_file)
 
 # Increase simulation Δt after 40days
