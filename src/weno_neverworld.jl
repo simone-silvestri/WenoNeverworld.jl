@@ -2,7 +2,7 @@
 ##### Boundary conditions
 #####
 
-using Oceananigans.Grids: node
+using Oceananigans.Grids: node, halo_size
 using Oceananigans.TurbulenceClosures: FluxTapering
 using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
 using Oceananigans.Operators: Δx, Δy, Az 
@@ -133,9 +133,10 @@ function weno_neverworld_simulation(; grid, orig_grid,
     if !interp_init
         set!(model, b=initial_buoyancy)
     else
-        b_init = jldopen(init_file)["b/data"][H+1:end-H, H+1:end-H, H+1:end-H]
-        u_init = jldopen(init_file)["u/data"][H+1:end-H, H+1:end-H, H+1:end-H]
-        v_init = jldopen(init_file)["v/data"][H+1:end-H, H+1:end-H, H+1:end-H]
+        Hx, Hy, Hz = halo_size(orig_grid)
+        b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+        u_init = jldopen(init_file)["u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+        v_init = jldopen(init_file)["v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
         if !(grid == orig_grid)
              @info "interpolating b field"
              b_init = interpolate_per_level(b_init, orig_grid, grid, (Center, Center, Center))
