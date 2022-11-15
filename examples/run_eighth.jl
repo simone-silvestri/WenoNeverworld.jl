@@ -17,7 +17,9 @@ grid      = neverworld_grid(arch, new_degree; H)
 # Remember to pass init file if we want to interpolate!
 interp_init = false
 init_file   = nothing
-init        = true
+
+# init always has to be true with interp_init, otherwise it depends if we start from a file or not
+init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
 Δt        = 1.5minutes

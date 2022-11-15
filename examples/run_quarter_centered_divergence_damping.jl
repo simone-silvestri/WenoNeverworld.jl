@@ -1,10 +1,10 @@
 using Oceananigans
-using Oceananigans.TurbulenceClosures
+using Oceananigans.TurbulenceClosures: HorizontalDivergenceScalarBiharmonicDiffusivity
 using Oceananigans.Units
 using WenoNeverworld
 
-output_dir    = joinpath(@__DIR__, "../files_four_centered")
-@show output_prefix = output_dir * "/neverworld_quarter_centered"
+output_dir    = joinpath(@__DIR__, "../files_four_centered_divergence")
+@show output_prefix = output_dir * "/neverworld_quarter_centered_divergence"
 
 H = 5
 
@@ -29,7 +29,7 @@ stop_time = 20years
 ## Changing parameterizations
 using WenoNeverworld: geometric_νhb
 
-biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
+biharmonic_viscosity = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 momentum_advection   = VectorInvariant()
 
 # Construct the neverworld simulation
