@@ -4,7 +4,7 @@ using Oceananigans.Units
 using WenoNeverworld
 
 output_dir    = joinpath(@__DIR__, "../files_four_centered")
-@show output_prefix = output_dir * "/neverworld_quarter"
+@show output_prefix = output_dir * "/neverworld_quarter_centered"
 
 H = 5
 
