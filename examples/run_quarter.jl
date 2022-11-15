@@ -29,7 +29,7 @@ stop_time = 20years
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
 
 # Increase simulation Δt after 40days
-increase_simulation_Δt!(simulation, cutoff_time = 150days, new_Δt = 10minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 3.5years, new_Δt = 10minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
