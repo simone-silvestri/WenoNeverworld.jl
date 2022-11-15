@@ -24,7 +24,7 @@ stop_time = 0.5years
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
 
-# Increase simulation Δt after 40days
+# Increase simulation Δt after 50days
 increase_simulation_Δt!(simulation, cutoff_time = 50days, new_Δt = 2minutes)
 
 # Let's goo!

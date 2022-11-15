@@ -56,6 +56,7 @@ function weno_neverworld_simulation(; grid, orig_grid,
                                       stop_time = 10years
                                       )
 
+    arch = architecture(grid)
     underlying_grid = grid.underlying_grid
 
     Nx, Ny, Nz = size(grid)
