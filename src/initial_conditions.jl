@@ -1,17 +1,3 @@
-import Pkg
-Pkg.activate("/home/ssilvest/development/Oceananigans.jl/")
-
-using Printf
-using JLD2
-using Oceananigans
-using Oceananigans.Operators
-using Oceananigans.BoundaryConditions
-using Oceananigans.Units
-using Oceananigans.Architectures: arch_array
-using Oceananigans.Grids: peripheral_node, inactive_node, on_architecture
-using Oceananigans.ImmersedBoundaries: ImmersedBoundaryGrid, ImmersedBoundaryCondition, GridFittedBottom
-using Oceananigans.Advection: VelocityStencil, VorticityStencil
-
 function cubic_profile(x, x1, x2, y1, y2, d1, d2)
     A = [ x1^3 x1^2 x1 1.0
           x2^3 x2^2 x2 1.0

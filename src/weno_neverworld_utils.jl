@@ -2,6 +2,28 @@ using Oceananigans.Fields: interpolate
 using Oceananigans.Grids: xnode, ynode
 using Oceananigans.Utils: instantiate
 
+
+function update_simulation_clock!(simulation, init_file)
+    clock = jldopen(init_file)["clock"]
+    simulation.model.clock.time = clock.time	
+    simulation.model.clock.iteration = clock.iteration	
+
+    return nothing
+end
+
+function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2minutes)
+    
+    function increase_Δt!(simulation)
+        if simulation.model.clock.time > cutoff_time
+                simulation.Δt = new_Δt
+        end
+    end
+
+    simulation.callbacks[:increase_dt] = Callback(increase_Δt!, IterationInterval(1000))
+
+    return nothing
+end
+
 function check_zeros(grid, old_array, loc; max_passes = 10)
     Nx, Ny, Nz = size(grid)
 
