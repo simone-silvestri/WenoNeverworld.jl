@@ -180,8 +180,10 @@ function run_simulation!(simulation; init = true, init_file = nothing)
     model = simulation.model 
         
     if init
+        @info "running simulation from zero-velocity initial conditions"
         run!(simulation)
     else
+        @info "running simulation from $init_file"
         update_simulation_clock!(simulation, init_file)
         run!(simulation, pickup=init_file)
     end
