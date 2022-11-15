@@ -20,14 +20,14 @@ init_file   = nothing
 init        = true
 
 # Simulation parameters
-Δt        = 2.5minutes
+Δt        = 1.5minutes
 stop_time = 2years
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
 
 # Increase simulation Δt after 40days
-increase_simulation_Δt!(simulation, cutoff_time = 50days, new_Δt = 4minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 150days, new_Δt = 3minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
