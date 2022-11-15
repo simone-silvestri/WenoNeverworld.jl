@@ -3,7 +3,7 @@ using Oceananigans.Units
 using WenoNeverworld
 
 output_dir    = joinpath(@__DIR__, "../files_sixteen")
-output_prefix = output_dir * "/neverworld_sixteenth"
+@show output_prefix = output_dir * "/neverworld_sixteenth"
 
 H = 5
 
@@ -17,6 +17,7 @@ grid      = neverworld_grid(arch, new_degree; H)
 # Remember to pass init file if we want to interpolate!
 interp_init = false
 init_file   = nothing
+init        = true
 
 # Simulation parameters
 Δt        = 1minutes
