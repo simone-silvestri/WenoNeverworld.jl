@@ -156,7 +156,7 @@ function weno_neverworld_simulation(; grid, orig_grid,
 
         wall_time = (time_ns() - start_time[1]) * 1e-9
 
-        u = sim.model.velocities.u
+        u, v, w = sim.model.velocities
 
         @info @sprintf("Time: % 12s, it: %d, max(|u|, |v|, |w|): (%.2e, %.2e , %.2e) ms⁻¹, Δt: %.2e s, wall time: %s", 
                         prettytime(sim.model.clock.time),
