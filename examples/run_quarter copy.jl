@@ -24,6 +24,7 @@ init        = true
 Δt        = 6minutes
 stop_time = 20years
 
+## Changing parameterizations
 using WenoNeverworld: geometric_νhb
 
 biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(geometric_νhb, discrete_form=true, parameters = 5days)
