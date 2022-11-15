@@ -149,7 +149,11 @@ function weno_neverworld_simulation(; grid, orig_grid,
 
     simulation = Simulation(model; Δt, stop_time)
 
+    @show start_time = [time_ns()]
+
     function progress(sim)
+        sim.model.clock.iteration == 1
+
         wall_time = (time_ns() - start_time[1]) * 1e-9
 
         u = sim.model.velocities.u
@@ -173,9 +177,7 @@ function run_simulation!(simulation; init = true, init_file = nothing)
     
     Δt    = simulation.Δt
     model = simulation.model 
-    
-    start_time = [time_ns()]
-    
+        
     if init
         run!(simulation)
     else
