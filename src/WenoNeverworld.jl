@@ -1,7 +1,7 @@
 module WenoNeverworld
 
 export neverworld_grid, weno_neverworld_simulation, standard_outputs!
-export increase_simulation_Δt!, update_simulation_clock!
+export increase_simulation_Δt!, update_simulation_clock!, run_simulation!
 
 using CUDA
 using Printf
