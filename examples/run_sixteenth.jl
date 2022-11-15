@@ -14,7 +14,7 @@ grid      = neverworld_grid(arch, new_degree; H)
 orig_grid = neverworld_grid(arch, old_degree; H)
 
 # Remember to pass init file if we want to interpolate!
-interp_file = false
+interp_init = false
 init_file   = nothing
 
 # Simulation parameters
@@ -22,7 +22,7 @@ init_file   = nothing
 stop_time = 0.5years
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_file, init_file)
+simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
 
 # Increase simulation Δt after 40days
 increase_simulation_Δt!(simulation, cutoff_time = 50days, new_Δt = 2minutes)
