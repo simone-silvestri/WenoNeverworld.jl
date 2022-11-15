@@ -1,7 +1,10 @@
+using Oceananigans.AbstractOperations
+using Oceananigans.Operators: ζ₃ᶠᶠᶜ
 
 function standard_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)
 
     model = simulation.model
+    grid  = model.grid
 
     u, v, w = model.velocities
     b = model.tracers.b
@@ -26,7 +29,7 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
                                                                   filename = output_prefix * "_snapshots",
                                                                   overwrite_existing)
 
-    simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, (u, v, w, b);
+    simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, output_fields;
                                                                   schedule = TimeInterval(5days),
                                                                   filename = output_prefix * "_surface",
                                                                   indices = (:, :, grid.Nz),
