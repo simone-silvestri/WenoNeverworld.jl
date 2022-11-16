@@ -1,10 +1,9 @@
 using Oceananigans
-using Oceananigans.TurbulenceClosures
 using Oceananigans.Units
 using WenoNeverworld
 
-output_dir    = joinpath(@__DIR__, "../files_four_centered")
-@show output_prefix = output_dir * "/neverworld_quarter_centered"
+output_dir    = joinpath(@__DIR__, "../files_four_vorticity_stencil/")
+@show output_prefix = output_dir * "/neverworld_quarter_vorticity"
 
 arch   = GPU()
 old_degree = 1/4
@@ -15,23 +14,21 @@ grid      = NeverworldGrid(arch, new_degree)
 
 # Remember to pass init file if we want to interpolate!
 interp_init = false
-init_file   = "files_four_centered/neverworld_quarter_checkpoint_iteration172480.jld2"
+init_file   = "files_four/neverworld_quarter_checkpoint_iteration172480.jld2"
 
 # init always has to be true with interp_init, otherwise it depends if we start from a file or not
 init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
 Δt        = 10minutes
-stop_time = 20years
+stop_time =  2years
 
-## Changing parameterizations
-using WenoNeverworld: geometric_νhb
+using Oceananigans.Advection: VorticityStencil
 
-biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
-momentum_advection   = VectorInvariant()
+momentum_advection = WENO(vector_invariant = VorticityStencil())
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, biharmonic_viscosity, momentum_advection, Δt, stop_time, interp_init, init_file)
+simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, momentum_advection, stop_time, interp_init, init_file)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"

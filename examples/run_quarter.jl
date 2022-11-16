@@ -20,14 +20,11 @@ init_file   = "files_four/neverworld_quarter_checkpoint_iteration172480.jld2"
 init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
-Δt        = 6minutes
+Δt        = 10minutes
 stop_time = 20years
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
-
-# Increase simulation Δt after 40days
-increase_simulation_Δt!(simulation, cutoff_time = 3.5years, new_Δt = 10minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"

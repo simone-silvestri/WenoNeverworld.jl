@@ -21,7 +21,7 @@ init_file   = "files_four_centered/neverworld_quarter_centered_checkpoint_iterat
 init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
-Δt        = 6minutes
+Δt        = 10minutes
 stop_time = 20.5years
 
 ## Changing parameterizations
