@@ -20,20 +20,22 @@ init_file   = nothing
 init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
-Δt        = 20minutes
+Δt        = 10minutes
 stop_time = 100years
 
 preconditioner_method   = :SparseInverse
-preconditioner_settings = (ε = 0.001, nzrel=5) 
+preconditioner_settings = (ε = 0.001, nzrel = 5) 
 
-free_surface = ImplicitFreeSurface(; preconditioner_method, preconditioner_settings)
+free_surface         = ImplicitFreeSurface(; preconditioner_method, preconditioner_settings)
+biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, free_surface)
+simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, free_surface, biharmonic_viscosity)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
+increase_simulation_Δt(simualation, cutoff_time = 60days, new_Δt = 15minutes)
 # Add outputs
 checkpoint_time = 1year
 snapshot_time   = 365days
