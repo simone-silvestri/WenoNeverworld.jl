@@ -51,18 +51,9 @@ end
    return p.Area(i, j, k, grid, lx, ly, lz)^2 * dynamic_visc
 end
 
-function smagorinski_viscosity(formulation, grid; Cₛₘ = 2.0, λ = 5days, Area = Δ²ᵃᵃᵃ)
+function smagorinski_viscosity(formulation; Cₛₘ = 2.0, λ = 5days, Area = Δ²ᵃᵃᵃ)
 
-    dx_min = min_Δx(grid.underlying_grid)
-    dy_min = min_Δy(grid.underlying_grid)
-    dx_max = @allowscalar grid.Δxᶠᶜᵃ[Int(grid.Ny / 2)]
-    dy_max = @allowscalar grid.Δxᶠᶜᵃ[Int(grid.Ny / 2)]
-    timescale_max = 100days
-    timescale_min = 0.2days
-
-    @show C     = (Cₛₘ / π)^2 / 8
-    @show min_ν = (1 / (1 / dx_min^2 + 1 / dy_min^2))^2 / timescale_max
-    @show max_ν = (1 / (1 / dx_max^2 + 1 / dy_max^2))^2 / timescale_min
+    @show C = (Cₛₘ / π)^2 / 8
 
     return ScalarBiharmonicDiffusivity(formulation; 
                                        ν=νhb_smagorinski_final, discrete_form=true,  
@@ -92,7 +83,7 @@ end
     return max(visc₁, visc₂) 
 end
 
-function leith_viscosity(formulation, grid; C_vort = 2.0, C_div = 2.0, λ = 5days, Area = Δ²ᵃᵃᵃ)
+function leith_viscosity(formulation; C_vort = 2.0, C_div = 2.0, λ = 5days, Area = Δ²ᵃᵃᵃ)
 
     @show C₁ = (C_vort / π)^6 
     @show C₂ = (C_div  / π)^6 
@@ -105,8 +96,3 @@ function leith_viscosity(formulation, grid; C_vort = 2.0, C_div = 2.0, λ = 5day
 
     return visc
 end
-
-@inline νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) =
-		(1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2))^2 / λ
-
-geometric_viscosity(formulation, timescale) = ScalarBiharmonicDiffusivity(formulation, ν=νhb, discrete_form=true, parameters = timescale) 

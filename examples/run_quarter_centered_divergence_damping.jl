@@ -12,12 +12,12 @@ arch   = GPU()
 old_degree = 1/4
 new_degree = 1/4
 
-orig_grid = neverworld_grid(arch, old_degree; H)
-grid      = neverworld_grid(arch, new_degree; H)
+orig_grid = NeverworldGrid(arch, old_degree; H)
+grid      = NeverworldGrid(arch, new_degree; H)
 
 # Remember to pass init file if we want to interpolate!
 interp_init = false
-init_file   = "files_four_centered/neverworld_quarter_checkpoint_iteration119920.jld2"
+init_file   = "files_four_centered/neverworld_quarter_centered_checkpoint_iteration119920.jld2"
 
 # init always has to be true with interp_init, otherwise it depends if we start from a file or not
 init = interp_init ? true : (init_file isa Nothing ? true : false)
