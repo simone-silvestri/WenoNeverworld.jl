@@ -8,7 +8,7 @@ output_dir    = joinpath(@__DIR__, "../files_sixteen")
 H = 5
 
 arch   = GPU()
-old_degree = 1/4
+old_degree = 1/8
 new_degree = 1/16
 
 orig_grid = neverworld_grid(arch, old_degree; H)
