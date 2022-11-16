@@ -26,6 +26,8 @@ stop_time = 100years
 preconditioner_method   = :SparseInverse
 preconditioner_settings = (ε = 0.001, nzrel = 5) 
 
+using WenoNeverworld: geometric_νhb
+
 free_surface         = ImplicitFreeSurface(; preconditioner_method, preconditioner_settings)
 biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 

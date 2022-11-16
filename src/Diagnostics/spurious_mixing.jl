@@ -1,18 +1,20 @@
 using Oceananigans.AbstractOperations: GridMetricOperation
+using Oceananigans.Grids: architecture, znode
+using Oceananigans.Architectures: device, device_event, arch_array
 
-VolumeField(loc, grid) = compute!(Field(GridMetricOperation(loc, Oceananigans.AbstractOperations.volume, grid)))
-AreaField(loc, grid)   = Compute!(Field(GridMetricOperation(loc, Oceananigans.AbstractOperations.Az, grid)))
+VolumeField(grid, loc=(Center, Center, Center))  = compute!(Field(GridMetricOperation(loc, Oceananigans.AbstractOperations.volume, grid)))
+AreaField(grid, loc = (Center, Center, Nothing)) = compute!(Field(GridMetricOperation(loc, Oceananigans.AbstractOperations.Az, grid)))
 
-MetricField(loc, grid, metric)   = Compute!(Field(GridMetricOperation(loc, metric, grid)))
+MetricField(loc, grid, metric)   = compute!(Field(GridMetricOperation(loc, metric, grid)))
 
 function calculate_z★_diagnostics(b::FieldTimeSeries)
 
     times = b.times
 
-    vol = VolumeField((Center, Center, Center), b.grid)
+    vol = VolumeField(b.grid)
     z★  = FieldTimeSeries{Center, Center, Center}(b.grid, b.times)
 
-    total_area = sum(AreaField((Center, Center, Nothing), b.grid))
+    total_area = sum(AreaField(b.grid))
     
     for iter in 1:length(times)
        @info "time $iter of $(length(times))"
@@ -64,6 +66,9 @@ function calculate_Γ²_diagnostics(z★::FieldTimeSeries, b::FieldTimeSeries)
 end
 
 function calculate_Γ²!(Γ², z★, b)
+    grid = b.grid
+    arch = architecture(grid)
+
     perm   = sortperm(Array(interior(z★))[:])
 
     b_arr  = (Array(interior(b))[:])[perm]
