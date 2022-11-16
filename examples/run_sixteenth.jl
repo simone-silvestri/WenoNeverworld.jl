@@ -35,7 +35,7 @@ increase_simulation_Δt!(simulation, cutoff_time = 0.3years, new_Δt = 2minutes)
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
 # Add outputs
-checkpoint_time = 50days
+checkpoint_time = 20days
 standard_outputs!(simulation, output_prefix; checkpoint_time)
 
 # initializing the time for wall_time calculation
