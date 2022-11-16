@@ -16,7 +16,7 @@ grid      = neverworld_grid(arch, new_degree; H)
 
 # Remember to pass init file if we want to interpolate!
 interp_init = true
-init_file   = "files_four/neverworld_quarter_checkpoint_iteration172480.jld2"
+init_file   = "files_eight/neverworld_eighth_checkpoint_iteration422900.jld2"
 
 # init always has to be true with interp_init, otherwise it depends if we start from a file or not
 init = interp_init ? true : (init_file isa Nothing ? true : false)
@@ -29,7 +29,7 @@ stop_time = 0.5years
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
 
 # Increase simulation Δt after 50days
-increase_simulation_Δt!(simulation, cutoff_time = 3.3years, new_Δt = 2minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 0.3years, new_Δt = 2minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
