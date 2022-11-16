@@ -97,7 +97,7 @@ function interpolate_per_level(old_vector, old_grid, new_grid, loc)
 
     for k in 1:k_final
         set!(old_field, old_vector[:, :, k])
-        fill_halo_regions(old_field)
+        fill_halo_regions!(old_field)
         for i in 1:Nx_new, j in 1:j_final
             new_vector[i, j, k] = interpolate(old_field, xnode(loc[1](), i, new_grid), ynode(loc[2](), j, new_grid), new_grid.zᵃᵃᶜ[1])
         end
