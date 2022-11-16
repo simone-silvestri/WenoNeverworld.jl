@@ -6,8 +6,8 @@ output_dir    = joinpath(@__DIR__, "../files_two")
 @show output_prefix = output_dir * "/neverworld_half"
 
 arch   = GPU()
-old_degree = 1/4
-new_degree = 1/4
+old_degree = 1/2
+new_degree = 1/2
 
 orig_grid = NeverworldGrid(arch, old_degree)
 grid      = NeverworldGrid(arch, new_degree)
