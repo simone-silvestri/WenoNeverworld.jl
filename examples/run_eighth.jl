@@ -5,14 +5,12 @@ using WenoNeverworld
 output_dir    = joinpath(@__DIR__, "../files_eight")
 @show output_prefix = output_dir * "/neverworld_eighth"
 
-H = 5
-
 arch   = GPU()
 old_degree = 1/4
 new_degree = 1/8
 
-orig_grid = NeverworldGrid(arch, old_degree; H)
-grid      = NeverworldGrid(arch, new_degree; H)
+orig_grid = NeverworldGrid(arch, old_degree)
+grid      = NeverworldGrid(arch, new_degree)
 
 # Remember to pass init file if we want to interpolate!
 interp_init = false
