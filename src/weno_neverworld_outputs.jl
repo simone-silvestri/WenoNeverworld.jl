@@ -1,7 +1,13 @@
 using Oceananigans.Operators: ζ₃ᶠᶠᶜ
 using Oceananigans.AbstractOperations: KernelFunctionOperation
 
-function standard_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)
+function standard_outputs!(simulation, output_prefix; overwrite_existing = true, 
+                                                      checkpoint_time    = 100days,
+                                                      snapshot_time      = 30days,
+                                                      surface_time       = 5days,
+                                                      average_time       = 30days,
+                                                      average_window     = average_time,
+                                                      average_stride     = 10)
 
     model = simulation.model
     grid  = model.grid
@@ -25,18 +31,18 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
     averaged_fields = (; u, v, w, b, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)
 
     simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields;
-                                                                  schedule = TimeInterval(30days),
+                                                                  schedule = TimeInterval(snapshot_time),
                                                                   filename = output_prefix * "_snapshots",
                                                                   overwrite_existing)
 
     simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, output_fields;
-                                                                  schedule = TimeInterval(5days),
+                                                                  schedule = TimeInterval(surface_time),
                                                                   filename = output_prefix * "_surface",
                                                                   indices = (:, :, grid.Nz),
                                                                   overwrite_existing)
 
     simulation.output_writers[:averaged_fields] = JLD2OutputWriter(model, averaged_fields;
-                                                                   schedule = AveragedTimeInterval(30days, window=30days, stride = 10),
+                                                                   schedule = AveragedTimeInterval(average_time, window=average_window, stride = average_stride),
                                                                    filename = output_prefix * "_averages",
                                                                    overwrite_existing)
 

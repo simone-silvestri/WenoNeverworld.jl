@@ -40,7 +40,8 @@ default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(
 default_vertical_diffusivity  = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter         = FluxTapering(1e-2)
 
-function weno_neverworld_simulation(; grid, orig_grid,
+function weno_neverworld_simulation(; grid, 
+                                      orig_grid = grid,
                                       μ_drag = 0.003,  
                                       λ_buoy = 7days,
                                       convective_adjustment = default_convective_adjustment,

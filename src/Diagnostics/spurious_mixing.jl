@@ -3,6 +3,8 @@ using Oceananigans.AbstractOperations: GridMetricOperation
 VolumeField(loc, grid) = compute!(Field(GridMetricOperation(loc, Oceananigans.AbstractOperations.volume, grid)))
 AreaField(loc, grid)   = Compute!(Field(GridMetricOperation(loc, Oceananigans.AbstractOperations.Az, grid)))
 
+MetricField(loc, grid, metric)   = Compute!(Field(GridMetricOperation(loc, metric, grid)))
+
 function calculate_z★_diagnostics(b::FieldTimeSeries)
 
     times = b.times
