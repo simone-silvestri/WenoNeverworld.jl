@@ -23,8 +23,13 @@ init = interp_init ? true : (init_file isa Nothing ? true : false)
 Δt        = 20minutes
 stop_time = 100years
 
+preconditioner_method   = :SparseInverse
+preconditioner_settings = (ε = 0.001, nzrel=5) 
+
+free_surface = ImplicitFreeSurface(; preconditioner_method, preconditioner_settings)
+
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file)
+simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, free_surface)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"

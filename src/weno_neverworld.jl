@@ -50,6 +50,7 @@ function weno_neverworld_simulation(; grid,
                                       gm_redi_diffusivities = nothing,
                                       tapering = default_slope_limiter,
                                       coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme()),
+                                      free_surface = ImplicitFreeSurface(),
                                       momentum_advection = WENO(vector_invariant = VelocityStencil()),
                                       interp_init = false,
                                       init_file = nothing,
@@ -117,8 +118,6 @@ function weno_neverworld_simulation(; grid,
 
     @info "building model..."
     
-    free_surface = ImplicitFreeSurface(solver_method=:HeptadiagonalIterativeSolver)
-
     model = HydrostaticFreeSurfaceModel(; grid, free_surface, coriolis, closure, momentum_advection,
                                         boundary_conditions = (; u = u_bcs, v = v_bcs, b = b_bcs),
                                         buoyancy = BuoyancyTracer(),
