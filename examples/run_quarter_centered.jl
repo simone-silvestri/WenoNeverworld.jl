@@ -33,8 +33,8 @@ momentum_advection   = VectorInvariant()
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, biharmonic_viscosity, momentum_advection, Δt, stop_time, interp_init, init_file)
 
-# Increase simulation Δt after 40days
-increase_simulation_Δt!(simulation, cutoff_time = 3.5years, new_Δt = 10minutes)
+# # Increase simulation Δt after 40days
+# increase_simulation_Δt!(simulation, cutoff_time = 3.5years, new_Δt = 10minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"

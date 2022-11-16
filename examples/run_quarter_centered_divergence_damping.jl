@@ -15,14 +15,14 @@ grid      = NeverworldGrid(arch, new_degree)
 
 # Remember to pass init file if we want to interpolate!
 interp_init = false
-init_file   = "files_four_centered/neverworld_quarter_centered_checkpoint_iteration119920.jld2"
+init_file   = "files_four_centered/neverworld_quarter_centered_checkpoint_iteration1066000.jld2"
 
 # init always has to be true with interp_init, otherwise it depends if we start from a file or not
 init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
 Δt        = 6minutes
-stop_time = 20years
+stop_time = 20.5years
 
 ## Changing parameterizations
 using WenoNeverworld: geometric_νhb
@@ -33,14 +33,11 @@ momentum_advection   = VectorInvariant()
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, biharmonic_viscosity, momentum_advection, Δt, stop_time, interp_init, init_file)
 
-# Increase simulation Δt after 40days
-increase_simulation_Δt!(simulation, cutoff_time = 150days, new_Δt = 10minutes)
-
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
 # Add outputs
-checkpoint_time = 1year
+checkpoint_time = 30days
 standard_outputs!(simulation, output_prefix; checkpoint_time)
 
 # initializing the time for wall_time calculation
