@@ -47,3 +47,15 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
 
     return nothing
 end
+
+function checkpoint_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)
+
+    model = simulation.model
+
+    simulation.output_writers[:checkpointer] = Checkpointer(model;
+                                                            schedule = TimeInterval(checkpoint_time),
+                                                            prefix = output_prefix * "_checkpoint",
+                                                            overwrite_existing)
+
+    return nothing
+end

@@ -23,4 +23,8 @@ include("horizontal_visc.jl")
 include("weno_neverworld.jl")
 include("weno_neverworld_outputs.jl")
 
+include("Diagnostics/Diagnostics.jl")
+
+using .Diagnostics
+
 end # module WenoNeverworld
