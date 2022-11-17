@@ -37,7 +37,8 @@ simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, ini
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
-increase_simulation_Δt(simualation, cutoff_time = 60days, new_Δt = 15minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 60days, new_Δt = 15minutes)
+
 # Add outputs
 checkpoint_time = 1year
 snapshot_time   = 365days
