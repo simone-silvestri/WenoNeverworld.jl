@@ -6,7 +6,7 @@ output_dir    = joinpath(@__DIR__, "../files_two")
 @show output_prefix = output_dir * "/neverworld_half"
 
 arch   = GPU()
-old_degree = 1/4
+old_degree = 1/2
 new_degree = 1/2
 
 orig_grid = NeverworldGrid(arch, old_degree)
@@ -14,13 +14,13 @@ grid      = NeverworldGrid(arch, new_degree)
 
 # Remember to pass init file if we want to interpolate!
 interp_init = true
-init_file   = "files_four/neverworld_quarter_checkpoint_iteration1083808.jld2"
+init_file   = nothing
 
 # init always has to be true with interp_init, otherwise it depends if we start from a file or not
 init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
-Δt        = 1minutes
+Δt        = 5minutes
 stop_time = 100years
 
 using WenoNeverworld: geometric_νhb

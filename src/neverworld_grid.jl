@@ -20,13 +20,37 @@ using Oceananigans.ImmersedBoundaries: PartialCellBottom
 
 function NeverworldGrid(arch, degree; H = 5)
 
-    Nx = Int(64 / degree)
+    Nx = Int(70 / degree)
     Ny = Int(70 / degree)
     Nz = length(new_z_faces) - 1
 
     underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
                                             latitude  = (-70, 0),
-                                            longitude = (-2, 62),
+                                            longitude = (-5, 65),
+                                            halo = (H, H, H),
+                                            topology = (Periodic, Bounded, Bounded),
+                                            z = new_z_faces)
+
+    λ_grid = underlying_grid.λᶜᵃᵃ[1:Nx]
+    φ_grid = underlying_grid.φᵃᶜᵃ[1:Ny]
+
+    bathy = zeros(Nx, Ny)
+    for (i, λ) in enumerate(λ_grid), (j, φ) in enumerate(φ_grid)
+        bathy[i, j] = bathymetry(λ, φ)
+    end
+
+    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))
+end
+
+function NeverworldGridExtended(arch, degree; H = 5)
+
+    Nx = Int(70  / degree)
+    Ny = Int(140 / degree)
+    Nz = length(new_z_faces) - 1
+
+    underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
+                                            latitude  = (-70, 70),
+                                            longitude = (-5, 65),
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
                                             z = new_z_faces)

@@ -55,7 +55,8 @@ function weno_neverworld_simulation(; grid,
                                       interp_init = false,
                                       init_file = nothing,
                                       Δt = 5minutes,
-                                      stop_time = 10years
+                                      stop_time = 10years,
+                                      initial_buoyancy = initial_buoyancy_tangent
                                       )
 
     arch = architecture(grid)

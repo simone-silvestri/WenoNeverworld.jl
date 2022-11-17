@@ -20,5 +20,8 @@ const fact = 5.0
     end
 end
 
-@inline atan_scaling(y)           = (atan(fact*((Ly + y)/Ly - 0.5)) / atan(fact * 0.5) + 1) /2
-@inline initial_buoyancy(x, y, z) = ( ΔB * (exp(z / h) - exp( - Lz / h)) / (1 - exp( - Lz / h)) ) * atan_scaling(y)
+@inline parabolic_scaling(y) = - 1 / 70^2 * y^2 + 1
+@inline atan_scaling(y)      = (atan(fact*((Ly + y)/Ly - 0.5)) / atan(fact * 0.5) + 1) /2
+
+@inline initial_buoyancy_tangent(x, y, z)  = ( ΔB * (exp(z / h) - exp( - Lz / h)) / (1 - exp( - Lz / h)) ) * atan_scaling(y)
+@inline initial_buoyancy_parabola(x, y, z) = ( ΔB * (exp(z / h) - exp( - Lz / h)) / (1 - exp( - Lz / h)) ) * parabolic_scaling(y) 
