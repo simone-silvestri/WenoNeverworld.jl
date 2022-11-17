@@ -6,9 +6,9 @@ output_dir    = joinpath(@__DIR__, "../files_lowres")
 @show output_prefix = output_dir * "/neverworld_lowres"
 
 arch       = GPU()
-new_degree = 1.0
+new_degree = 0.5
 
-grid      = NeverworldGrid(arch, new_degree)
+grid = NeverworldGrid(arch, new_degree)
 
 # Remember to pass init file if we want to interpolate!
 interp_init = false
