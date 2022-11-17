@@ -20,7 +20,7 @@ init_file   = nothing
 init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
-Δt        = 10minutes
+Δt        = 5minutes
 stop_time = 100years
 
 preconditioner_method   = :SparseInverse
@@ -38,7 +38,9 @@ simulation = weno_neverworld_simulation(; grid, biharmonic_viscosity, momentum_a
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
-increase_simulation_Δt(simualation, cutoff_time = 60days, new_Δt = 15minutes)
+increase_simulation_Δt(simualation, cutoff_time = 60days, new_Δt = 10minutes)
+increase_simulation_Δt(simualation, cutoff_time = 1year,  new_Δt = 15minutes)
+
 # Add outputs
 checkpoint_time = 1year
 snapshot_time   = 365days
