@@ -20,7 +20,7 @@ init_file   = "files_four/neverworld_quarter_checkpoint_iteration1083808.jld2"
 init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
-Δt        = 5minutes
+Δt        = 1minutes
 stop_time = 100years
 
 using WenoNeverworld: geometric_νhb
@@ -34,8 +34,10 @@ simulation = weno_neverworld_simulation(; grid, orig_grid, biharmonic_viscosity,
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
-increase_simulation_Δt!(simulation, cutoff_time = 60days, new_Δt = 10minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 1year,  new_Δt = 15minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 60days,  new_Δt = 2minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 200days, new_Δt = 5minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 1year,   new_Δt = 10minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 2years,  new_Δt = 15minutes)
 
 # Add outputs
 checkpoint_time = 1year
