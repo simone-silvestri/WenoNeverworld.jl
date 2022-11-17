@@ -24,7 +24,7 @@ stop_time = 40years
 biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(ν = WenoNeverworld.geometric_νhb, discrete_form=true, parameters = 5days)
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file)
+simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, biharmonic_viscosity)
 
 increase_simulation_Δt!(simulation; cutoff_time = 30days,  new_Δt =  5minutes)
 increase_simulation_Δt!(simulation; cutoff_time = 60days,  new_Δt =  7.5minutes)
