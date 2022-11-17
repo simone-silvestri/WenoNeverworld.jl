@@ -14,24 +14,29 @@ grid      = NeverworldGrid(arch, new_degree)
 
 # Remember to pass init file if we want to interpolate!
 interp_init = false
-init_file   = "files_four/neverworld_quarter_checkpoint_iteration172480.jld2"
+init_file   = "files_four/neverworld_quarter_checkpoint_iteration1083808.jld2"
 
 # init always has to be true with interp_init, otherwise it depends if we start from a file or not
 init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
 Δt        = 10minutes
-stop_time = 20years
+stop_time = 40years
+
+preconditioner_method   = :SparseInverse
+preconditioner_settings = (ε = 0.001, nzrel = 5) 
+
+free_surface = ImplicitFreeSurface(; preconditioner_method, preconditioner_settings)
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
+simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, free_surface)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
 # Add outputs
 checkpoint_time = 1year
-standard_outputs!(simulation, output_prefix; checkpoint_time)
+standard_outputs!(simulation, output_prefix; checkpoint_time, overwrite_existing=false)
 
 # initializing the time for wall_time calculation
 run_simulation!(simulation; init, init_file)
