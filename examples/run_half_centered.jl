@@ -30,9 +30,10 @@ using WenoNeverworld: geometric_νhb
 
 free_surface         = ImplicitFreeSurface()
 biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
+momentum_advection   = VectorInvariant()
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, free_surface, biharmonic_viscosity)
+simulation = weno_neverworld_simulation(; grid, biharmonic_viscosity, momentum_advection, Δt, stop_time, interp_init, init_file)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
