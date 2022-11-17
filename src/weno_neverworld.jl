@@ -109,7 +109,7 @@ function weno_neverworld_simulation(; grid,
         closure = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment)
     else
         κᴳ, κᴿ = gm_redi_diffusivities
-        isopycnal_closure = IsopycnalSkewSymmetricDiffusivity(κ_skew = κᴳ, κ_symmetric = κᴿ, tapering)
+        isopycnal_closure = IsopycnalSkewSymmetricDiffusivity(κ_skew = κᴳ, κ_symmetric = κᴿ, slope_limiter = tapering)
         closure = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment, isopycnal_closure)
     end
 
