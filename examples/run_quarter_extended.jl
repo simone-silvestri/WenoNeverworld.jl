@@ -1,5 +1,6 @@
 using WenoNeverworld
 using WenoNeverworld: initial_buoyancy_parabola
+using Oceananigans
 
 output_dir    = joinpath(@__DIR__, "../files_four_extended")
 @show output_prefix = output_dir * "/neverworld_quarter_exetended"
