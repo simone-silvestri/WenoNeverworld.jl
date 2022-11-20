@@ -52,19 +52,20 @@ function weno_neverworld_simulation(; grid,
                                       coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme()),
                                       free_surface = ImplicitFreeSurface(),
                                       momentum_advection = WENO(vector_invariant = VelocityStencil()),
+				      tracer_advection   = WENO(grid), 
                                       interp_init = false,
                                       init_file = nothing,
                                       Δt = 5minutes,
                                       stop_time = 10years,
-                                      initial_buoyancy = initial_buoyancy_tangent
+                                      initial_buoyancy = initial_buoyancy_tangent,
+				      wind_stress = zonal_wind_stress
                                       )
 
     arch = architecture(grid)
-    underlying_grid = grid.underlying_grid
 
     Nx, Ny, Nz = size(grid)
 
-    φ_grid = underlying_grid.φᵃᶜᵃ[1:Ny]
+    φ_grid = grid.φᵃᶠᵃ[1:Ny+1]
 
     # Initializing boundary conditions
 
@@ -119,11 +120,10 @@ function weno_neverworld_simulation(; grid,
 
     @info "building model..."
     
-    model = HydrostaticFreeSurfaceModel(; grid, free_surface, coriolis, closure, momentum_advection,
+    model = HydrostaticFreeSurfaceModel(; grid, free_surface, coriolis, closure, momentum_advection, tracer_advection,
                                         boundary_conditions = (; u = u_bcs, v = v_bcs, b = b_bcs),
                                         buoyancy = BuoyancyTracer(),
-                                        tracers = :b,
-                                        tracer_advection = WENO(underlying_grid))
+                                        tracers = :b)
 
     #####
     ##### Model initialization
