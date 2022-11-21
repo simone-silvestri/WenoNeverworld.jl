@@ -11,7 +11,7 @@ new_degree = 1
 grid = NeverworldGrid(arch, new_degree)
 
 # Remember to pass init file if we want to interpolate!
-interp_init = false
+interp_init = true
 init_file   = "files_lowres/neverworld_lowres_checkpoint_iteration2341318.jld2"
 
 # init always has to be true with interp_init, otherwise it depends if we start from a file or not
