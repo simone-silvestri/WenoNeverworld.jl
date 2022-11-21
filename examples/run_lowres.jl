@@ -1,6 +1,7 @@
 using Oceananigans
 using Oceananigans.Units
 using WenoNeverworld
+using WenoNeverworld: bathymetry_with_ridge, bathymetry_without_ridge
 
 output_dir    = joinpath(@__DIR__, "../files_lowres_new_bathy")
 @show output_prefix = output_dir * "/neverworld_lowres"
