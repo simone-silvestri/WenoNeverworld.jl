@@ -8,7 +8,8 @@ output_dir    = joinpath(@__DIR__, "../files_lowres_new_bathy")
 arch       = GPU()
 new_degree = 1
 
-grid = NeverworldGrid(arch, new_degree)
+orig_grid = NeverworldGrid(arch, new_degree; longitude = (-5, 65), bathymetry = bathymetry_with_ridge)
+grid      = NeverworldGrid(arch, new_degree; longitude = (-5, 65))
 
 # Remember to pass init file if we want to interpolate!
 interp_init = true
