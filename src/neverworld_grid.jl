@@ -18,7 +18,7 @@ new_z_faces = vcat(z_faces[1:22], all_z_faces[44:end])
 
 using Oceananigans.ImmersedBoundaries: PartialCellBottom
 
-function NeverworldGrid(arch, degree; H = 5, longitude = (-2, 62))
+function NeverworldGrid(arch, degree; H = 5, longitude = (-2, 62), bathymetry = bathymetry_without_ridge)
 
     Nx = Int((longitude[2] - longitude[1]) / degree)
     Ny = Int(70 / degree)

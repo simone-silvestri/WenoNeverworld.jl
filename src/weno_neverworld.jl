@@ -34,10 +34,11 @@ using Oceananigans.Advection: VorticityStencil, VelocityStencil
 end
 
 @inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Az(i, j, k, grid, lx, ly, lz)^2 / λ
+@inline boundary_increased_νz(x, y, z, t)                          = ifelse(z > -31.0, 1e-2, 1e-4)
 
-default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 0.2, convective_νz = 0.5)
+default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 0.2)
 default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 5days)
-default_vertical_diffusivity  = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
+default_vertical_diffusivity  = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=boundary_increased_νz, κ=1e-5)
 default_slope_limiter         = FluxTapering(1e-2)
 
 function weno_neverworld_simulation(; grid, 

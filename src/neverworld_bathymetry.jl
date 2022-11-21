@@ -27,6 +27,14 @@ function coastal_ridge_x(x)
     end
 end
 
+function sharp_coast_x(x) 
+    if x < 0.5
+        return 0.0
+    else        
+        return -4000.0 
+    end
+end
+
 function coastal_ridge_y(x) 
     if x < 0.5
         return cubic_profile(x, 0.0, 0.5, 0.0, -200, 0.0, 0.0)
@@ -79,7 +87,31 @@ function scotia_arc(x, y)
 end
 
 # Full bathymetry!
-function bathymetry(x, y) 
+function bathymetry_without_ridge(x, y) 
+    if x < 5 || x > 55
+        if x < 0 
+           x = 0.0
+        end
+        if x > 60
+           x = 60.0
+        end
+        if y > -59 && y < -41 
+            return  max(sharp_coast_x(sqrt(x^2 + (y + 59)^2)),
+                        sharp_coast_x(sqrt(x^2 + (y + 41)^2)), 
+                        sharp_coast_x(sqrt((60 - x)^2 + (y + 59)^2)),
+                        sharp_coast_x(sqrt((60 - x)^2 + (y + 41)^2)))
+        else
+            return max(sharp_coast_x(x), 
+                       sharp_coast_x(60 - x))
+        end
+    else
+        return max(sharp_coast_x(x), 
+                   sharp_coast_x(60 - x))
+    end
+end
+
+# No ridge bathymetry!
+function bathymetry_with_ridge(x, y) 
     if x < 5 || x > 55
         if x < 0 
            x = 0.0

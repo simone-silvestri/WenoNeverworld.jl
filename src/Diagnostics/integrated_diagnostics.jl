@@ -1,6 +1,25 @@
-using Oceananigans.OutputReaders: OnDisk
 using Oceananigans.Utils
 using Oceananigans.Fields: mean
+using Oceananigans.Grids: halo_size
+using Oceananigans.OutputReaders: OnDisk
+using JLD2
+
+function checkpoint_fields(file)
+    file = jldopen(file)
+    grid = file["grid"]
+
+    u = XFaceField(grid)
+    v = YFaceField(grid)
+    b = CenterField(grid)
+
+    Hx, Hy, Hz = halo_size(grid)
+    for (var, name) in zip((u, v, b), ("u", "v", "b"))
+        set!(var, file[name * "/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz])
+        fill_halo_regions!(var)
+    end
+
+    return (; u, v, b)
+end
 
 function all_fieldtimeseries(file; variables = ("u", "v", "w", "b"))
 
@@ -11,6 +30,31 @@ function all_fieldtimeseries(file; variables = ("u", "v", "w", "b"))
     end
 
     return fields
+end
+
+function limit_timeseries!(fields::Dict, times)
+    new_fields = Dict()
+
+    for (key, field) in fields
+        new_fields[key] = limit_timeseries!(field, times)
+    end
+
+    return new_fields
+end
+
+function limit_timeseries!(field::FieldTimeSeries, times)
+
+    loc = location(field)
+    new_field = FieldTimeSeries{loc...}(field.grid, times)
+
+    for (idx, time) in enumerate(field.times)
+        id2 = findfirst(isequal(time), times)
+        if !isnothing(id2)
+            set!(new_field[id2], field[idx])
+        end
+    end
+
+    return new_field
 end
 
 function kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries)
@@ -41,10 +85,11 @@ end
 function heat_content(b::FieldTimeSeries)
 
     heat = Float64[]
-    
+    vol = VolumeField(b.grid)
+
     for (i, time) in enumerate(b.times)
         @info "integrating time $(prettytime(time)) of $(prettytime(b.times[end]))"
-        push!(heat, compute!(Field(Integral(b[i])))[1, 1, 1])
+        push!(heat, sum(compute!(Field(b[i] * vol))))
     end
 
     return heat
@@ -68,26 +113,21 @@ function calculate_MOC(v::Field)
     return ψ
 end
 
-function calculate_MOC(v::FieldTimeSeries, indices)
-        
-    v̄ = similar(v[1])
+function calculate_MOC(v::FieldTimeSeries)
 
-    fill!(v̄, 0.0)
-
-    for idx in indices
-        v̄ .+= compute!(Field(Integral(v[idx], dims = 1))) / length(indices)
-    end
-
-    ψ = Field((Nothing, Face, Face), v.grid)
-
-    for k in 2:v.grid.Nz
-        dz =  Δzᶜᶠᶜ(1, 1, k-1, v.grid)
-        for j in 1:size(v.grid, 2)
-            ψ[1, j, k] = ψ[1, j, k - 1] + v̄[1, j, k - 1] * dz
-        end
-    end
-
+    v̄ = time_average(v)
+    ψ = calculate_MOC(v̄)
+    
     return ψ
 end
 
+function time_average(field::FieldTimesSeries)
+    avg = similar(field[1])
+    fill!(avg, 0)
 
+    for t in 1:length(field.times)
+        avg .+= field[t] ./ length(field.times)
+    end
+
+    return avg
+end

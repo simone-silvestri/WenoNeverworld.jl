@@ -20,9 +20,7 @@ init_file   = "files_lowres/neverworld_lowres_checkpoint_iteration3313678.jld2"
 using WenoNeverworld: geometric_νhb
 
 biharmonic_viscosity  = HorizontalScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 5days)
-vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν = 1e-4, κ = 1e-5)
 momentum_advection    = VectorInvariant()
-convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.5)
 
 # init always has to be true with interp_init, otherwise it depends if we start from a file or not
 init = interp_init ? true : (init_file isa Nothing ? true : false)
@@ -32,7 +30,7 @@ init = interp_init ? true : (init_file isa Nothing ? true : false)
 stop_time = 20years
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, biharmonic_viscosity, momentum_advection, vertical_diffusivity, convective_adjustment)
+simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, biharmonic_viscosity, momentum_advection)
 
 increase_simulation_Δt!(simulation, cutoff_time = 60days,  new_Δt = 5minutes)
 increase_simulation_Δt!(simulation, cutoff_time = 90days,  new_Δt = 7.5minutes)

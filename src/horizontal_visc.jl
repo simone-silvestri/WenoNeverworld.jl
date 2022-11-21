@@ -3,39 +3,11 @@ using Oceananigans.Grids: min_Δx, min_Δy
 using Oceananigans.Operators: Δxᶜᶜᶜ, Δyᶜᶜᶜ, ℑxyᶜᶜᵃ, ζ₃ᶠᶠᶜ, div_xyᶜᶜᶜ
 using Oceananigans.Operators: Δx, Δy
 using Oceananigans.Operators: ℑxyz
-using Oceananigans.Models.HydrostaticFreeSurfaceModels: hydrostatic_fields
-using Oceananigans.TurbulenceClosures: ∂ⱼ_τ₁ⱼ, ∂ⱼ_τ₂ⱼ, ∂ⱼ_τ₃ⱼ, AbstractScalarBiharmonicDiffusivity
 using CUDA: @allowscalar
 
 @inline Dₛ(i, j, k, grid, u, v) = ∂xᶜᶜᶜ(i, j, k, grid, u) - ∂yᶜᶜᶜ(i, j, k, grid, v)
 @inline Dₜ(i, j, k, grid, u, v) = ∂xᶠᶠᶜ(i, j, k, grid, v) + ∂yᶠᶠᶜ(i, j, k, grid, u)
 @inline Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz) =  (1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2))
-
-@inline function HorizontalFriction(model; ClosureType = AbstractScalarBiharmonicDiffusivity)
-
-    grid          = model.grid
-    clock         = model.clock
-    closure       = filter(x -> x isa ClosureType, model.closure)
-    diffusivities = model.diffusivity_fields
-    buoyancy      = model.buoyancy
-    velocities    = model.velocities
-    free_surface  = model.free_surface
-    tracers       = model.tracers
-    auxiliary_fields = model.auxiliary_fields
-
-    model_fields = merge(hydrostatic_fields(velocities, free_surface, tracers), auxiliary_fields)
-    computed_dependencies = (closure, diffusivities, clock, model_fields, buoyancy)
-
-    ∂ⱼ_τ₁ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₁ⱼ, grid; computed_dependencies)
-    ∂ⱼ_τ₂ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₂ⱼ, grid; computed_dependencies)
-    ∂ⱼ_τ₃ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₃ⱼ, grid; computed_dependencies)
-
-    τ₁ = compute!(Field(∂ⱼ_τ₁ⱼ_op))
-    τ₂ = compute!(Field(∂ⱼ_τ₂ⱼ_op))
-    τ₃ = compute!(Field(∂ⱼ_τ₃ⱼ_op))
-
-    return (; τ₁, τ₂, τ₃)
-end
 
 @inline function νhb_smagorinski_final(i, j, k, grid, lx, ly, lz, clock, fields, p)
 

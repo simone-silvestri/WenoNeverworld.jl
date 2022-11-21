@@ -2,10 +2,10 @@ using Oceananigans
 using Oceananigans.Units
 using WenoNeverworld
 
-output_dir    = joinpath(@__DIR__, "../files_lowres")
+output_dir    = joinpath(@__DIR__, "../files_lowres_new_bathy")
 @show output_prefix = output_dir * "/neverworld_lowres"
 
-arch       = CPU()
+arch       = GPU()
 new_degree = 1
 
 grid = NeverworldGrid(arch, new_degree)
@@ -19,16 +19,10 @@ init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
 Δt        = 20minutes
-stop_time = 110years
-
-vertical_diffusivity  = VerticalScalarDiffusivity(ν = 1e-4, κ = 1e-5)
-convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.5)
+stop_time = 120years
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, vertical_diffusivity)
-
-# Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, vertical_diffusivity, convective_adjustment) 
+simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file) 
 
 # Add outputs
 checkpoint_time = 1year
