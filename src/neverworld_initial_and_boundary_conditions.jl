@@ -4,7 +4,7 @@ const h    = 1000.0
 const ΔB   = 6.0e-2 
 const fact = 5.0
 
-@inline function wind_stress(y, mid_wind)
+@inline function zonal_wind_stress(y, mid_wind)
     if y < -45
         return cubic_profile(y, -70.0, -45.0, 0.0, 0.2, 0.0, 0.0)
     elseif y < -15

@@ -56,7 +56,7 @@ function interpolate_per_level(old_vector, old_grid, new_grid, loc)
     end
     old_grid = LatitudeLongitudeGrid(CPU(), size = (Nx_old, Ny_old, 1),
                                             latitude  = (-70, 0),
-                                            longitude = (-2, 62),
+                                            longitude = (-5, 65),
                                             halo = H_old,
                                             topology = (Periodic, Bounded, Bounded),
                                             z = (0, 1))

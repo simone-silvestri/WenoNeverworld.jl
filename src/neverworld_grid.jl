@@ -18,15 +18,15 @@ new_z_faces = vcat(z_faces[1:22], all_z_faces[44:end])
 
 using Oceananigans.ImmersedBoundaries: PartialCellBottom
 
-function NeverworldGrid(arch, degree; H = 5)
+function NeverworldGrid(arch, degree; H = 5, longitude = (-2, 62))
 
-    Nx = Int(70 / degree)
+    Nx = Int((longitude[2] - longitude[1]) / degree)
     Ny = Int(70 / degree)
     Nz = length(new_z_faces) - 1
 
-    underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
+    underlying_grid = LatitudeLongitudeGrid(arch; size = (Nx, Ny, Nz),
                                             latitude  = (-70, 0),
-                                            longitude = (-5, 65),
+                                            longitude,
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
                                             z = new_z_faces)
