@@ -47,7 +47,7 @@ default_slope_limiter         = FluxTapering(1e-2)
 
 function weno_neverworld_simulation(; grid, 
                                       orig_grid = grid,
-                                      μ_drag = 0.003,  
+                                      μ_drag = 0.03,  
                                       λ_buoy = 7days,
                                       convective_adjustment = default_convective_adjustment,
                                       biharmonic_viscosity  = default_biharmonic_viscosity,

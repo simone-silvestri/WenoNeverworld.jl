@@ -57,6 +57,22 @@ function limit_timeseries!(field::FieldTimeSeries, times)
     return new_field
 end
 
+function add_kinetic_energy_and_vorticity_timeseries!(fields::Dict)
+
+    ζ =     FieldTimeSeries{Face, Face, Center}(fields[:u].grid, fields[:u].times)
+    E = FieldTimeSeries{Center, Center, Center}(fields[:u].grid, fields[:u].times)
+
+    for t in 1:length(ζ.times)
+        set!(ζ[t], VerticalVorticityField(fields, t))
+        set!(E[t], KineticEnergyField(fields, t))
+    end
+
+    fields[:E] = E
+    fields[:ζ] = ζ
+
+    return nothing
+end
+
 function kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries)
 
     energy = Float64[]
