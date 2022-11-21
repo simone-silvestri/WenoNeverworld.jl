@@ -52,13 +52,13 @@ function weno_neverworld_simulation(; grid,
                                       coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme()),
                                       free_surface = ImplicitFreeSurface(),
                                       momentum_advection = WENO(vector_invariant = VelocityStencil()),
-				      tracer_advection   = WENO(grid), 
+				                      tracer_advection   = WENO(grid), 
                                       interp_init = false,
                                       init_file = nothing,
                                       Δt = 5minutes,
                                       stop_time = 10years,
                                       initial_buoyancy = initial_buoyancy_tangent,
-				      wind_stress = zonal_wind_stress
+				                      wind_stress = zonal_wind_stress
                                       )
 
     arch = architecture(grid)
