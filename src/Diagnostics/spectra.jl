@@ -12,11 +12,13 @@ function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 69, spectra = pow
 
     Nt = length(var.times)
 
-    spec = spectra(interior(var[1], xlim, ylim, k), xdomain, ydomain) / Nt
+    spec = spectra(interior(var[1], xlim, ylim, k), xdomain, ydomain) 
 
     for i in 2:Nt
-        spec.spec .+= spectra(interior(var[i], xlim, ylim, k), xdomain, ydomain).spec ./ Nt
+        spec.spec .+= spectra(interior(var[i], xlim, ylim, k), xdomain, ydomain).spec 
     end
+
+    spec.spec ./= Nt
 
     return spec
 end
