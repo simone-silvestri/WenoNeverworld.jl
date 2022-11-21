@@ -121,7 +121,7 @@ function calculate_MOC(v::FieldTimeSeries)
     return ψ
 end
 
-function time_average(field::FieldTimesSeries)
+function time_average(field::FieldTimeSeries)
     avg = similar(field[1])
     fill!(avg, 0)
 
