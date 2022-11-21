@@ -136,8 +136,6 @@ function weno_neverworld_simulation(; grid,
     else
         Hx, Hy, Hz = halo_size(orig_grid)
         b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
-        u_init = jldopen(init_file)["u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
-        v_init = jldopen(init_file)["v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
         if !(grid == orig_grid)
              @info "interpolating b field"
              b_init = interpolate_per_level(b_init, orig_grid, grid, (Center, Center, Center))

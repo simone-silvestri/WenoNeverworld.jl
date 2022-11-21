@@ -5,7 +5,7 @@ using WenoNeverworld
 output_dir    = joinpath(@__DIR__, "../files_lowres")
 @show output_prefix = output_dir * "/neverworld_lowres"
 
-arch       = GPU()
+arch       = CPU()
 new_degree = 1
 
 grid = NeverworldGrid(arch, new_degree)
@@ -23,6 +23,9 @@ stop_time = 110years
 
 vertical_diffusivity  = VerticalScalarDiffusivity(ν = 1e-4, κ = 1e-5)
 convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.5)
+
+# Construct the neverworld simulation
+simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, vertical_diffusivity)
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, vertical_diffusivity, convective_adjustment) 
