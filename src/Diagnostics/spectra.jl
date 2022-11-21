@@ -5,6 +5,22 @@ struct Spectrum{S, F}
     freq :: F
 end
 
+function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 69, spectra = power_spectrum_1d_x)
+
+    xdomain = xnodes(var[1])[xlim]
+    ydomain = ynodes(var[1])[ylim]
+
+    Nt = length(var.times)
+
+    spec = spectra(interior(var[1], xlim, ylim, k), xdomain, ydomain) / Nt
+
+    for i in 2:Nt
+        spec.spec .+= spectra(interior(var[i], xlim, ylim, k), xdomain, ydomain).spec ./ Nt
+    end
+
+    return spec
+end
+
 function power_spectrum_1d_x(var, x, y; condition = nothing)
     Nx  = length(x)
     Ny  = length(y)

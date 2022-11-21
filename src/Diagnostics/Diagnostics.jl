@@ -1,5 +1,7 @@
 module Diagnostics
 
+export all_fieldtimeseries, limit_timeseries!
+
 using Oceananigans
 using KernelAbstractions: @kernel, @index 
 using KernelAbstractions.Extras.LoopInfo: @unroll

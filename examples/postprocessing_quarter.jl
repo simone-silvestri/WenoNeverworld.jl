@@ -1,0 +1,4 @@
+using WenoNeverworld
+using WenoNeverworld.Diagnostics
+
+all_fields = all_fieldtimeseries("files_four_centered/neverworld_quarter_centered_snapshots.jld2")
