@@ -14,7 +14,6 @@ new_degree = 1/4
 orig_grid = NeverworldGrid(arch, old_degree; longitude = (-5, 65)) 
 grid      = NeverworldGrid(arch, new_degree)
 
-# Remember to pass init file if we want to interpolate!
 interp_init = true
 init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration3313678.jld2" 
 
@@ -22,9 +21,6 @@ using WenoNeverworld: cosine_νhb
 
 biharmonic_viscosity  = HorizontalScalarBiharmonicDiffusivity(ν=cosine_νhb, discrete_form=true, parameters = 1e11)
 momentum_advection    = VectorInvariant()
-
-# init always has to be true with interp_init, otherwise it depends if we start from a file or not
-init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
 Δt        = 2minutes
@@ -43,4 +39,4 @@ increase_simulation_Δt!(simulation, cutoff_time = 200days, new_Δt = 10minutes)
 standard_outputs!(simulation, output_prefix)
 
 # initializing the time for wall_time calculation
-run_simulation!(simulation; init, init_file)
+run_simulation!(simulation; interp_init, init_file)

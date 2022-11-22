@@ -22,10 +22,9 @@ end
 function VerticalVorticityField(velocities::NamedTuple)
 
     grid = velocities.u.grid
-    dependencies = (; u = velocities.u, v = velocities.v)
-    fill_halo_regions!(dependencies)
+    computed_dependencies = (velocities.u, velocities.v)
 
-    ζ_op = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = dependencies)
+    ζ_op = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies)
 
     return compute!(Field(ζ_op))
 end

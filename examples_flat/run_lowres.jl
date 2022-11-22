@@ -11,14 +11,10 @@ new_degree = 1
 
 grid = NeverworldGrid(arch, new_degree; longitude = (-5, 65))
 
-# Remember to pass init file if we want to interpolate!
 interp_init = false
 init_file   = nothing
 
 gm_redi_diffusivities = (1000.0, 1000.0)
-
-# init always has to be true with interp_init, otherwise it depends if we start from a file or not
-init = interp_init ? true : (init_file isa Nothing ? true : false)
 
 # Simulation parameters
 Δt        = 2.5minutes
@@ -38,4 +34,4 @@ average_time    = 1year
 standard_outputs!(simulation, output_prefix; checkpoint_time, snapshot_time, surface_time, average_time, overwrite_existing=true)
 
 # initializing the time for wall_time calculation
-run_simulation!(simulation; init, init_file)
+run_simulation!(simulation; interp_init, init_file)

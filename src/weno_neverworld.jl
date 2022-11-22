@@ -178,8 +178,10 @@ function weno_neverworld_simulation(; grid,
     return simulation
 end
 
-function run_simulation!(simulation; init = true, init_file = nothing) 
+function run_simulation!(simulation; interp_init = false, init_file = nothing) 
     
+    init = interp_init ? true : (init_file isa Nothing ? true : false)
+
     Δt    = simulation.Δt
     model = simulation.model 
         
