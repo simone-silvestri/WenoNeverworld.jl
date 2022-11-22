@@ -15,7 +15,7 @@ orig_grid = NeverworldGrid(arch, old_degree; longitude = (-5, 65))
 grid      = NeverworldGrid(arch, new_degree)
 
 interp_init = true
-init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration3313678.jld2" 
+init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067840.jld2" 
 
 # Simulation parameters
 Δt        = 2minutes
