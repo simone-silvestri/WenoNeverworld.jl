@@ -2,6 +2,7 @@ using Oceananigans
 using Oceananigans.Units
 using WenoNeverworld
 using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization
+using WenoNeverworld: bathymetry_with_ridge
 
 output_dir    = joinpath(@__DIR__, "../files_eight")
 @show output_prefix = output_dir * "/neverworld_eighth"
@@ -10,8 +11,8 @@ arch   = GPU()
 old_degree = 1
 new_degree = 1/8
 
-orig_grid = NeverworldGrid(arch, old_degree; longitude = (-5, 65))
-grid      = NeverworldGrid(arch, new_degree)
+orig_grid = NeverworldGrid(arch, old_degree; longitude = (-5, 65), bathymetry = bathymetry_with_ridge)
+grid      = NeverworldGrid(arch, new_degree; bathymetry = bathymetry_with_ridge)
 
 # Remember to pass init file if we want to interpolate!
 interp_init = true
@@ -25,7 +26,7 @@ init = interp_init ? true : (init_file isa Nothing ? true : false)
 stop_time = 20years
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, vertical_diffusivity, convective_adjustment)
+simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
 
 increase_simulation_Δt!(simulation, cutoff_time = 30days,  new_Δt = 2.5minutes)
 increase_simulation_Δt!(simulation, cutoff_time = 60days,  new_Δt = 3minutes)
