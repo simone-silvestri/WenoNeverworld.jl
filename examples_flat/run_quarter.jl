@@ -40,7 +40,7 @@ import Oceananigans.Advection: vertical_advection_U, vertical_advection_V, advec
     return Azᶠᶜᶠ(i, j, k, grid) * upwind_biased_product(w̃, uᴸ, uᴿ)
 end
 
-@inline function advective_momentum_flux_Wu(i, j, k, grid, scheme::WENOVectorInvariant, W, v)
+@inline function advective_momentum_flux_Wv(i, j, k, grid, scheme::WENOVectorInvariant, W, v)
 
     wᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, VorticityStencil, W)
     wᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, VorticityStencil, W)
