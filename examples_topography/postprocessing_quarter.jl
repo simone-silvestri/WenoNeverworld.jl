@@ -5,18 +5,16 @@ using FFTW
 
 using Statistics: mean
 
-center = all_fieldtimeseries("../files_four_centered/neverworld_quarter_centered_snapshots.jld2")
+center = all_fieldtimeseries("files_four_centered/neverworld_quarter_centered_snapshots.jld2")
 center = limit_timeseries!(center, center[:b].times[end-20:end])
 
-weno = all_fieldtimeseries("../files_four/neverworld_quarter_snapshots.jld2")
+weno = all_fieldtimeseries("files_four/neverworld_quarter_snapshots.jld2")
 weno = limit_timeseries!(weno, weno[:b].times[end-20:end])
 
 WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(center)
 WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(weno)
 
-"""
-Calculate energy (Ê) and enstrophy (Ω̂) spectra on a transect in the channel
-"""
+# Calculate energy (Ê) and enstrophy (Ω̂) spectra on a transect in the channel
 using WenoNeverworld.Diagnostics: average_spectra
 
 Êcenter = average_spectra(center[:E], Colon(), 78:82; k = 65)

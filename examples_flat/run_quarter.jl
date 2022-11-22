@@ -18,10 +18,22 @@ grid      = NeverworldGrid(arch, new_degree)
 using Oceananigans.Advection: WENOVectorInvariant, _advective_momentum_flux_Wu, _advective_momentum_flux_Wv
 using Oceananigans.Operators: Vᶠᶜᶜ, δzᵃᵃᶜ
 
-import Oceananigans.Advection: vertical_advection_U, vertical_advection_V
+import Oceananigans.Advection: vertical_advection_U, vertical_advection_V, advective_momentum_flux_Wu, advective_momentum_flux_Wv
 
-@inline vertical_advection_U(i, j, k, grid, advection::WENOVectorInvariant, u, w) = 1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wu, advection.scheme, w, u)
-@inline vertical_advection_V(i, j, k, grid, advection::WENOVectorInvariant, v, w) = 1/Vᶜᶠᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wv, advection.scheme, w, v)
+@inline function advective_momentum_flux_Wu(i, j, k, grid, scheme::WENOVectorInvariant, W, u)
+
+    wᴸ =   _left_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, VorticityStencil, W)
+    wᴿ =  _right_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, VorticityStencil, W)
+    uᴸ =  _left_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, u)
+    uᴿ = _right_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, u)
+
+    w̃ = 0.5 * (wᴸ + wᴿ)
+
+    return Azᶠᶜᶠ(i, j, k, grid) * upwind_biased_product(w̃, uᴸ, uᴿ)
+end
+
+@inline vertical_advection_U(i, j, k, grid, advection::WENOVectorInvariant, u, w) = 1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wu, scheme, w, u)
+@inline vertical_advection_V(i, j, k, grid, advection::WENOVectorInvariant, v, w) = 1/Vᶜᶠᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wv, scheme, w, v)
 
 interp_init = true
 init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067840.jld2" 
