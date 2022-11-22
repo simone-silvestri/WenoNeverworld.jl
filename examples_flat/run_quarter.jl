@@ -24,7 +24,8 @@ using Oceananigans.Advection:  _left_biased_interpolate_xᶠᵃᵃ,
                               _right_biased_interpolate_zᵃᵃᶠ,
                                         upwind_biased_product
 
-using Oceananigans.Operators: Vᶠᶜᶜ, Vᶜᶠᶜ, δzᵃᵃᶜ, Azᶠᶜᶠ, Azᶜᶠᶠ
+using Oceananigans.Operators
+using Oceananigans.Operators: Vᶠᶜᶜ, Vᶜᶠᶜ, δzᵃᵃᶜ, Azᶠᶜᶠ, Azᶜᶠᶠ, ℑxzᶠᵃᶜ, ℑyzᵃᶠᶜ
 
 import Oceananigans.Advection: vertical_advection_U, vertical_advection_V, advective_momentum_flux_Wu, advective_momentum_flux_Wv
     
