@@ -5,26 +5,29 @@ using Oceananigans.TurbulenceClosures: ∂ⱼ_τ₁ⱼ, ∂ⱼ_τ₂ⱼ, ∂ⱼ_
 
 import Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
 
-function VerticalVorticityField(velocities::Dict, i)
+VerticalVorticityField(fields::Dict, i) = VerticalVorticityField((; u = fields[:u][i], v = fields[:v][i]))
+KineticEnergyField(fields::Dict, i)     = KineticEnergyField((; u = fields[:u][i], v = fields[:v][i]))
 
-    grid = velocities[:u].grid
-    
-    dependencies = (velocities[:u][i], velocities[:v][i])
+function KineticEnergyField(velocities::NamedTuple)
+    u = velocities.u
+    v = velocities.v
+
+    fill_halo_regions!((u, v))
+
+    E_op = @at (Center, Center, Center) 0.5 * (u^2 + v^2)
+
+    return compute!(Field(E_op))
+end
+
+function VerticalVorticityField(velocities::NamedTuple)
+
+    grid = velocities.u.grid
+    dependencies = (; u = velocities.u, v = velocities.v)
     fill_halo_regions!(dependencies)
 
     ζ_op = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = dependencies)
 
     return compute!(Field(ζ_op))
-end
-
-
-function KineticEnergyField(fields::Dict, i)
-    fill_halo_regions!(fields[:u][i])
-    fill_halo_regions!(fields[:v][i])
-
-    E_op = @at (Center, Center, Center) 0.5 * (fields[:u][i]^2 + fields[:v][i]^2)
-
-    return compute!(Field(E_op))
 end
 
 function HorizontalFriction(model; ClosureType = AbstractScalarBiharmonicDiffusivity)

@@ -11,7 +11,6 @@ using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, Exp
 using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
 using Oceananigans.Coriolis: WetCellEnstrophyConservingScheme
 using Oceananigans.Advection: VorticityStencil, VelocityStencil
-using Oceananigans.Coriolis: hack_cosd
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
@@ -33,6 +32,9 @@ using Oceananigans.Coriolis: hack_cosd
 
     return @inbounds p.λ * (b - p.initial_buoyancy(x, y, z))
 end
+
+@inline hack_cosd(φ) = cos(π * φ / 180)
+@inline hack_sind(φ) = sin(π * φ / 180)
 
 @inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Az(i, j, k, grid, lx, ly, lz)^2 / λ
 @inline    cosine_νhb(i, j, k, grid, lx, ly, lz, clock, fields, ν) = ν * hack_cosd(ynode(ly, j, grid))^3
