@@ -18,10 +18,11 @@ interp_init = true
 init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067840.jld2" 
 
 # Simulation parameters
-Δt        = 2minutes
+Δt        = 0.5minutes
 stop_time = 7000days
 
-biharmonic_viscosity = HorizontalDivergenceScalarDiffusivity(ν = 50.0)
+biharmonic_viscosity          = HorizontalDivergenceScalarDiffusivity(ν = 50.0)
+default_vertical_diffusivity  = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, biharmonic_viscosity)
