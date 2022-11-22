@@ -14,6 +14,15 @@ new_degree = 1/4
 orig_grid = NeverworldGrid(arch, old_degree; longitude = (-5, 65)) 
 grid      = NeverworldGrid(arch, new_degree)
 
+# Extend the vertical advection scheme
+using Oceananigans.Advection: WENOVectorInvariant, _advective_momentum_flux_Wu, _advective_momentum_flux_Wv
+using Oceananigans.Operators: Vᶠᶜᶜ, δzᵃᵃᶜ
+
+import Oceananigans.Advection: vertical_advection_U, vertical_advection_V
+
+@inline vertical_advection_U(i, j, k, grid, advection::WENOVectorInvariant, u, w) = 1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wu, advection.scheme, w, u)
+@inline vertical_advection_V(i, j, k, grid, advection::WENOVectorInvariant, v, w) = 1/Vᶜᶠᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wv, advection.scheme, w, v)
+
 interp_init = true
 init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067840.jld2" 
 
