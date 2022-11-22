@@ -86,7 +86,7 @@ function scotia_arc(x, y)
     end
 end
 
-# Full bathymetry!
+# No ridge no arc bathymetry!
 function bathymetry_without_ridge(x, y) 
     if x < 5 || x > 55
         if x < 0 
@@ -110,7 +110,7 @@ function bathymetry_without_ridge(x, y)
     end
 end
 
-# No ridge bathymetry!
+# Full bathymetry!
 function bathymetry_with_ridge(x, y) 
     if x < 5 || x > 55
         if x < 0 

@@ -42,15 +42,15 @@ function NeverworldGrid(arch, degree; H = 5, longitude = (-2, 62), bathymetry = 
     return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))
 end
 
-function NeverworldGridExtended(arch, degree; H = 5)
+function NeverworldGridExtended(arch, degree; H = 5, longitude = (-2, 62), bathymetry = bathymetry_without_ridge)
 
-    Nx = Int(70  / degree)
+    Nx = Int((longitude[2] - longitude[1]) / degree)
     Ny = Int(140 / degree)
     Nz = length(new_z_faces) - 1
 
     underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
                                             latitude  = (-70, 70),
-                                            longitude = (-5, 65),
+                                            longitude,
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),
                                             z = new_z_faces)

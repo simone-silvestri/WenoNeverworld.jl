@@ -59,3 +59,15 @@ zc = calculate_z★_diagnostics(center_avg[:b])
 
 εw = propagate_on_fieldtimeseries(zw,   weno_avg[:b], Γw; func = (x, y, z) -> x * y + z, nargs = 3)
 εc = propagate_on_fieldtimeseries(zc, center_avg[:b], Γc; func = (x, y, z) -> x * y + z, nargs = 3)
+
+using Statistics: mean
+
+function calc_zonal_mean(var::FieldTimeSeries)
+    mean_var = mean(var[1], dims = 1)
+
+    for i in 2:length(var.times)
+        mean_var .+= mean(var[i], dims = 1)
+    end
+
+    return mean_var
+end

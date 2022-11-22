@@ -144,10 +144,6 @@ function weno_neverworld_simulation(; grid,
         if !(grid == orig_grid)
              @info "interpolating b field"
              b_init = interpolate_per_level(b_init, orig_grid, grid, (Center, Center, Center))
-             # @info "interpolating u field"
-             # u_init = interpolate_per_level(u_init, orig_grid, grid, (Face, Center, Center))
-             # @info "interpolating v field"
-             # v_init = interpolate_per_level(v_init, orig_grid, grid, (Center, Face, Center))
         end
         set!(model, b=b_init) 
     end
