@@ -27,33 +27,9 @@ using Oceananigans.Advection:  _left_biased_interpolate_xᶠᵃᵃ,
 using Oceananigans.Operators: Vᶠᶜᶜ, Vᶜᶠᶜ, δzᵃᵃᶜ, Azᶠᶜᶠ, Azᶜᶠᶠ
 
 import Oceananigans.Advection: vertical_advection_U, vertical_advection_V, advective_momentum_flux_Wu, advective_momentum_flux_Wv
-
-@inline function advective_momentum_flux_Wu(i, j, k, grid, scheme::WENOVectorInvariant, W, u)
-
-    wᴸ =  _left_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, W)
-    wᴿ = _right_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, W)
-    uᴸ =  _left_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, u)
-    uᴿ = _right_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, u)
-
-    w̃ = 0.5 * (wᴸ + wᴿ)
-
-    return Azᶠᶜᶠ(i, j, k, grid) * upwind_biased_product(w̃, uᴸ, uᴿ)
-end
-
-@inline function advective_momentum_flux_Wv(i, j, k, grid, scheme::WENOVectorInvariant, W, v)
-
-    wᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, W)
-    wᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, W)
-    vᴸ =  _left_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, v)
-    vᴿ = _right_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, v)
-
-    w̃ = 0.5 * (wᴸ + wᴿ)
-
-    return Azᶜᶠᶠ(i, j, k, grid) * upwind_biased_product(w̃, vᴸ, vᴿ)
-end
-
-@inline vertical_advection_U(i, j, k, grid, scheme::WENOVectorInvariant, u, w) = 1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wu, scheme, w, u)
-@inline vertical_advection_V(i, j, k, grid, scheme::WENOVectorInvariant, v, w) = 1/Vᶜᶠᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wv, scheme, w, v)
+    
+@inline vertical_advection_U(i, j, k, grid, ::WENOVectorInvariant, u, w) =  ℑxzᶠᵃᶜ(i, j, k, grid, w) * ℑzᵃᵃᶜ(i, j, k, grid, ∂zᶠᶜᶠ, u)
+@inline vertical_advection_V(i, j, k, grid, ::WENOVectorInvariant, v, w) =  ℑyzᵃᶠᶜ(i, j, k, grid, w) * ℑzᵃᵃᶜ(i, j, k, grid, ∂zᶜᶠᶠ, v)
 
 interp_init = true
 init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067840.jld2" 
