@@ -18,38 +18,14 @@ new_z_faces = vcat(z_faces[1:22], all_z_faces[44:end])
 
 using Oceananigans.ImmersedBoundaries: PartialCellBottom
 
-function NeverworldGrid(arch, degree; H = 5, longitude = (-2, 62), bathymetry = bathymetry_without_ridge)
+function NeverworldGrid(arch, degree; H = 5, longitude = (-2, 62), latitude = (-70, 0), bathymetry = bathymetry_without_ridge)
 
     Nx = Int((longitude[2] - longitude[1]) / degree)
-    Ny = Int(70 / degree)
+    Ny = Int((latitude[2]  - latitude[1]) / degree)
     Nz = length(new_z_faces) - 1
 
     underlying_grid = LatitudeLongitudeGrid(arch; size = (Nx, Ny, Nz),
-                                            latitude  = (-70, 0),
-                                            longitude,
-                                            halo = (H, H, H),
-                                            topology = (Periodic, Bounded, Bounded),
-                                            z = new_z_faces)
-
-    λ_grid = underlying_grid.λᶜᵃᵃ[1:Nx]
-    φ_grid = underlying_grid.φᵃᶜᵃ[1:Ny]
-
-    bathy = zeros(Nx, Ny)
-    for (i, λ) in enumerate(λ_grid), (j, φ) in enumerate(φ_grid)
-        bathy[i, j] = bathymetry(λ, φ)
-    end
-
-    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))
-end
-
-function NeverworldGridExtended(arch, degree; H = 5, longitude = (-2, 62), bathymetry = bathymetry_without_ridge)
-
-    Nx = Int((longitude[2] - longitude[1]) / degree)
-    Ny = Int(140 / degree)
-    Nz = length(new_z_faces) - 1
-
-    underlying_grid = LatitudeLongitudeGrid(arch, size = (Nx, Ny, Nz),
-                                            latitude  = (-70, 70),
+                                            latitude,
                                             longitude,
                                             halo = (H, H, H),
                                             topology = (Periodic, Bounded, Bounded),

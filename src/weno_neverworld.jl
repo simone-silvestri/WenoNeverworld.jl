@@ -11,6 +11,7 @@ using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, Exp
 using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
 using Oceananigans.Coriolis: WetCellEnstrophyConservingScheme
 using Oceananigans.Advection: VorticityStencil, VelocityStencil
+using Oceananigans.Coriolis: hack_cosd
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
@@ -34,6 +35,7 @@ using Oceananigans.Advection: VorticityStencil, VelocityStencil
 end
 
 @inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Az(i, j, k, grid, lx, ly, lz)^2 / λ
+@inline    cosine_νhb(i, j, k, grid, lx, ly, lz, clock, fields, ν) = ν * hack_cosd(ynode(ly, j, grid))^3
 
 const min_ν = 1e-4
 const Δν    = 5e-3 - min_ν
@@ -41,7 +43,7 @@ const Δν    = 5e-3 - min_ν
 @inline exponential_νz_profile(x, y, z, t) = exponential_profile(z; Δ = Δν) + min_ν
 
 default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 0.2)
-default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 5days)
+default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=cosine_νhb, discrete_form=true, parameters = 1e11)
 default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=exponential_νz_profile, κ=1e-5)
 default_slope_limiter         = FluxTapering(1e-2)
 
