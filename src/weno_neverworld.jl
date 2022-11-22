@@ -69,7 +69,7 @@ function weno_neverworld_simulation(; grid,
 
     Nx, Ny, Nz = size(grid)
 
-    φ_grid = grid.φᵃᶠᵃ[1:Ny+1]
+    φ_grid = grid.φᵃᶜᵃ[1:Ny]
 
     # Initializing boundary conditions
 
