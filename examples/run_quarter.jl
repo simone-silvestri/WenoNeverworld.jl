@@ -8,6 +8,7 @@ output_dir    = joinpath(@__DIR__, "../files_four")
 @show output_prefix = output_dir * "/neverworld_quarter"
 
 arch   = GPU()
+old_degree = 1
 new_degree = 1/4
 
 orig_grid = NeverworldGrid(arch, old_degree; longitude = (-5, 65), bathymetry = bathymetry_with_ridge) 
