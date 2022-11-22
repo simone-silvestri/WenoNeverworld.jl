@@ -59,7 +59,7 @@ interp_init = true
 init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067840.jld2" 
 
 # Simulation parameters
-Δt        = 2minutes
+Δt        = 1minutes
 stop_time = 7000days
 
 biharmonic_viscosity = HorizontalDivergenceScalarDiffusivity(ν = 100.0)
@@ -68,9 +68,10 @@ vertical_diffusivity = VerticalScalarDiffusivity(VerticallyImplicitTimeDiscretiz
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, biharmonic_viscosity, vertical_diffusivity)
 
-increase_simulation_Δt!(simulation, cutoff_time = 50days,  new_Δt = 5minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 100days, new_Δt = 7.5minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 200days, new_Δt = 10minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 50days,  new_Δt = 2.5minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 100days, new_Δt = 5.0minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 200days, new_Δt = 7.5minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 300days, new_Δt = 10minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
