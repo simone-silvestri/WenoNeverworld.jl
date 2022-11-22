@@ -75,7 +75,7 @@ function weno_neverworld_simulation(; grid,
 
     @info "specifying boundary conditions..."
 
-    τw = zeros(Ny+1)
+    τw = zeros(Ny)
     for (j, φ) in enumerate(φ_grid)
         τw[j] = wind_stress(φ, 0.0) ./ 1000
     end
