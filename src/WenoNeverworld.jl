@@ -21,6 +21,7 @@ include("neverworld_initial_and_boundary_conditions.jl")
 include("weno_neverworld_utils.jl")
 include("horizontal_visc.jl")
 include("weno_neverworld.jl")
+include("new_divergence.jl")
 include("weno_neverworld_outputs.jl")
 
 include("Diagnostics/Diagnostics.jl")
