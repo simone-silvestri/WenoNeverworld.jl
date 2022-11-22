@@ -30,10 +30,10 @@ import Oceananigans.Advection: vertical_advection_U, vertical_advection_V, advec
 
 @inline function advective_momentum_flux_Wu(i, j, k, grid, scheme::WENOVectorInvariant, W, u)
 
-    wᴸ =  _left_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, VorticityStencil, W)
-    wᴿ = _right_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, VorticityStencil, W)
-    uᴸ =  _left_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, u)
-    uᴿ = _right_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, u)
+    wᴸ =  _left_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, W)
+    wᴿ = _right_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, W)
+    uᴸ =  _left_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, u)
+    uᴿ = _right_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, u)
 
     w̃ = 0.5 * (wᴸ + wᴿ)
 
@@ -42,10 +42,10 @@ end
 
 @inline function advective_momentum_flux_Wv(i, j, k, grid, scheme::WENOVectorInvariant, W, v)
 
-    wᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, VorticityStencil, W)
-    wᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, VorticityStencil, W)
-    vᴸ =  _left_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, v)
-    vᴿ = _right_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, v)
+    wᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, W)
+    wᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, W)
+    vᴸ =  _left_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, v)
+    vᴿ = _right_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, v)
 
     w̃ = 0.5 * (wᴸ + wᴿ)
 
