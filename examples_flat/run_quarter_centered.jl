@@ -17,7 +17,7 @@ grid      = NeverworldGrid(arch, new_degree)
 interp_init = true
 init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067840.jld2" 
 
-using WenoNeverworld: cosine_νhb
+using WenoNeverworld: geometric_νhb
 
 biharmonic_viscosity  = HorizontalScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 2.5days)
 momentum_advection    = VectorInvariant()
