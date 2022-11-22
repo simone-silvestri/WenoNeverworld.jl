@@ -16,20 +16,40 @@ grid      = NeverworldGrid(arch, new_degree)
 
 # Extend the vertical advection scheme
 using Oceananigans.Advection: WENOVectorInvariant, _advective_momentum_flux_Wu, _advective_momentum_flux_Wv
+using Oceananigans.Advection:  _left_biased_interpolate_xᶠᵃᵃ, 
+                              _right_biased_interpolate_xᶠᵃᵃ,
+                               _left_biased_interpolate_yᵃᶠᵃ,
+                              _right_biased_interpolate_yᵃᶠᵃ,
+                               _left_biased_interpolate_zᵃᵃᶠ,
+                              _right_biased_interpolate_zᵃᵃᶠ,
+                                        upwind_biased_product
+
 using Oceananigans.Operators: Vᶠᶜᶜ, δzᵃᵃᶜ
 
 import Oceananigans.Advection: vertical_advection_U, vertical_advection_V, advective_momentum_flux_Wu, advective_momentum_flux_Wv
 
 @inline function advective_momentum_flux_Wu(i, j, k, grid, scheme::WENOVectorInvariant, W, u)
 
-    wᴸ =   _left_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, VorticityStencil, W)
-    wᴿ =  _right_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, VorticityStencil, W)
+    wᴸ =  _left_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, VorticityStencil, W)
+    wᴿ = _right_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, VorticityStencil, W)
     uᴸ =  _left_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, u)
     uᴿ = _right_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, u)
 
     w̃ = 0.5 * (wᴸ + wᴿ)
 
     return Azᶠᶜᶠ(i, j, k, grid) * upwind_biased_product(w̃, uᴸ, uᴿ)
+end
+
+@inline function advective_momentum_flux_Wu(i, j, k, grid, scheme::WENOVectorInvariant, W, v)
+
+    wᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, VorticityStencil, W)
+    wᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, VorticityStencil, W)
+    vᴸ =  _left_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, v)
+    vᴿ = _right_biased_interpolate_zᵃᵃᶠ(i, j, k, grid, scheme, VorticityStencil, v)
+
+    w̃ = 0.5 * (wᴸ + wᴿ)
+
+    return Azᶜᶠᶠ(i, j, k, grid) * upwind_biased_product(w̃, vᴸ, vᴿ)
 end
 
 @inline vertical_advection_U(i, j, k, grid, scheme::WENOVectorInvariant, u, w) = 1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wu, scheme, w, u)
