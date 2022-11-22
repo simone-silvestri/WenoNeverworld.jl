@@ -10,15 +10,16 @@ function checkpoint_fields(file)
 
     u = XFaceField(grid)
     v = YFaceField(grid)
+    w = ZFaceField(grid)
     b = CenterField(grid)
 
     Hx, Hy, Hz = halo_size(grid)
-    for (var, name) in zip((u, v, b), ("u", "v", "b"))
+    for (var, name) in zip((u, v, w, b), ("u", "v", "w", "b"))
         set!(var, file[name * "/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz])
         fill_halo_regions!(var)
     end
 
-    return (; u, v, b)
+    return (; u, v, w, b)
 end
 
 function all_fieldtimeseries(file; variables = ("u", "v", "w", "b"))

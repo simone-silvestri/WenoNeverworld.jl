@@ -39,14 +39,9 @@ end
 @inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Az(i, j, k, grid, lx, ly, lz)^2 / λ
 @inline    cosine_νhb(i, j, k, grid, lx, ly, lz, clock, fields, ν) = ν * hack_cosd(ynode(ly, j, grid))^3
 
-const min_ν = 1e-4
-const Δν    = 5e-3 - min_ν
-
-@inline exponential_νz_profile(x, y, z, t) = exponential_profile(z; Δ = Δν) + min_ν
-
-default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 0.2)
-default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν=cosine_νhb, discrete_form=true, parameters = 1e11)
-default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=exponential_νz_profile, κ=1e-5)
+default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 1.0)
+default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 2.5days)
+default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter         = FluxTapering(1e-2)
 
 function weno_neverworld_simulation(; grid, 

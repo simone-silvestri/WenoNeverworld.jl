@@ -32,7 +32,6 @@ function smagorinski_viscosity(formulation; Cₛₘ = 2.0, λ = 5days, Area = Δ
 				                       parameters = (; C, λ, Area))
 end
 
-
 @inline function νhb_leith_final(i, j, k, grid, lx, ly, lz, clock, fields, p)
     
     location = (lx, ly, lz)
@@ -55,7 +54,7 @@ end
     return max(visc₁, visc₂) 
 end
 
-function leith_viscosity(formulation; C_vort = 2.0, C_div = 2.0, λ = 5days, Area = Δ²ᵃᵃᵃ)
+function leith_viscosity(formulation; C_vort = 2.0, C_div = 2.0, λ = 10days, Area = Δ²ᵃᵃᵃ)
 
     @show C₁ = (C_vort / π)^6 
     @show C₂ = (C_div  / π)^6 
