@@ -27,7 +27,7 @@ momentum_advection    = VectorInvariant()
 stop_time = 7000days
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, biharmonic_viscosity, momentum_advection, μ_drag = 0.003)
+simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, biharmonic_viscosity, momentum_advection)
 
 increase_simulation_Δt!(simulation, cutoff_time = 50days,  new_Δt = 5minutes)
 increase_simulation_Δt!(simulation, cutoff_time = 100days, new_Δt = 7.5minutes)

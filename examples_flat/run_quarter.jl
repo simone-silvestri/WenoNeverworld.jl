@@ -22,7 +22,7 @@ init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067
 stop_time = 7000days
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, μ_drag = 0.003)
+simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
 
 increase_simulation_Δt!(simulation, cutoff_time = 50days,  new_Δt = 5minutes)
 increase_simulation_Δt!(simulation, cutoff_time = 100days, new_Δt = 7.5minutes)
