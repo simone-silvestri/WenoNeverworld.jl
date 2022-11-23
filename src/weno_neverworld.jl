@@ -11,6 +11,7 @@ using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, Exp
 using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
 using Oceananigans.Coriolis: WetCellEnstrophyConservingScheme
 using Oceananigans.Advection: VorticityStencil, VelocityStencil
+using Oceananigans.MultiRegion: multi_region_object_from_array
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
@@ -62,7 +63,8 @@ function weno_neverworld_simulation(; grid,
                                       Δt = 5minutes,
                                       stop_time = 10years,
                                       initial_buoyancy = initial_buoyancy_tangent,
-				                      wind_stress = zonal_wind_stress
+				                      wind_stress = zonal_wind_stress,
+                                      regions = nothing
                                       )
 
     arch = architecture(grid)
@@ -79,7 +81,15 @@ function weno_neverworld_simulation(; grid,
     for (j, φ) in enumerate(φ_grid)
         τw[j] = wind_stress(φ, 0.0) ./ 1000
     end
-    τw = arch_array(arch, -τw)
+
+    global_grid = deepcopy(grid)
+    
+    if !isnothing(regions)
+        grid = MultiRegionGrid(grid, partition = Xpartition(regions), devices = regions)
+        τw = multi_region_object_from_array(-τw, grid)
+    else
+        τw = arch_array(arch, -τw)
+    end
 
     u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
 
@@ -140,9 +150,10 @@ function weno_neverworld_simulation(; grid,
     else
         Hx, Hy, Hz = halo_size(orig_grid)
         b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
-        if !(grid == orig_grid)
+        if !(global_grid == orig_grid)
              @info "interpolating b field"
-             b_init = interpolate_per_level(b_init, orig_grid, grid, (Center, Center, Center))
+             b_init = interpolate_per_level(b_init, orig_grid, global_grid, (Center, Center, Center))
+             b_init = multi_region_object_from_array(b_init, grid)
         end
         set!(model, b=b_init) 
     end
@@ -159,16 +170,20 @@ function weno_neverworld_simulation(; grid,
         u, v, w = sim.model.velocities
 
         @info @sprintf("Time: % 12s, it: %d, max(|u|, |v|, |w|): (%.2e, %.2e , %.2e) ms⁻¹, Δt: %.2e s, wall time: %s", 
-                        prettytime(sim.model.clock.time),
-                        sim.model.clock.iteration, maximum(abs, u), maximum(abs, v), maximum(abs, w), sim.Δt,
-                        prettytime(wall_time))
+            prettytime(sim.model.clock.time),
+            sim.model.clock.iteration, maximum(abs, u), maximum(abs, v), maximum(abs, w), sim.Δt,
+            prettytime(wall_time))
 
         start_time[1] = time_ns()
 
         return nothing
     end
 
-    simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
+    if !isnothing(regions)
+        simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
+    else
+        simulation.callbacks[:progress] = Callback(progress, IterationInterval(200))
+    end
 
     return simulation
 end
