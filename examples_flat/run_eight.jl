@@ -21,14 +21,14 @@ interp_init = true
 init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067840.jld2" 
 
 # Simulation parameters
-Δt        = 2minutes
+Δt        = 1minutes
 stop_time = 7000days
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
 
-increase_simulation_Δt!(simulation, cutoff_time = 300days,  new_Δt = 3.5minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 600days,  new_Δt = 5.0minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 300days,  new_Δt = 2minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 600days,  new_Δt = 3minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"

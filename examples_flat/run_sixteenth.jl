@@ -21,7 +21,7 @@ interp_init = true
 init_file   = "files_lowres_new_bathy/restart_file_15_years.jld2" 
 
 # Simulation parameters
-Δt        = 1minutes
+Δt        = 0.5minutes
 stop_time = 7000days
 
 vertical_diffusivity = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
@@ -34,7 +34,8 @@ increase_simulation_Δt!(simulation, cutoff_time = 500days,  new_Δt = 2.0minute
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
-standard_outputs!(simulation, output_prefix)
+checkpoint_time = 20days
+standard_outputs!(simulation, output_prefix; checkpoint_time)
 
 # initializing the time for wall_time calculation
 run_simulation!(simulation; interp_init, init_file)
