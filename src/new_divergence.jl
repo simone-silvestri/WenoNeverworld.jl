@@ -37,9 +37,9 @@ fifth_order_coeffs = (9.0, -116.0, 2134.0, -116.0, 9.0) ./ 1920
 Optimal coefficients obtained assuming all stencils are perfectly smooth (`β₀ = β₁ = β₂`)
 and the reconstruction is fifth order
 """
-const OC₀ = -9.0 / 80
-const OC₁ = 98.0 / 80
-const OC₂ = -9.0 / 80
+const OC₀ =  - 9.0 / 80
+const OC₁ =   98.0 / 80
+const OC₂ =  - 9.0 / 80
 
 """
 To calculate the smoothness coefficients
@@ -60,8 +60,7 @@ const wᵢⱼ₁ = (-52, -76, 26) ./ 12
 const wᵢᵢ₂ = (  25,  160, 61) ./ 12
 const wᵢⱼ₂ = (-123, -195, 74) ./ 12
 
-@inline dagger(ψ)    = (ψ[2], ψ[3], ψ[1])
-@inline star(ψ₁, ψ₂) = (ψ₁ .* dagger(ψ₂) .+ dagger(ψ₁) .* ψ₂)
+@inline dagger(ψ) = (ψ[2], ψ[3], ψ[1])
 
 # @inline   left_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * (3ψ[1] - 4ψ[2] +  ψ[3])^two_32
 # @inline center_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * ( ψ[1]         -  ψ[3])^two_32
@@ -71,6 +70,34 @@ const wᵢⱼ₂ = (-123, -195, 74) ./ 12
 @inline center_biased_β(FT, ψ) = @inbounds sum(Tuple(ψ[j] * (wᵢᵢ₁[j] * ψ[j] + wᵢⱼ₁[j] * dagger(ψ)[j]) for j in 1:3))
 @inline  right_biased_β(FT, ψ) = @inbounds sum(Tuple(ψ[j] * (wᵢᵢ₂[j] * ψ[j] + wᵢⱼ₂[j] * dagger(ψ)[j]) for j in 1:3))
 
+@inline function centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
+
+    β₀ =   left_biased_β(FT, ψ₀)
+    β₁ = center_biased_β(FT, ψ₁)
+    β₂ =  right_biased_β(FT, ψ₂)
+
+    α₀ = FT(OC₀) / (β₀ + FT(ε))^two_32
+    α₁ = FT(OC₁) / (β₁ + FT(ε))^two_32
+    α₂ = FT(OC₂) / (β₂ + FT(ε))^two_32
+
+    Σα = α₀ + α₁ + α₂
+    w₀ = α₀ / Σα
+    w₁ = α₁ / Σα
+    w₂ = α₂ / Σα
+
+    return w₀, w₁, w₂
+end
+
+@inline function weno_reconstruction(FT, ψ₀, ψ₁, ψ₂)
+
+    w₀, w₁, w₂ = centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
+
+    ψ̂₀ = sum(ψ₀ .* C₀)
+    ψ̂₂ = sum(ψ₂ .* C₂)
+
+    return ψ̂₀ * w₀ + ψ₁[2] * w₁ + ψ̂₂ * w₂
+end
+
 @inline function center_interpolate_xᶠᵃᵃ(i, j, k, grid, u)
     
     FT = eltype(grid)
@@ -78,10 +105,8 @@ const wᵢⱼ₂ = (-123, -195, 74) ./ 12
     @inbounds ψ₀ = (u[i-2, j, k], u[i-1, j, k], u[i,   j, k])
     @inbounds ψ₁ = (u[i-1, j, k], u[i,   j, k], u[i+1, j, k])
     @inbounds ψ₂ = (u[i,   j, k], u[i+1, j, k], u[i+2, j, k])
-
-    w₀, w₁, w₂ = centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
-
-    return sum(ψ₀ .* C₀) * w₀ + sum(ψ₁ .* C₁) * w₁ + sum(ψ₂ .* C₂) * w₂
+    
+    return weno_reconstruction(FT, ψ₀, ψ₁, ψ₂)
 end
 
 @inline function center_interpolate_xᶠᵃᵃ(i, j, k, grid, f::Function, args...)
@@ -91,10 +116,8 @@ end
     @inbounds ψ₀ = (f(i-2, j, k, grid, args...), f(i-1, j, k, grid, args...), f(i,   j, k, grid, args...))
     @inbounds ψ₁ = (f(i-1, j, k, grid, args...), f(i,   j, k, grid, args...), f(i+1, j, k, grid, args...))
     @inbounds ψ₂ = (f(i,   j, k, grid, args...), f(i+1, j, k, grid, args...), f(i+2, j, k, grid, args...))
-
-    w₀, w₁, w₂ = centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
-
-    return sum(ψ₀ .* C₀) * w₀ + sum(ψ₁ .* C₁) * w₁ + sum(ψ₂ .* C₂) * w₂
+    
+    return weno_reconstruction(FT, ψ₀, ψ₁, ψ₂)
 end
 
 @inline function center_interpolate_yᵃᶠᵃ(i, j, k, grid, v)
@@ -104,10 +127,8 @@ end
     @inbounds ψ₀ = (v[i, j-2, k], v[i, j-1, k], v[i, j,   k])
     @inbounds ψ₁ = (v[i, j-1, k], v[i, j,   k], v[i, j+1, k])
     @inbounds ψ₂ = (v[i, j,   k], v[i, j+1, k], v[i, j+2, k])
-
-    w₀, w₁, w₂ = centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
-
-    return sum(ψ₀ .* C₀) * w₀ + sum(ψ₁ .* C₁) * w₁ + sum(ψ₂ .* C₂) * w₂
+    
+    return weno_reconstruction(FT, ψ₀, ψ₁, ψ₂)
 end
 
 @inline function center_interpolate_yᵃᶠᵃ(i, j, k, grid, f::Function, args...)
@@ -117,30 +138,8 @@ end
     @inbounds ψ₀ = (f(i, j-2, k, grid, args...), f(i, j-1, k, grid, args...), f(i, j,   k, grid, args...))
     @inbounds ψ₁ = (f(i, j-1, k, grid, args...), f(i, j,   k, grid, args...), f(i, j+1, k, grid, args...))
     @inbounds ψ₂ = (f(i, j,   k, grid, args...), f(i, j+1, k, grid, args...), f(i, j+2, k, grid, args...))
-
-    w₀, w₁, w₂ = centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
-
-    return sum(ψ₀ .* C₀) * w₀ + sum(ψ₁ .* C₁) * w₁ + sum(ψ₂ .* C₂) * w₂
-end
-
-@inline function centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
-
-    β₀ =   left_biased_β(FT, ψ₀)
-    β₁ = center_biased_β(FT, ψ₁)
-    β₂ =  right_biased_β(FT, ψ₂)
-
-    τ = abs(β₀ - β₂)
-
-    α₀ = FT(OC₀) * (1 + τ / (β₀ + FT(ε))^two_32)
-    α₁ = FT(OC₁) * (1 + τ / (β₁ + FT(ε))^two_32)
-    α₂ = FT(OC₂) * (1 + τ / (β₂ + FT(ε))^two_32)
-
-    Σα = α₀ + α₁ + α₂
-    w₀ = α₀ / Σα
-    w₁ = α₁ / Σα
-    w₂ = α₂ / Σα
-
-    return w₀, w₁, w₂
+    
+    return weno_reconstruction(FT, ψ₀, ψ₁, ψ₂)
 end
 
 using Oceananigans.Grids: inactive_node
