@@ -1,4 +1,3 @@
-const Lz   = 4000.0
 const Ly   = 70
 const h    = 1000.0
 const ΔB   = 6.0e-2 

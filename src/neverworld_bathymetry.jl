@@ -86,7 +86,7 @@ function scotia_arc(x, y)
     end
 end
 
-# No ridge no arc bathymetry!
+# No ridge bathymetry!
 function bathymetry_without_ridge(x, y) 
     if x < 5 || x > 55
         if x < 0 
@@ -96,17 +96,22 @@ function bathymetry_without_ridge(x, y)
            x = 60.0
         end
         if y > -59 && y < -41 
-            return  max(sharp_coast_x(sqrt(x^2 + (y + 59)^2)),
-                        sharp_coast_x(sqrt(x^2 + (y + 41)^2)), 
-                        sharp_coast_x(sqrt((60 - x)^2 + (y + 59)^2)),
-                        sharp_coast_x(sqrt((60 - x)^2 + (y + 41)^2)))
+            return  max(scotia_arc(x, y), 
+                       coastal_ridge_x(sqrt(x^2 + (y + 59)^2)),
+                       coastal_ridge_x(sqrt(x^2 + (y + 41)^2)), 
+                       coastal_ridge_x(sqrt((60 - x)^2 + (y + 59)^2)),
+                       coastal_ridge_x(sqrt((60 - x)^2 + (y + 41)^2)))
         else
-            return max(sharp_coast_x(x), 
-                       sharp_coast_x(60 - x))
+            return max(coastal_ridge_x(x), 
+                       coastal_ridge_y(70 + y),
+                       coastal_ridge_x(60 - x), 
+                       scotia_arc(x, y))
         end
     else
-        return max(sharp_coast_x(x), 
-                   sharp_coast_x(60 - x))
+        return max(coastal_ridge_x(x),  
+                   coastal_ridge_y(70 + y),
+                   coastal_ridge_x(60 - x), 
+                   scotia_arc(x, y))
     end
 end
 
@@ -128,6 +133,7 @@ function bathymetry_with_ridge(x, y)
         else
             return max(coastal_ridge_x(x), 
                        coastal_ridge_x(60 - x), 
+                       coastal_ridge_y(70 + y),
                        bottom_ridge_xy(x, y), 
                        bottom_ridge_xy(60 - x, y), 
                        scotia_arc(x, y))
@@ -135,6 +141,7 @@ function bathymetry_with_ridge(x, y)
     else
         return max(coastal_ridge_x(x), 
                    coastal_ridge_x(60 - x), 
+                   coastal_ridge_y(70 + y),
                    bottom_ridge_xy(x, y), 
                    bottom_ridge_xy(60 - x, y), 
                    scotia_arc(x, y))
