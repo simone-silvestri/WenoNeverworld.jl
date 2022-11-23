@@ -19,7 +19,7 @@ init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067
 
 using WenoNeverworld: geometric_νhb
 
-biharmonic_viscosity  = HorizontalScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 2.5days)
+biharmonic_viscosity  = HorizontalScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 10days)
 momentum_advection    = VectorInvariant()
 
 # Simulation parameters
