@@ -18,7 +18,7 @@ grid      = NeverworldGrid(arch, new_degree)
 
 # Extend the vertical advection scheme
 interp_init = true
-init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067840.jld2" 
+init_file   = "files_lowres_new_bathy/restart_file_15_years.jld2" 
 
 # Simulation parameters
 Δt        = 1minutes

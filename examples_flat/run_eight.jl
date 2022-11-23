@@ -24,12 +24,10 @@ init_file   = "files_lowres_new_bathy/neverworld_lowres_checkpoint_iteration2067
 Δt        = 2minutes
 stop_time = 7000days
 
-biharmonic_viscosity = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 10days)
-vertical_diffusivity = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
-
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, biharmonic_viscosity, vertical_diffusivity)
+simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file)
 
+increase_simulation_Δt!(simulation, cutoff_time = 300days,  new_Δt = 3.5minutes)
 increase_simulation_Δt!(simulation, cutoff_time = 600days,  new_Δt = 5.0minutes)
 
 # Let's goo!
