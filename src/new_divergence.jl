@@ -50,25 +50,9 @@ where
 
 `pᵣ(x) = ∑ₘ₌₀³∑ⱼ₌₀ᵐ⁻¹ v̂ᵢ₋ᵣ₊ⱼ Δx`
 """
-
-const wᵢᵢ₀ = ( 25,  64, 13) ./ 12
-const wᵢⱼ₀ = (-76, -52, 26) ./ 12
-
-const wᵢᵢ₁ = ( 13,  64, 25) ./ 12
-const wᵢⱼ₁ = (-52, -76, 26) ./ 12
-
-const wᵢᵢ₂ = (  25,  160, 61) ./ 12
-const wᵢⱼ₂ = (-123, -195, 74) ./ 12
-
-@inline dagger(ψ) = (ψ[2], ψ[3], ψ[1])
-
-# @inline   left_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * (3ψ[1] - 4ψ[2] +  ψ[3])^two_32
-# @inline center_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * ( ψ[1]         -  ψ[3])^two_32
-# @inline  right_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * ( ψ[1] - 4ψ[2] + 3ψ[3])^two_32
-
-@inline   left_biased_β(FT, ψ) = @inbounds sum(Tuple(ψ[j] * (wᵢᵢ₀[j] * ψ[j] + wᵢⱼ₀[j] * dagger(ψ)[j]) for j in 1:3))
-@inline center_biased_β(FT, ψ) = @inbounds sum(Tuple(ψ[j] * (wᵢᵢ₁[j] * ψ[j] + wᵢⱼ₁[j] * dagger(ψ)[j]) for j in 1:3))
-@inline  right_biased_β(FT, ψ) = @inbounds sum(Tuple(ψ[j] * (wᵢᵢ₂[j] * ψ[j] + wᵢⱼ₂[j] * dagger(ψ)[j]) for j in 1:3))
+@inline   left_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * (3ψ[1] - 4ψ[2] +  ψ[3])^two_32
+@inline center_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * ( ψ[1]         -  ψ[3])^two_32
+@inline  right_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * ( ψ[1] - 4ψ[2] + 3ψ[3])^two_32
 
 @inline function centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
 
@@ -93,9 +77,10 @@ end
     w₀, w₁, w₂ = centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
 
     ψ̂₀ = sum(ψ₀ .* C₀)
+    ψ̂₁ = sum(ψ₀ .* C₀)
     ψ̂₂ = sum(ψ₂ .* C₂)
 
-    return ψ̂₀ * w₀ + ψ₁[2] * w₁ + ψ̂₂ * w₂
+    return ψ̂₀ * w₀ + ψ̂₁ * w₁ + ψ̂₂ * w₂
 end
 
 @inline function center_interpolate_xᶠᵃᵃ(i, j, k, grid, u)

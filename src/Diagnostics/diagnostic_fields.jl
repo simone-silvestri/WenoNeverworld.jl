@@ -12,8 +12,6 @@ function KineticEnergyField(velocities::NamedTuple)
     u = velocities.u
     v = velocities.v
 
-    fill_halo_regions!((u, v))
-
     E_op = @at (Center, Center, Center) 0.5 * (u^2 + v^2)
 
     return compute!(Field(E_op))

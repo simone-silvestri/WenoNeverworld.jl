@@ -3,6 +3,7 @@ using Oceananigans.Fields: mean
 using Oceananigans.Grids: halo_size
 using Oceananigans.OutputReaders: OnDisk
 using JLD2
+using Oceananigans.Fields: default_indices
 
 function checkpoint_fields(file)
     file = jldopen(file)
@@ -63,7 +64,7 @@ function add_kinetic_energy_and_vorticity_timeseries!(fields::Dict)
     ζ =     FieldTimeSeries{Face, Face, Center}(fields[:u].grid, fields[:u].times)
     E = FieldTimeSeries{Center, Center, Center}(fields[:u].grid, fields[:u].times)
 
-    for t in 1:length(ζ.times)
+    for t in 1:length(E.times)
         set!(ζ[t], VerticalVorticityField(fields, t))
         set!(E[t], KineticEnergyField(fields, t))
     end
@@ -90,10 +91,11 @@ end
 function ACC_transport(u::FieldTimeSeries)
 
     transport = Float64[]
+    vol = VolumeField(u.grid)
 
     for (i, time) in enumerate(u.times)
         @info "integrating time $(prettytime(time)) of $(prettytime(u.times[end]))"
-        push!(transport, compute!(Field(Integral(u[i], dims = (2, 3))))[1, 1, 1])
+        push!(transport, sum(compute!(Field(u[i] * vol)), dims = (2, 3))[1, 1, 1])
     end
 
     return transport

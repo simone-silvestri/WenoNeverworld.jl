@@ -2,10 +2,10 @@ using Oceananigans.AbstractOperations: GridMetricOperation
 using Oceananigans.Grids: architecture, znode
 using Oceananigans.Architectures: device, device_event, arch_array
 
-MetricField(loc, grid, metric) = compute!(Field(GridMetricOperation(loc, metric, grid)))
+MetricField(loc, grid, metric; indices = default_indices(3)) = compute!(Field(GridMetricOperation(loc, metric, grid); indices))
 
-VolumeField(grid, loc=(Center, Center, Center))  = MetricField(loc, grid, Oceananigans.AbstractOperations.volume)
-AreaField(grid, loc = (Center, Center, Nothing)) = MetricField(loc, grid, Oceananigans.AbstractOperations.Az)
+VolumeField(grid, loc=(Center, Center, Center);  indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.volume; indices)
+  AreaField(grid, loc=(Center, Center, Nothing); indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.Az; indices)
 
 function calculate_z★_diagnostics(b::FieldTimeSeries)
 
