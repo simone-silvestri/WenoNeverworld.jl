@@ -25,7 +25,7 @@ using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_glob
 @inline u_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, k] * speedᶠᶜᶜ(i, j, k, grid, fields) 
 @inline v_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, k] * speedᶜᶠᶜ(i, j, k, grid, fields) 
 
-@inline surface_wind_stress(i, j, grid, clock, fields, τ) = τ[j]
+@inline surface_wind_stress(x, y, t, p) = p.τw(y, p.equatorial_wind)
 
 @inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
 
@@ -45,20 +45,6 @@ default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(Vertical
 default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter         = FluxTapering(1e-2)
-
-@inline function grid_specific_wind_stress_array(wind_stress, grid)
-    
-    Ny   = size(grid, 2)
-    arch = architecture(grid)
-    φ_grid = grid.φᵃᶜᵃ[1:Ny]
-
-    τw = zeros(Ny)
-    for (j, φ) in enumerate(φ_grid)
-        τw[j] = wind_stress(φ, 0.0) ./ 1000
-    end
-
-    return arch_array(arch, -τw)
-end
 
 @inline initialize_model!(model, ::Val{false}, initial_buoyancy, args...) = set!(model, b = initial_buoyancy)
 
@@ -108,9 +94,8 @@ function weno_neverworld_simulation(; grid,
     # Initializing boundary conditions
 
     @info "specifying boundary conditions..."
-    @apply_regionally τw = grid_specific_wind_stress_array(wind_stress, grid)
 
-    u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
+    u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, parameters = (τw = wind_stress, equatorial_wind = 0.0))
 
     # Quadratic bottom drag:
 

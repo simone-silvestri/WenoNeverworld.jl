@@ -14,7 +14,7 @@ old_degree = 1
 new_degree = 1/16
 
 orig_grid = NeverworldGrid(arch, old_degree; longitude = (-5, 65)) 
-grid      = NeverworldGrid(arch, new_degree)
+grid      = MultiRegionGrid(NeverworldGrid(arch, new_degree), partition = XPartition(2), devices = 2)
 
 # Extend the vertical advection scheme
 interp_init = true
