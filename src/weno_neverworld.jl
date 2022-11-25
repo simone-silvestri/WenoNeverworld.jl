@@ -46,7 +46,7 @@ default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(
 default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter         = FluxTapering(1e-2)
 
-@inline function grid_specific_array(wind_stress, grid)
+@inline function grid_specific_wind_stress_array(wind_stress, grid)
     
     Ny   = size(grid, 2)
     arch = architecture(grid)
@@ -108,7 +108,7 @@ function weno_neverworld_simulation(; grid,
     # Initializing boundary conditions
 
     @info "specifying boundary conditions..."
-    @apply_regionally τw = grid_specific_array(wind_stress, grid)
+    @apply_regionally τw = grid_specific_wind_stress_array(wind_stress, grid)
 
     u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
 
