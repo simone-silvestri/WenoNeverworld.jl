@@ -5,7 +5,8 @@ struct Spectrum{S, F}
     freq :: F
 end
 
-@inline onefunc(j) = 1.0
+@inline onefunc(args...)  = 1.0
+@inline hann_window(n, N) = sin(π * n / N)^2 
 
 function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 69, spectra = power_spectrum_1d_x, windowing = onefunc)
 
@@ -38,7 +39,7 @@ function power_spectrum_1d_x(var, x, y; windowing = onefunc)
     freqs = freqs[1:Int(Nfx/2)] .* 2.0 .* π
     
     for j in 1:Ny
-        windowed_var = [var[i, j] * windowing[i] for i in 1:Nfx]
+        windowed_var = [var[i, j] * windowing(i, Nfx) for i in 1:Nfx]
         fourier      = fft(windowed_var) / Nfx
         spectra[1]  += fourier[1] .* conj(fourier[1])
 
@@ -62,7 +63,7 @@ function power_spectrum_1d_y(var, x, y; windowing = onefunc)
     freqs = freqs[1:Int(Nfy/2)] .* 2.0 .* π
     
     for i in 1:Nx
-        windowed_var = [var[i, j] * windowing[j] for i in 1:Nfy]
+        windowed_var = [var[i, j] * windowing(j, Nfy) for i in 1:Nfy]
 
         fourier      = fft(windowed_var[i, :]) / Nfy
         spectra[1]  += fourier[1] .* conj(fourier[1])
