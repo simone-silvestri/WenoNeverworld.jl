@@ -11,7 +11,7 @@ using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, Exp
 using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
 using Oceananigans.Coriolis: WetCellEnstrophyConservingScheme
 using Oceananigans.Advection: VorticityStencil, VelocityStencil
-using Oceananigans.MultiRegion: multi_region_object_from_array
+using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_global_grid
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
@@ -45,6 +45,17 @@ default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(
 default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter         = FluxTapering(1e-2)
 
+@inline function grid_specific_array(wind_stress, grid)
+    φ_grid = grid.φᵃᶜᵃ[1:Ny]
+
+    τw = zeros(Ny)
+    for (j, φ) in enumerate(φ_grid)
+        τw[j] = wind_stress(φ, 0.0) ./ 1000
+    end
+
+    return arch_array(arch, -τw)
+end
+
 function weno_neverworld_simulation(; grid, 
                                       orig_grid = grid,
                                       μ_drag = 0.001,  
@@ -63,33 +74,17 @@ function weno_neverworld_simulation(; grid,
                                       Δt = 5minutes,
                                       stop_time = 10years,
                                       initial_buoyancy = initial_buoyancy_tangent,
-				                      wind_stress = zonal_wind_stress,
-                                      regions = nothing
+				                      wind_stress = zonal_wind_stress
                                       )
 
     arch = architecture(grid)
 
     Nx, Ny, Nz = size(grid)
 
-    φ_grid = grid.φᵃᶜᵃ[1:Ny]
-
     # Initializing boundary conditions
 
     @info "specifying boundary conditions..."
-
-    τw = zeros(Ny)
-    for (j, φ) in enumerate(φ_grid)
-        τw[j] = wind_stress(φ, 0.0) ./ 1000
-    end
-
-    global_grid = deepcopy(grid)
-    
-    if !isnothing(regions)
-        grid = MultiRegionGrid(grid, partition = Xpartition(regions), devices = regions)
-        τw = multi_region_object_from_array(-τw, grid)
-    else
-        τw = arch_array(arch, -τw)
-    end
+    @apply_regionally τw = grid_specific_array(wind_stress, grid)
 
     u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
 
@@ -135,9 +130,9 @@ function weno_neverworld_simulation(; grid,
     @info "building model..."
     
     model = HydrostaticFreeSurfaceModel(; grid, free_surface, coriolis, closure, momentum_advection, tracer_advection,
-                                        boundary_conditions = (; u = u_bcs, v = v_bcs, b = b_bcs),
-                                        buoyancy = BuoyancyTracer(),
-                                        tracers = :b)
+                                          boundary_conditions = (; u = u_bcs, v = v_bcs, b = b_bcs),
+                                          buoyancy = BuoyancyTracer(),
+                                          tracers = :b)
 
     #####
     ##### Model initialization
@@ -145,18 +140,7 @@ function weno_neverworld_simulation(; grid,
 
     @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
 
-    if !interp_init
-        set!(model, b=initial_buoyancy)
-    else
-        Hx, Hy, Hz = halo_size(orig_grid)
-        b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
-        if !(global_grid == orig_grid)
-             @info "interpolating b field"
-             b_init = interpolate_per_level(b_init, orig_grid, global_grid, (Center, Center, Center))
-             b_init = multi_region_object_from_array(b_init, grid)
-        end
-        set!(model, b=b_init) 
-    end
+    set_model!(model, Val(interp_init), initial_buoyancy, grid, orig_grid, init_file)
 
     simulation = Simulation(model; Δt, stop_time)
 
@@ -179,13 +163,33 @@ function weno_neverworld_simulation(; grid,
         return nothing
     end
 
-    if !isnothing(regions)
-        simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
-    else
-        simulation.callbacks[:progress] = Callback(progress, IterationInterval(200))
-    end
+    simulation.callbacks[:progress] = Callback(progress, IterationInterval(50))
 
     return simulation
+end
+
+set_model!(model, ::Val{false}, initial_buoyancy, args...) = set!(model, b = initial_buoyancy)
+
+function set_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file)
+    Hx, Hy, Hz = halo_size(orig_grid)
+
+    @info "interpolating b field"
+    b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    b_init = interpolate_per_level(b_init, orig_grid, grid, (Center, Center, Center))
+
+    set!(model, b=b_init) 
+end
+
+function set_model!(model, ::Val{true}, initial_buoyancy, grid::MultiRegionGrid, orig_grid, init_file)
+    global_grid = reconstruct_global_grid(grid)
+    Hx, Hy, Hz = halo_size(orig_grid)
+
+    @info "interpolating b field"
+    b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    b_init = interpolate_per_level(b_init, orig_grid, global_grid, (Center, Center, Center))
+
+    local_b_init = multi_region_object_from_array(b_init, grid)
+    set!(model, b=local_b_init) 
 end
 
 function run_simulation!(simulation; interp_init = false, init_file = nothing) 
