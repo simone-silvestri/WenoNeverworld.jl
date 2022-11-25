@@ -48,8 +48,8 @@ default_slope_limiter         = FluxTapering(1e-2)
 
 @inline function grid_specific_array(wind_stress, grid)
     
-    Ny = size(grid, 2)
-    
+    Ny   = size(grid, 2)
+    arch = architecture(grid)
     φ_grid = grid.φᵃᶜᵃ[1:Ny]
 
     τw = zeros(Ny)
@@ -60,9 +60,9 @@ default_slope_limiter         = FluxTapering(1e-2)
     return arch_array(arch, -τw)
 end
 
-initialize_model!(model, ::Val{false}, initial_buoyancy, args...) = set!(model, b = initial_buoyancy)
+@inline initialize_model!(model, ::Val{false}, initial_buoyancy, args...) = set!(model, b = initial_buoyancy)
 
-function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file)
+@inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file)
     Hx, Hy, Hz = halo_size(orig_grid)
 
     @info "interpolating b field"
@@ -72,7 +72,7 @@ function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid
     set!(model, b=b_init) 
 end
 
-function initialize_model!(model, ::Val{true}, initial_buoyancy, grid::MultiRegionGrid, orig_grid, init_file)
+@inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid::MultiRegionGrid, orig_grid, init_file)
     global_grid = reconstruct_global_grid(grid)
     Hx, Hy, Hz = halo_size(orig_grid)
 
@@ -104,10 +104,6 @@ function weno_neverworld_simulation(; grid,
                                       initial_buoyancy = initial_buoyancy_tangent,
 				                      wind_stress = zonal_wind_stress
                                       )
-
-    arch = architecture(grid)
-
-    Nx, Ny, Nz = size(grid)
 
     # Initializing boundary conditions
 
