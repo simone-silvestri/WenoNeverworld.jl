@@ -1,6 +1,7 @@
 module Diagnostics
 
 export all_fieldtimeseries, limit_timeseries!, propagate_on_fieldtimeseries
+export VolumeField, AreaField, MetricField
 
 using Oceananigans
 using KernelAbstractions: @kernel, @index 

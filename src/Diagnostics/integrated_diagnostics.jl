@@ -75,6 +75,15 @@ function add_kinetic_energy_and_vorticity_timeseries!(fields::Dict)
     return nothing
 end
 
+function add_kinetic_energy_and_vorticity_timeseries!(fields::NamedTuple)
+
+    ζ = VerticalVorticityField(fields)
+    E = KineticEnergyField(fields)
+
+    return merge(fields, (; ζ, E))
+end
+
+
 function kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries)
 
     energy = Float64[]
