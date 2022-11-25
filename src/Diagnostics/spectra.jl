@@ -5,14 +5,16 @@ struct Spectrum{S, F}
     freq :: F
 end
 
-function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 69, spectra = power_spectrum_1d_x, latlong = true)
+@inline onefunc(j) = 1.0
+
+function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 69, spectra = power_spectrum_1d_x, windowing = onefunc)
 
     xdomain = xnodes(var[1])[xlim]
     ydomain = ynodes(var[1])[ylim]
 
     Nt = length(var.times)
 
-    spec = spectra(interior(var[1], xlim, ylim, k), xdomain, ydomain; latlong) 
+    spec = spectra(interior(var[1], xlim, ylim, k), xdomain, ydomain; windowing) 
 
     for i in 2:Nt
         spec.spec .+= spectra(interior(var[i], xlim, ylim, k), xdomain, ydomain).spec 
@@ -23,7 +25,7 @@ function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 69, spectra = pow
     return spec
 end
 
-function power_spectrum_1d_x(var, x, y; condition = nothing, latlong = true)
+function power_spectrum_1d_x(var, x, y; windowing = onefunc)
     Nx  = length(x)
     Ny  = length(y)
     Nfx = Int64(Nx)
@@ -36,20 +38,19 @@ function power_spectrum_1d_x(var, x, y; condition = nothing, latlong = true)
     freqs = freqs[1:Int(Nfx/2)] .* 2.0 .* π
     
     for j in 1:Ny
-        if  (condition isa Nothing) || condition(π, y[j])
-            fourier      = fft(var[:, j]) / Nfx
-            spectra[1]  += fourier[1] .* conj(fourier[1])
+        windowed_var = [var[i, j] * windowing[i] for i in 1:Nfx]
+        fourier      = fft(windowed_var) / Nfx
+        spectra[1]  += fourier[1] .* conj(fourier[1])
 
-            for m in 2:Int(Nfx/2)
-                spectra[m] += 2.0 * fourier[m] * conj(fourier[m])  / Ny # factor 2 for neg freq contribution
-            end
+        for m in 2:Int(Nfx/2)
+            spectra[m] += 2.0 * fourier[m] * conj(fourier[m])  / Ny # factor 2 for neg freq contribution
         end
     end
     return Spectrum(spectra, freqs)
 end
 
     
-function power_spectrum_1d_y(var, x, y; condition = nothing, latlong = true)
+function power_spectrum_1d_y(var, x, y; windowing = onefunc)
     Nx  = length(x)
     Ny  = length(y)
     Nfy = Int64(Ny)
@@ -61,14 +62,13 @@ function power_spectrum_1d_y(var, x, y; condition = nothing, latlong = true)
     freqs = freqs[1:Int(Nfy/2)] .* 2.0 .* π
     
     for i in 1:Nx
-        if  (condition isa Nothing) || condition(x[i], π/2)
+        windowed_var = [var[i, j] * windowing[j] for i in 1:Nfy]
 
-            fourier      = fft(var[i, :]) / Nfy
-            spectra[1]  += fourier[1] .* conj(fourier[1])
+        fourier      = fft(windowed_var[i, :]) / Nfy
+        spectra[1]  += fourier[1] .* conj(fourier[1])
 
-            for m in 2:Int(Nfy/2)
-                spectra[m] += 2.0 * fourier[m] * conj(fourier[m]) / Nx # factor 2 for neg freq contribution
-            end
+        for m in 2:Int(Nfy/2)
+            spectra[m] += 2.0 * fourier[m] * conj(fourier[m]) / Nx # factor 2 for neg freq contribution
         end
     end
     return Spectrum(spectra, freqs)
