@@ -21,27 +21,25 @@ function calculate_z★_diagnostics(b::FieldTimeSeries; ρ₀ = 1000.0, g = 9.80
     for iter in 1:length(times)
        @info "time $iter of $(length(times))"
 
-       ρ = DensityField(b; ρ₀, g)
-
-       calculate_z★!(z★[iter], ρ, vol, total_area)
+       calculate_z★!(z★[iter], b[iter], vol, total_area)
     end
         
     return z★
 end
 
-function calculate_z★!(z★::Field, ρ::Field, vol, total_area)
+function calculate_z★!(z★::Field, b::Field, vol, total_area)
     grid = b.grid
     arch = architecture(grid)
 
-    ρ_arr = Array(interior(ρ))[:]
+    b_arr = Array(interior(b))[:]
     v_arr = Array(interior(vol))[:]
 
-    perm           = sortperm(ρ_arr)
-    sorted_ρ_field = ρ_arr[perm]
+    perm           = sortperm(b_arr)
+    sorted_b_field = b_arr[perm]
     sorted_v_field = v_arr[perm]
     integrated_v   = cumsum(sorted_v_field)    
 
-    z★_event = launch!(arch, grid, :xyz, _calculate_z★, z★, ρ, sorted_ρ_field, integrated_v; dependencies = device_event(arch))
+    z★_event = launch!(arch, grid, :xyz, _calculate_z★, z★, b, sorted_b_field, integrated_v; dependencies = device_event(arch))
     wait(device(arch), z★_event)
 
     z★ ./= total_area
@@ -49,10 +47,10 @@ function calculate_z★!(z★::Field, ρ::Field, vol, total_area)
     return nothing
 end
 
-@kernel function _calculate_z★(z★, ρ, ρ_sorted, integrated_v)
+@kernel function _calculate_z★(z★, b, b_sorted, integrated_v)
     i, j, k = @index(Global, NTuple)
-    ρl  = ρ[i, j, k]
-    i₁  = searchsortedfirst(ρ_sorted, ρl)
+    bl  = b[i, j, k]
+    i₁  = searchsortedfirst(b_sorted, bl)
     z★[i, j, k] = integrated_v[i₁] 
 end
 
