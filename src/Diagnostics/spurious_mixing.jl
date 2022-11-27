@@ -63,7 +63,7 @@ function calculate_Γ²_diagnostics(z★::FieldTimeSeries, b::FieldTimeSeries; �
     for iter in 1:length(times)
         @info "time $iter of $(length(times))"
 
-        ρ = DensityField(b; ρ₀, g)
+        ρ = DensityField(b[iter]; ρ₀, g)
 
         calculate_Γ²!(Γ²[iter], z★[iter], ρ)
     end

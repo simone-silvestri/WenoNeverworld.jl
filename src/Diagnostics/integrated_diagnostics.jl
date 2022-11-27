@@ -59,6 +59,21 @@ function limit_timeseries!(field::FieldTimeSeries, times)
     return new_field
 end
 
+function add_kinetic_energy_from_timeseries!(fields::Dict)
+
+    E = FieldTimeSeries{Center, Center, Center}(fields[:u].grid, fields[:u].times)
+
+    for t in 1:length(E.times)
+        u2 = fields[:u2][t]
+        v2 = fields[:v2][t]
+        set!(E[t], compute!(Field(@at (Center, Center, Center) 0.5 * (u2 + v2))))
+    end
+
+    fields[:E] = E
+
+    return nothing
+end
+
 function add_kinetic_energy_and_vorticity_timeseries!(fields::Dict)
 
     ζ =     FieldTimeSeries{Face, Face, Center}(fields[:u].grid, fields[:u].times)
@@ -97,26 +112,26 @@ function kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries)
     return energy
 end
 
-function ACC_transport(u::FieldTimeSeries)
+function ACC_transport(u::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
 
     transport = Float64[]
     vol = VolumeField(u.grid)
 
-    for (i, time) in enumerate(u.times)
-        @info "integrating time $(prettytime(time)) of $(prettytime(u.times[end]))"
+    for i in start_time:stride:end_time
+        @info "integrating time $(prettytime(u.times[i])) of $(prettytime(u.times[end]))"
         push!(transport, sum(compute!(Field(u[i] * vol)), dims = (2, 3))[1, 1, 1])
     end
 
     return transport
 end
 
-function heat_content(b::FieldTimeSeries)
+function heat_content(b::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(b.times))
 
     heat = Float64[]
     vol = VolumeField(b.grid)
 
-    for (i, time) in enumerate(b.times)
-        @info "integrating time $(prettytime(time)) of $(prettytime(b.times[end]))"
+    for i in start_time:stride:end_time
+        @info "integrating time $(prettytime(b.times[i])) of $(prettytime(b.times[end]))"
         push!(heat, sum(compute!(Field(b[i] * vol))))
     end
 
@@ -158,4 +173,22 @@ function time_average(field::FieldTimeSeries)
     end
 
     return avg
+end
+
+function calculate_fluctuations!(fields::Dict, variables)
+
+    for var in variables
+
+        field_avg  = time_average(fields[var])
+        field_fluc = FieldTimeSeries{location(fields[var])...}(fields[var].grid, fields[var].times)
+
+        for t in 1:length(fields[var].times)
+            fluc = compute!(Field(fields[var][t] - field_avg))
+            set!(field_fluc[t], fluc)
+        end
+
+        fields[Symbol(var, :fluc)] = field_fluc
+    end
+
+    return nothing
 end

@@ -1,5 +1,19 @@
+using Oceananigans.Advection: AbstractUpwindBiasedAdvectionScheme,
+                                      _symmetric_interpolate_xᶠᵃᵃ,
+                                      _symmetric_interpolate_yᵃᶠᵃ,
+                                      _symmetric_interpolate_zᵃᵃᶠ,
+                                    _left_biased_interpolate_xᶠᵃᵃ,
+                                    _left_biased_interpolate_yᵃᶠᵃ,
+                                    _left_biased_interpolate_zᵃᵃᶠ,
+                                   _right_biased_interpolate_xᶠᵃᵃ,
+                                   _right_biased_interpolate_yᵃᶠᵃ,
+                                   _right_biased_interpolate_zᵃᵃᶠ,
+                                            upwind_biased_product
 
-coefficients_C6 = (2, -16, 74, 74, -16, 2.0) ./ 120
+import Oceananigans.Advection: div_Uc
+
+using Oceananigans.TurbulenceClosures: SmallSlopeIsopycnalTensor, FluxTapering
+using Oceananigans.Operators
 
 abstract type AbstractIsopycnallyRotatedUpwindBiasedAdvection{N, FT} <: AbstractUpwindBiasedAdvectionScheme{N, FT} end
 
@@ -8,9 +22,16 @@ struct IsopycnallyRotatedUpwindScheme{N, FT, U, C, I, S} <: AbstractIsopycnallyR
     centered_scheme  :: C
     isopycnal_tensor :: I
     slope_limiter    :: S
+
+    IsopycnallyRotatedUpwindScheme{N, FT}(u::U, c::C, i::I, s::S) where {N, FT, U, C, I, S} = new{N, FT, U, C, I, S}(u, c, i, s)
 end
 
-import Oceananigans.Advection: _advective_tracer_flux_x, _advective_tracer_flux_y, _advective_tracer_flux_z
+function IsopycnallyRotatedUpwindScheme(upwind_scheme::AbstractUpwindBiasedAdvectionScheme{N, FT}, centered_scheme; 
+                                        isopycnal_tensor = SmallSlopeIsopycnalTensor(),
+                                        slope_limiter = FluxTapering(1e-2)) where {N, FT}
+
+    return IsopycnallyRotatedUpwindScheme{N, FT}(upwind_scheme, centered_scheme, isopycnal_tensor, slope_limiter)
+end
 
 @inline function div_Uc(i, j, k, grid, advection::AbstractIsopycnallyRotatedUpwindBiasedAdvection, U, c)
     return 1/Vᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _isopycnally_rotated_advective_tracer_flux_x, advection, U, c) +
@@ -20,11 +41,15 @@ end
     
 using Oceananigans.ImmersedBoundaries: conditional_flux_fcc, conditional_flux_cfc, conditional_flux_ccf, GFIBG
 
-@inline _isopycnally_rotated_advective_tracer_flux_x(i, j, k, ibg::GFIBG, args...) = conditional_flux_fcc(i, j, k, ibg, zero(eltype(ibg)), isopycnally_rotated_advective_tracer_flux_x(i, j, k, ibg, args...))
-@inline _isopycnally_rotated_advective_tracer_flux_y(i, j, k, ibg::GFIBG, args...) = conditional_flux_cfc(i, j, k, ibg, zero(eltype(ibg)), isopycnally_rotated_advective_tracer_flux_y(i, j, k, ibg, args...))
-@inline _isopycnally_rotated_advective_tracer_flux_z(i, j, k, ibg::GFIBG, args...) = conditional_flux_ccf(i, j, k, ibg, zero(eltype(ibg)), isopycnally_rotated_advective_tracer_flux_z(i, j, k, ibg, args...))
+@inline _isopycnally_rotated_advective_tracer_flux_x(args...) = isopycnally_rotated_advective_tracer_flux_x(args...)
+@inline _isopycnally_rotated_advective_tracer_flux_y(args...) = isopycnally_rotated_advective_tracer_flux_y(args...)
+@inline _isopycnally_rotated_advective_tracer_flux_z(args...) = isopycnally_rotated_advective_tracer_flux_z(args...)
 
-@inline function advective_tracer_flux_x(i, j, k, grid, scheme::IsopycnallyRotatedUpwindBiasedAdvection, U, c) 
+@inline _isopycnally_rotated_advective_tracer_flux_x(i, j, k, ibg::GFIBG, args...) = conditional_flux_fcc(i, j, k, ibg, zero(eltype(ibg)), isopycnally_rotated_advective_tracer_flux_x(i, j, k, ibg.underlying_grid, args...))
+@inline _isopycnally_rotated_advective_tracer_flux_y(i, j, k, ibg::GFIBG, args...) = conditional_flux_cfc(i, j, k, ibg, zero(eltype(ibg)), isopycnally_rotated_advective_tracer_flux_y(i, j, k, ibg.underlying_grid, args...))
+@inline _isopycnally_rotated_advective_tracer_flux_z(i, j, k, ibg::GFIBG, args...) = conditional_flux_ccf(i, j, k, ibg, zero(eltype(ibg)), isopycnally_rotated_advective_tracer_flux_z(i, j, k, ibg.underlying_grid, args...))
+
+@inline function advective_tracer_fluxes_x(i, j, k, grid, scheme::IsopycnallyRotatedUpwindScheme, U, c) 
 
     @inbounds ũ = U[i, j, k]
 
@@ -38,13 +63,13 @@ using Oceananigans.ImmersedBoundaries: conditional_flux_fcc, conditional_flux_cf
     return advective_flux_upwind, advective_flux_center
 end
 
-@inline function advective_tracer_flux_y(i, j, k, grid, scheme::IsopycnallyRotatedUpwindBiasedAdvection, V, c) 
+@inline function advective_tracer_fluxes_y(i, j, k, grid, scheme::IsopycnallyRotatedUpwindScheme, V, c) 
 
     @inbounds ṽ = V[i, j, k]
 
-    cˢ =    _symmetric_interpolate_yᶠᵃᵃ(i, j, k, grid, scheme.centered_scheme, c)
-    cᴸ =  _left_biased_interpolate_yᶠᵃᵃ(i, j, k, grid, scheme.upwind_scheme,   c)
-    cᴿ = _right_biased_interpolate_yᶠᵃᵃ(i, j, k, grid, scheme.upwind_scheme,   c)
+    cˢ =    _symmetric_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme.centered_scheme, c)
+    cᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme.upwind_scheme,   c)
+    cᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme.upwind_scheme,   c)
 
     advective_flux_upwind = Ayᶜᶠᶜ(i, j, k, grid) * upwind_biased_product(ṽ, cᴸ, cᴿ)
     advective_flux_center = Ayᶜᶠᶜ(i, j, k, grid) * ṽ * cˢ
@@ -52,7 +77,7 @@ end
     return advective_flux_upwind, advective_flux_center
 end
 
-@inline function advective_tracer_flux_z(i, j, k, grid, scheme::IsopycnallyRotatedUpwindBiasedAdvection, W, c) 
+@inline function advective_tracer_fluxes_z(i, j, k, grid, scheme::IsopycnallyRotatedUpwindScheme, W, c) 
 
     @inbounds w̃ = W[i, j, k]
 
@@ -71,8 +96,8 @@ end
     R₁₁ = one(grid)
     R₁₃ = isopycnal_rotation_tensor_xz_fcc(i, j, k, grid, c, advection.isopycnal_tensor)
 
-    Aᵘˣ, Aᶜˣ = advective_tracer_flux_x(i, j, k, grid, advection, U.u, c)
-    Aᵘᶻ, Aᶜᶻ = advective_tracer_flux_z(i, j, k, grid, advection, U.w, c)
+    Aᵘˣ, Aᶜˣ = advective_tracer_fluxes_x(i, j, k, grid, advection, U.u, c)
+    Aᵘᶻ, Aᶜᶻ = advective_tracer_fluxes_z(i, j, k, grid, advection, U.w, c)
 
     Dᵘˣ = Aᵘˣ - Aᶜˣ
     Dᵘᶻ = Aᵘᶻ - Aᶜᶻ
@@ -87,8 +112,8 @@ end
     R₂₂ = one(grid)
     R₂₃ = isopycnal_rotation_tensor_yz_cfc(i, j, k, grid, c, advection.isopycnal_tensor)
 
-    Aᵘʸ, Aᶜʸ = advective_tracer_flux_y(i, j, k, grid, advection, U.v, c)
-    Aᵘᶻ, Aᶜᶻ = advective_tracer_flux_z(i, j, k, grid, advection, U.w, c)
+    Aᵘʸ, Aᶜʸ = advective_tracer_fluxes_y(i, j, k, grid, advection, U.v, c)
+    Aᵘᶻ, Aᶜᶻ = advective_tracer_fluxes_z(i, j, k, grid, advection, U.w, c)
 
     Dᵘʸ = Aᵘʸ - Aᶜʸ
     Dᵘᶻ = Aᵘᶻ - Aᶜᶻ
@@ -104,9 +129,9 @@ end
     R₃₂ = isopycnal_rotation_tensor_yz_ccf(i, j, k, grid, c, advection.isopycnal_tensor)
     R₃₃ = isopycnal_rotation_tensor_zz_ccf(i, j, k, grid, c, advection.isopycnal_tensor)
 
-    Aᵘˣ, Aᶜˣ = advective_tracer_flux_x(i, j, k, grid, advection, U.u, c)
-    Aᵘʸ, Aᶜʸ = advective_tracer_flux_y(i, j, k, grid, advection, U.v, c)
-    Aᵘᶻ, Aᶜᶻ = advective_tracer_flux_z(i, j, k, grid, advection, U.w, c)
+    Aᵘˣ, Aᶜˣ = advective_tracer_fluxes_x(i, j, k, grid, advection, U.u, c)
+    Aᵘʸ, Aᶜʸ = advective_tracer_fluxes_y(i, j, k, grid, advection, U.v, c)
+    Aᵘᶻ, Aᶜᶻ = advective_tracer_fluxes_z(i, j, k, grid, advection, U.w, c)
 
     Dᵘˣ = Aᵘˣ - Aᶜˣ
     Dᵘʸ = Aᵘʸ - Aᶜʸ
@@ -114,9 +139,9 @@ end
 
     ϵ = tapering_factorᶜᶜᶠ(i, j, k, grid, advection, c)
 
-    return ϵ * (R₃₁ * Dᵘˣ  +
-                R₃₂ * Dᵘʸ  +
-                R₃₃ * Dᵘᶻ  + Aᶜᶻ) + (1 - ϵ) * Aᵘᶻ
+    return ϵ * (R₃₁ * Dᵘˣ +
+                R₃₂ * Dᵘʸ +
+                R₃₃ * Dᵘᶻ + Aᶜᶻ) + (1 - ϵ) * Aᵘᶻ
 end
 
 import Oceananigans.TurbulenceClosures: isopycnal_rotation_tensor_xz_fcc, 
@@ -169,7 +194,7 @@ end
     return ifelse(bz == 0, zero(grid), slope_y)
 end
 
-@inline function isopycnal_rotation_tensor_zz_ccf(i, j, k, grid::AbstractGrid, b, slope_model::SmallSlopeIsopycnalTensor)
+@inline function isopycnal_rotation_tensor_zz_ccf(i, j, k, grid, b, slope_model::SmallSlopeIsopycnalTensor)
 
     bx = ℑxzᶜᵃᶠ(i, j, k, grid, ∂xᶠᶜᶜ, b)
     by = ℑyzᵃᶜᶠ(i, j, k, grid, ∂yᶜᶠᶜ, b)
@@ -184,7 +209,7 @@ end
 end
 
 import Oceananigans.TurbulenceClosures: tapering_factorᶠᶜᶜ, tapering_factorᶜᶠᶜ, tapering_factorᶜᶜᶠ
-
+using Oceananigans.TurbulenceClosures: calc_tapering
 
 @inline function tapering_factorᶠᶜᶜ(i, j, k, grid, advection, c)
     
