@@ -14,6 +14,7 @@ import Oceananigans.Advection: div_Uc
 
 using Oceananigans.TurbulenceClosures: SmallSlopeIsopycnalTensor, FluxTapering
 using Oceananigans.Operators
+using Adapt
 
 abstract type AbstractIsopycnallyRotatedUpwindBiasedAdvection{N, FT} <: AbstractUpwindBiasedAdvectionScheme{N, FT} end
 
@@ -32,6 +33,10 @@ function IsopycnallyRotatedUpwindScheme(upwind_scheme::AbstractUpwindBiasedAdvec
 
     return IsopycnallyRotatedUpwindScheme{N, FT}(upwind_scheme, centered_scheme, isopycnal_tensor, slope_limiter)
 end
+
+Adapt.adapt_structure(to, scheme::IsopycnallyRotatedUpwindScheme{N, FT}) where {N, FT} =
+    IsopycnallyRotatedUpwindScheme{N, FT}(Adapt.adapt(to, scheme.upwind_scheme),    Adapt.adapt(to, scheme.centered_scheme),
+                                          Adapt.adapt(to, scheme.isopycnal_tensor), Adapt.adapt(to, scheme.slope_limiter))
 
 @inline function div_Uc(i, j, k, grid, advection::AbstractIsopycnallyRotatedUpwindBiasedAdvection, U, c)
     return 1/Vᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _isopycnally_rotated_advective_tracer_flux_x, advection, U, c) +
