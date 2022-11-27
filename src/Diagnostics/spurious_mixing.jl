@@ -95,8 +95,8 @@ end
          
     z_local  = znode(Center(), k, grid) + grid.Lz
     z★_local = z★[i, j, k] 
-    Δz       = (z_local - z★_local) / Nint
-    zrange   = z★_local:Δz:z_local
+    Δz       = - (z_local - z★_local) / Nint
+    zrange   = z_local:Δz:z★_local
 
     @unroll for z in zrange
         Γ²[i, j, k] += Δz * linear_interpolate(z★_arr, ρ_arr, z)
