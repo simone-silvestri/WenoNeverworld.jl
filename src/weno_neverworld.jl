@@ -25,7 +25,22 @@ using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_glob
 @inline u_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, k] * speedᶠᶜᶜ(i, j, k, grid, fields) 
 @inline v_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, k] * speedᶜᶠᶜ(i, j, k, grid, fields) 
 
-@inline surface_wind_stress(x, y, t, p) = p.τw(y, p.equatorial_wind)
+@inline surface_wind_stress(i, j, grid, clock, fields, τ) = τ[j]
+
+@inline function grid_specific_array(wind_stress, grid)
+
+    Ny   = size(grid, 2)
+    arch = architecture(grid)
+    
+    φ_grid = grid.φᵃᶜᵃ[1:Ny]
+
+    τw = zeros(Ny)
+    for (j, φ) in enumerate(φ_grid)
+        τw[j] = wind_stress(φ, 0.0) ./ 1000
+    end
+
+    return arch_array(arch, -τw)
+end
 
 @inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
 
@@ -51,11 +66,18 @@ default_slope_limiter         = FluxTapering(1e-2)
 @inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file)
     Hx, Hy, Hz = halo_size(orig_grid)
 
-    @info "interpolating b field"
     b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    u_init = jldopen(init_file)["u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    v_init = jldopen(init_file)["v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    w_init = jldopen(init_file)["w/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    
+    @info "interpolating fields"
     b_init = interpolate_per_level(b_init, orig_grid, grid, (Center, Center, Center))
+    u_init = interpolate_per_level(u_init, orig_grid, grid, (Face, Center, Center))
+    v_init = interpolate_per_level(v_init, orig_grid, grid, (Center, Face, Center))
+    w_init = interpolate_per_level(w_init, orig_grid, grid, (Center, Center, Face))
 
-    set!(model, b=b_init) 
+    set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
 end
 
 @inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid::MultiRegionGrid, orig_grid, init_file)
@@ -95,7 +117,9 @@ function weno_neverworld_simulation(; grid,
 
     @info "specifying boundary conditions..."
 
-    u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, parameters = (τw = wind_stress, equatorial_wind = 0.0))
+    @apply_regionally τw = grid_specific_array(wind_stress, grid)
+
+    u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
 
     # Quadratic bottom drag:
 
