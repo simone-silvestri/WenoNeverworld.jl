@@ -35,7 +35,7 @@ tadv4 = IsopycnallyRotatedUpwindScheme(tadv2, Centered(order = 6))
 
 tracer_advections = [tadv1, tadv2, tadv3, tadv4]
 
-momentum_advection = [VectorInvariant(), WENO(vector_invariant = VelocityStencil())]
+momentum_advections = [VectorInvariant(), WENO(vector_invariant = VelocityStencil())]
 
 @inline initialize_tracer(x, y, z) = y > - 60 && y < - 10 && x > 30 && x < 50 && z > - 3000 && z < - 200
 
