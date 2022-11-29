@@ -38,10 +38,39 @@ Adapt.adapt_structure(to, scheme::IsopycnallyRotatedUpwindScheme{N, FT}) where {
     IsopycnallyRotatedUpwindScheme{N, FT}(Adapt.adapt(to, scheme.upwind_scheme),    Adapt.adapt(to, scheme.centered_scheme),
                                           Adapt.adapt(to, scheme.isopycnal_tensor), Adapt.adapt(to, scheme.slope_limiter))
 
-@inline function div_Uc(i, j, k, grid, advection::AbstractIsopycnallyRotatedUpwindBiasedAdvection, U, c)
-    return 1/Vᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _isopycnally_rotated_advective_tracer_flux_x, advection, U, c) +
-                                    δyᵃᶜᵃ(i, j, k, grid, _isopycnally_rotated_advective_tracer_flux_y, advection, U, c) +
-                                    δzᵃᵃᶜ(i, j, k, grid, _isopycnally_rotated_advective_tracer_flux_z, advection, U, c))
+
+import Oceananigans.Models.HydrostaticFreeSurfaceModels: hydrostatic_free_surface_tracer_tendency
+using Oceananigans.Models.HydrostaticFreeSurfaceModels: ∇_dot_qᶜ, immersed_∇_dot_qᶜ
+
+@inline function hydrostatic_free_surface_tracer_tendency(i, j, k, grid,
+                                                          val_tracer_index::Val{tracer_index},
+                                                          advection::IsopycnallyRotatedUpwindScheme,
+                                                          closure,
+                                                          c_immersed_bc,
+                                                          buoyancy,
+                                                          velocities,
+                                                          free_surface,
+                                                          tracers,
+                                                          top_tracer_bcs,
+                                                          diffusivities,
+                                                          auxiliary_fields,
+                                                          forcing,
+                                                          clock) where tracer_index
+
+    @inbounds c = tracers[tracer_index]
+    @inbounds b = tracers.b
+    model_fields = merge(hydrostatic_fields(velocities, free_surface, tracers), auxiliary_fields)
+    
+    return ( - div_Uc(i, j, k, grid, advection, velocities, c, b)
+             - ∇_dot_qᶜ(i, j, k, grid, closure, diffusivities, val_tracer_index, c, clock, model_fields, buoyancy)
+             - immersed_∇_dot_qᶜ(i, j, k, grid, c, c_immersed_bc, closure, diffusivities, val_tracer_index, clock, model_fields)
+             + forcing(i, j, k, grid, clock, model_fields))
+end
+
+@inline function div_Uc(i, j, k, grid, advection::AbstractIsopycnallyRotatedUpwindBiasedAdvection, U, c, b)
+    return 1/Vᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _isopycnally_rotated_advective_tracer_flux_x, advection, U, c, b) +
+                                    δyᵃᶜᵃ(i, j, k, grid, _isopycnally_rotated_advective_tracer_flux_y, advection, U, c, b) +
+                                    δzᵃᵃᶜ(i, j, k, grid, _isopycnally_rotated_advective_tracer_flux_z, advection, U, c, b))
 end
     
 using Oceananigans.ImmersedBoundaries: conditional_flux_fcc, conditional_flux_cfc, conditional_flux_ccf, GFIBG
@@ -96,10 +125,10 @@ end
     return advective_flux_upwind, advective_flux_center
 end
 
-@inline function isopycnally_rotated_advective_tracer_flux_x(i, j, k, grid, advection, U, c)
+@inline function isopycnally_rotated_advective_tracer_flux_x(i, j, k, grid, advection, U, c, b)
     
     R₁₁ = one(grid)
-    R₁₃ = isopycnal_rotation_tensor_xz_fcc(i, j, k, grid, c, advection.isopycnal_tensor)
+    R₁₃ = isopycnal_rotation_tensor_xz_fcc(i, j, k, grid, b, advection.isopycnal_tensor)
 
     Aᵘˣ, Aᶜˣ = advective_tracer_fluxes_x(i, j, k, grid, advection, U.u, c)
     Aᵘᶻ, Aᶜᶻ = advective_tracer_fluxes_z(i, j, k, grid, advection, U.w, c)
@@ -112,10 +141,10 @@ end
     return (R₁₁ * Dᵘˣ + R₁₃ * Dᵘᶻ + Aᶜˣ) * ϵ + Aᵘˣ *  (1 - ϵ)
 end
 
-@inline function isopycnally_rotated_advective_tracer_flux_y(i, j, k, grid, advection, U, c)
+@inline function isopycnally_rotated_advective_tracer_flux_y(i, j, k, grid, advection, U, c, b)
     
     R₂₂ = one(grid)
-    R₂₃ = isopycnal_rotation_tensor_yz_cfc(i, j, k, grid, c, advection.isopycnal_tensor)
+    R₂₃ = isopycnal_rotation_tensor_yz_cfc(i, j, k, grid, b, advection.isopycnal_tensor)
 
     Aᵘʸ, Aᶜʸ = advective_tracer_fluxes_y(i, j, k, grid, advection, U.v, c)
     Aᵘᶻ, Aᶜᶻ = advective_tracer_fluxes_z(i, j, k, grid, advection, U.w, c)
@@ -123,16 +152,16 @@ end
     Dᵘʸ = Aᵘʸ - Aᶜʸ
     Dᵘᶻ = Aᵘᶻ - Aᶜᶻ
 
-    ϵ = tapering_factorᶜᶠᶜ(i, j, k, grid, advection, c)
+    ϵ = tapering_factorᶜᶠᶜ(i, j, k, grid, advection, b)
 
     return  (R₂₂ * Dᵘʸ + R₂₃ * Dᵘᶻ + Aᶜʸ) * ϵ + Aᵘʸ * (1 - ϵ)
 end
 
-@inline function isopycnally_rotated_advective_tracer_flux_z(i, j, k, grid, advection, U, c)
+@inline function isopycnally_rotated_advective_tracer_flux_z(i, j, k, grid, advection, U, c, b)
 
-    R₃₁ = isopycnal_rotation_tensor_xz_ccf(i, j, k, grid, c, advection.isopycnal_tensor)
-    R₃₂ = isopycnal_rotation_tensor_yz_ccf(i, j, k, grid, c, advection.isopycnal_tensor)
-    R₃₃ = isopycnal_rotation_tensor_zz_ccf(i, j, k, grid, c, advection.isopycnal_tensor)
+    R₃₁ = isopycnal_rotation_tensor_xz_ccf(i, j, k, grid, b, advection.isopycnal_tensor)
+    R₃₂ = isopycnal_rotation_tensor_yz_ccf(i, j, k, grid, b, advection.isopycnal_tensor)
+    R₃₃ = isopycnal_rotation_tensor_zz_ccf(i, j, k, grid, b, advection.isopycnal_tensor)
 
     Aᵘˣ, Aᶜˣ = advective_tracer_fluxes_x(i, j, k, grid, advection, U.u, c)
     Aᵘʸ, Aᶜʸ = advective_tracer_fluxes_y(i, j, k, grid, advection, U.v, c)
@@ -142,7 +171,7 @@ end
     Dᵘʸ = Aᵘʸ - Aᶜʸ
     Dᵘᶻ = Aᵘᶻ - Aᶜᶻ
 
-    ϵ = tapering_factorᶜᶜᶠ(i, j, k, grid, advection, c)
+    ϵ = tapering_factorᶜᶜᶠ(i, j, k, grid, advection, b)
 
     return ϵ * (R₃₁ * Dᵘˣ +
                 R₃₂ * Dᵘʸ +

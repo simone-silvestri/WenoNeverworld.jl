@@ -110,7 +110,8 @@ function weno_neverworld_simulation(; grid,
                                       Δt = 5minutes,
                                       stop_time = 10years,
                                       initial_buoyancy = initial_buoyancy_tangent,
-				                      wind_stress = zonal_wind_stress
+				                      wind_stress  = zonal_wind_stress,
+                                      tracers = :b
                                       )
 
     # Initializing boundary conditions
@@ -160,12 +161,11 @@ function weno_neverworld_simulation(; grid,
     ##### Model setup
     #####
 
-    @info "building model..."
-    
-    model = HydrostaticFreeSurfaceModel(; grid, free_surface, coriolis, closure, momentum_advection, tracer_advection,
-                                          boundary_conditions = (; u = u_bcs, v = v_bcs, b = b_bcs),
-                                          buoyancy = BuoyancyTracer(),
-                                          tracers = :b)
+    @info "building model..."            
+
+    model = HydrostaticFreeSurfaceModel(; grid, free_surface, coriolis, closure, tracers, momentum_advection, tracer_advection, 
+                                          boundary_conditions = (; u = u_bcs, v = v_bcs, b = b_bcs), 
+                                          buoyancy = BuoyancyTracer())
 
     #####
     ##### Model initialization
