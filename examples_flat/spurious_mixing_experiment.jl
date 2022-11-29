@@ -7,6 +7,7 @@ using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization, HorizontalDiv
 using Oceananigans.TurbulenceClosures: HorizontalDivergenceScalarBiharmonicDiffusivity
 using WenoNeverworld: geometric_νhb
 using Statistics: mean, quantile
+using JLD2
 
 output_dir    = joinpath(@__DIR__, "../files_spin_down")
 
