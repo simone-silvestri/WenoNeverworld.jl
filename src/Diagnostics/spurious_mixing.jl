@@ -103,6 +103,67 @@ end
     end
 end
 
+using Oceananigans.Fields: condition_operand
+
+@inline function calculate_residual_MOC(v::FieldTimeSeries, b::FieldTimeSeries; blevels = 0.0:0.001:0.06)
+
+    grid = v.grid
+    arch = architecture(grid)
+
+    Δb = blevels[2] - blevels[1]
+
+    Nb         = length(blevels)
+    Nx, Ny, Nz = size(grid)
+    Nt         = length(v.times) 
+    
+    ψ    = zeros(Ny, Nb)
+    ψint = zeros(Ny, Nb)
+
+    for iter in Nt-1:Nt
+        @info "time $iter of $(length(v.times))"
+        
+        for j in 1:Ny
+            for i in 1:Nx, k in 1:Nz
+                blev = searchsortedfirst(blevels, b[iter][i, j, k])
+                ψ[j, blev] .+= v[iter][i, j, k] * Ayᶜᶠᶜ(i, j, k, v.grid) / Nt
+            end
+        end
+    end
+
+    ψint[:, 1] .= ψ[:, 1]
+
+    for blev in 2:Nb
+        ψint[:, blev] = ψint[:, blev-1] + Δb * ψ[:, blev]
+    end
+
+    return ψint
+end
+
+# @kernel function _calculate_ψ!(ψ, vdzdb, b, column, Nz, blevels)
+#     i, j = @index(Global, NTuple)
+
+#     if column[i, j, 1] == Nz
+
+#         Δb = blevels[2] - blevels[1]
+
+#         integ = Array(interior(vdzdb, i, j, :))
+#         bcol  = Array(interior(b, i, j, :))
+
+#         perm  = sortperm(bcol)
+#         b_arr = bcol[perm]
+#         i_arr = integ[perm]
+        
+#         ψ[i, j, 1] = 0.0
+#         @unroll for k in 2:length(blevels)
+#             ψ[i, j, k] =  ψ[i, j, k-1] - Δb * linear_interpolate(b_arr, i_arr, blevels[k])
+#         end 
+#     else
+#         @unroll for (k, bi) in enumerate(blevels)
+#             ψ[i, j, k] = 1e10
+#         end 
+#     end
+# end
+
 @inline function linear_interpolate(x, y, x₀)
     i₁ = searchsortedfirst(x, x₀)
     i₂ =  searchsortedlast(x, x₀)

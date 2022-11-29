@@ -38,7 +38,7 @@ tracer_advections = [tadv1, tadv2, tadv3, tadv4]
 
 momentum_advections = [VectorInvariant(), WENO(vector_invariant = VelocityStencil())]
 
-@inline initialize_tracer(x, y, z) = y > - 60 && y < - 10 && x > 30 && x < 50 && z > - 3000 && z < - 200
+@inline initialize_tracer(x, y, z) = y > - 60 && y < - 10 && x > 20 && x < 50 && z > - 3000 && z < - 200
 
 using WenoNeverworld: geometric_νhb, default_biharmonic_viscosity
 
@@ -57,6 +57,19 @@ for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, 
                                               tracers = (:b, :c), vertical_diffusivity, biharmonic_viscosity)
 
     b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    u_init = jldopen(init_file)["u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    v_init = jldopen(init_file)["v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    w_init = jldopen(init_file)["w/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    η_init = jldopen(init_file)["η/data"][Hx+1:end-Hx, Hy+1:end-Hy, :]
+
+    Gb⁻_init = jldopen(init_file)["timstepper/G⁻/b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Gu⁻_init = jldopen(init_file)["timstepper/G⁻/u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Gv⁻_init = jldopen(init_file)["timstepper/G⁻/v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+
+    Gbⁿ_init = jldopen(init_file)["timstepper/G⁻/b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Guⁿ_init = jldopen(init_file)["timstepper/G⁻/u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Gvⁿ_init = jldopen(init_file)["timstepper/G⁻/v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+
     b_mean = quantile(b_init[:], 0.7)
     c_init = zeros(size(b_init)...)
 
@@ -70,8 +83,26 @@ for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, 
             c_init[i, j, k] = exp( - (b_init[i, j, k] - b_mean)^2 / 0.00002)
         end
     end
-                                            
-    set!(simulation.model.tracers.c, c_init)
+
+    model = simulation.model
+    
+    set!(model.tracers.b, b_init)
+    set!(model.tracers.c, c_init)
+
+    set!(model.velocities.u, u_init)
+    set!(model.velocities.v, v_init)
+    set!(model.velocities.w, w_init)
+
+    set!(model.free_surface.η, η_init)
+
+    set!(model.timestepper.G⁻.b, Gb⁻_init)
+    set!(model.timestepper.G⁻.u, Gu⁻_init)
+    set!(model.timestepper.G⁻.v, Gv⁻_init)
+
+    set!(model.timestepper.Gⁿ.b, Gbⁿ_init)
+    set!(model.timestepper.Gⁿ.u, Guⁿ_init)
+    set!(model.timestepper.Gⁿ.v, Gvⁿ_init)
+
     # Let's goo!
     @info "Running with Δt = $(prettytime(simulation.Δt))"
     @show output_prefix = output_dir * "/spin_down_trac$(idx_trac)_mom$(idx_mom)"
