@@ -47,7 +47,7 @@ for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, 
                                               tracers = (:b, :c), vertical_diffusivity)
 
     b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
-    b_mean = quantile(b_init[:], 0.8)
+    b_mean = quantile(b_init[:], 0.7)
     c_init = zeros(size(b_init)...)
 
     for i in 1:size(grid, 1), j in 1:size(grid, 2), k in 1:size(grid, 3)
