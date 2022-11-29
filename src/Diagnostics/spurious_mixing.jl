@@ -9,7 +9,7 @@ VolumeField(grid, loc=(Center, Center, Center);  indices = default_indices(3)) =
 
 DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655) = compute!(Field(ρ₀ * (1 - g * b)))
 
-function calculate_z★_diagnostics(b::FieldTimeSeries; ρ₀ = 1000.0, g = 9.80655)
+function calculate_z★_diagnostics(b::FieldTimeSeries)
 
     times = b.times
 
