@@ -15,7 +15,8 @@ output_dir    = joinpath(@__DIR__, "../files_spin_down")
 arch   = GPU()
 new_degree = 1/4
 
-grid = NeverworldGrid(arch, 1/4)
+grid     = NeverworldGrid(arch,  1/4)
+grid_aux = NeverworldGrid(CPU(), 1/4)
 Hx, Hy, Hz = halo_size(grid)
 
 # Extend the vertical advection scheme
@@ -61,9 +62,9 @@ for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, 
 
     for i in 1:size(grid, 1), j in 1:size(grid, 2), k in 1:size(grid, 3)
 
-        x = xnode(Center(), Center(), Center(), i, j, k, grid)
-        y = ynode(Center(), Center(), Center(), i, j, k, grid)
-        z = znode(Center(), Center(), Center(), i, j, k, grid)
+        x = xnode(Center(), Center(), Center(), i, j, k, grid_aux)
+        y = ynode(Center(), Center(), Center(), i, j, k, grid_aux)
+        z = znode(Center(), Center(), Center(), i, j, k, grid_aux)
 
         if initialize_tracer(x, y, z)
             c_init[i, j, k] = exp( - (b_init[i, j, k] - b_mean)^2 / 0.00002)
