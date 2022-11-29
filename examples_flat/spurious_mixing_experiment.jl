@@ -3,6 +3,7 @@ using Oceananigans.Grids: halo_size, xnode, ynode, znode
 using Oceananigans.Units
 using WenoNeverworld
 using WenoNeverworld: bathymetry_with_ridge
+using Oceananigans.Advection: VelocityStencil
 using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization, HorizontalDivergenceScalarDiffusivity
 using Oceananigans.TurbulenceClosures: HorizontalDivergenceScalarBiharmonicDiffusivity
 using WenoNeverworld: geometric_νhb
