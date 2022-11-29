@@ -41,11 +41,15 @@ momentum_advections = [VectorInvariant(), WENO(vector_invariant = VelocityStenci
 
 using WenoNeverworld: geometric_νhb, default_biharmonic_viscosity
 
+vertical_diffusivity = VerticalScalarDiffusivity(ν = 1e-4, κ = (; b = 1e-5, c = 0.0))
 
-for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, tracer_advection) in enumerate(tracer_advections), 
+for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, tracer_advection) in enumerate(tracer_advections)
 
-    vertical_diffusivity = VerticalScalarDiffusivity(ν = 1e-4, κ = (; b = 1e-5, c = 0.0))
-    biharmonic_viscosity = idx_mom == 1 ? HorizontalScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 5days) : default_biharmonic_viscosity
+    if idx_mom == 1
+        biharmonic_viscosity = HorizontalScalarBiharmonicDiffusivity(ν=geometric_νhb, discrete_form=true, parameters = 5days)
+    else
+        biharmonic_viscosity = default_biharmonic_viscosity
+    end
 
     # Construct the neverworld simulation
     simulation = weno_neverworld_simulation(; grid, Δt, stop_time, init_file, tracer_advection, momentum_advection,
