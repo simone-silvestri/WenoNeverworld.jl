@@ -62,13 +62,13 @@ for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, 
     w_init = jldopen(init_file)["w/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     η_init = jldopen(init_file)["η/data"][Hx+1:end-Hx, Hy+1:end-Hy, :]
 
-    Gb⁻_init = jldopen(init_file)["timstepper/G⁻/b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
-    Gu⁻_init = jldopen(init_file)["timstepper/G⁻/u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
-    Gv⁻_init = jldopen(init_file)["timstepper/G⁻/v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Gb⁻_init = jldopen(init_file)["timestepper/G⁻/b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Gu⁻_init = jldopen(init_file)["timestepper/G⁻/u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Gv⁻_init = jldopen(init_file)["timestepper/G⁻/v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
 
-    Gbⁿ_init = jldopen(init_file)["timstepper/G⁻/b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
-    Guⁿ_init = jldopen(init_file)["timstepper/G⁻/u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
-    Gvⁿ_init = jldopen(init_file)["timstepper/G⁻/v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Gbⁿ_init = jldopen(init_file)["timestepper/G⁻/b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Guⁿ_init = jldopen(init_file)["timestepper/G⁻/u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    Gvⁿ_init = jldopen(init_file)["timestepper/G⁻/v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
 
     b_mean = quantile(b_init[:], 0.7)
     c_init = zeros(size(b_init)...)
