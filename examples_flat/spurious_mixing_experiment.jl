@@ -110,6 +110,6 @@ for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, 
     checkpoint_outputs!(simulation, output_prefix; checkpoint_time = 10days)
 
     # initializing the time for wall_time calculation
-    run_simulation!(simulation; interp_init, init_file)
+    run_simulation!(simulation; interp_init, init_file = nothing)
 end
 
