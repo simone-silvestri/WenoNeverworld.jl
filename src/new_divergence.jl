@@ -182,20 +182,20 @@ end
 @inline flux_div_xyᶜᶜᶠ(i, j, k, grid, Qu, Qv) = δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Qu) + δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Qv)
 
 @inline div_xyᶜᶜᶜ(i, j, k, grid, u, v) = 
-    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Δy_qᶠᶜᶜ, u) +
-                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Δx_qᶜᶠᶜ, v))
+    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, Δy_qᶠᶜᶜ, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, u) +
+                                δyᵃᶜᵃ(i, j, k, grid, Δx_qᶜᶠᶜ, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, v))
 
 @inline div_xyᶜᶜᶜ(i, j, k, grid::ImmersedBoundaryGrid, u, v) = 
-    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Δy_qᶠᶜᶜ, u) +
-                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Δx_qᶜᶠᶜ, v))
+    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, Δy_qᶠᶜᶜ, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, u) +
+                                δyᵃᶜᵃ(i, j, k, grid, Δx_qᶜᶠᶜ, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, v))
 
 @inline div_xyᶜᶜᶠ(i, j, k, grid, u, v) = 
-    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Δy_qᶠᶜᶠ, u) +
-                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Δx_qᶜᶠᶠ, v))
+    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, Δy_qᶠᶜᶠ, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, u) +
+                                δyᵃᶜᵃ(i, j, k, grid, Δx_qᶜᶠᶠ, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, v))
 
 @inline div_xyᶜᶜᶠ(i, j, k, grid::ImmersedBoundaryGrid, u, v) = 
-    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Δy_qᶠᶜᶠ, u) +
-                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Δx_qᶜᶠᶠ, v))
+    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, Δy_qᶠᶜᶠ, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, u) +
+                                δyᵃᶜᵃ(i, j, k, grid, Δx_qᶜᶠᶠ, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, v))
                             
 @inline function advective_tracer_flux_x(i, j, k, grid, scheme::UpwindScheme, U, c) 
 
@@ -214,3 +214,9 @@ end
 
     return Ayᶜᶠᶜ(i, j, k, grid) * upwind_biased_product(ṽ, cᴸ, cᴿ)
 end
+
+import Oceananigans.Models.HydrostaticFreeSurfaceModels: Az_∇h²ᶜᶜᶜ
+
+@inline Az_∇h²ᶜᶜᶜ(i, j, k, grid, ∫ᶻ_Axᶠᶜᶜ, ∫ᶻ_Ayᶜᶠᶜ, η) =
+    (δxᶜᵃᵃ(i, j, k, grid, ∫ᶻ_Ax_∂x_ηᶠᶜᶜ, ∫ᶻ_Axᶠᶜᶜ, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, η) +
+     δyᵃᶜᵃ(i, j, k, grid, ∫ᶻ_Ay_∂y_ηᶜᶠᶜ, ∫ᶻ_Ayᶜᶠᶜ, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, η))
