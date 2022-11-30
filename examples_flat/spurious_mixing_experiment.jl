@@ -29,8 +29,8 @@ stop_time = 100days
 
 include("../src/isopycnally_rotated_upwinding.jl")
 
-tadv2 = WENO()
-tadv4 = IsopycnallyRotatedUpwindScheme(tadv2, Centered(order = 6))
+tadv2 = WENO(grid.underlying_grid)
+tadv4 = IsopycnallyRotatedUpwindScheme(tadv2, Centered(grid.underlying_grid, order = 6))
 
 tracer_advections = [tadv2, tadv4]
 
@@ -72,14 +72,7 @@ for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, 
     c_init = zeros(size(b_init)...)
 
     for i in 1:size(grid_aux, 1), j in 1:size(grid_aux, 2), k in 1:size(grid_aux, 3)
-
-        x = xnode(Center(), Center(), Center(), i, j, k, grid_aux)
-        y = ynode(Center(), Center(), Center(), i, j, k, grid_aux)
-        z = znode(Center(), Center(), Center(), i, j, k, grid_aux)
-
-        if initialize_tracer(x, y, z)
-            c_init[i, j, k] = exp( - (b_init[i, j, k] - b_mean)^2 / 0.00002)
-        end
+        c_init[i, j, k] = exp( - (b_init[i, j, k] - b_mean)^2 / 0.00002)
     end
 
     model = simulation.model
