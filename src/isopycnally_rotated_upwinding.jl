@@ -8,7 +8,11 @@ using Oceananigans.Advection: AbstractUpwindBiasedAdvectionScheme,
                                    _right_biased_interpolate_xᶠᵃᵃ,
                                    _right_biased_interpolate_yᵃᶠᵃ,
                                    _right_biased_interpolate_zᵃᵃᶠ,
-                                            upwind_biased_product
+                                            upwind_biased_product,
+                                          advective_tracer_flux_x,
+                                          advective_tracer_flux_y,
+                                          advective_tracer_flux_z
+                                            
 
 import Oceananigans.Advection: div_Uc
 
@@ -74,14 +78,28 @@ end
 end
     
 using Oceananigans.ImmersedBoundaries: conditional_flux_fcc, conditional_flux_cfc, conditional_flux_ccf, GFIBG
+using Oceananigans.ImmersedBoundaries: near_x_immersed_boundary_symmetricᶜ, 
+                                       near_y_immersed_boundary_symmetricᶜ, 
+                                       near_z_immersed_boundary_symmetricᶜ,
+                                       near_x_immersed_boundary_symmetricᶠ, 
+                                       near_y_immersed_boundary_symmetricᶠ, 
+                                       near_z_immersed_boundary_symmetricᶠ
+
+@inline near_any_boundary(i, j, k, ibg, advection::IsopycnallyRotatedUpwindScheme) = 
+                        near_x_immersed_boundary_symmetricᶜ(i, j, k, ibg, advection.centered_scheme) |
+                        near_y_immersed_boundary_symmetricᶜ(i, j, k, ibg, advection.centered_scheme) |
+                        near_z_immersed_boundary_symmetricᶜ(i, j, k, ibg, advection.centered_scheme) |
+                        near_x_immersed_boundary_symmetricᶠ(i, j, k, ibg, advection.centered_scheme) |
+                        near_y_immersed_boundary_symmetricᶠ(i, j, k, ibg, advection.centered_scheme) |
+                        near_z_immersed_boundary_symmetricᶠ(i, j, k, ibg, advection.centered_scheme) 
 
 @inline _isopycnally_rotated_advective_tracer_flux_x(args...) = isopycnally_rotated_advective_tracer_flux_x(args...)
 @inline _isopycnally_rotated_advective_tracer_flux_y(args...) = isopycnally_rotated_advective_tracer_flux_y(args...)
 @inline _isopycnally_rotated_advective_tracer_flux_z(args...) = isopycnally_rotated_advective_tracer_flux_z(args...)
 
-@inline _isopycnally_rotated_advective_tracer_flux_x(i, j, k, ibg::GFIBG, args...) = conditional_flux_fcc(i, j, k, ibg, zero(eltype(ibg)), isopycnally_rotated_advective_tracer_flux_x(i, j, k, ibg.underlying_grid, args...))
-@inline _isopycnally_rotated_advective_tracer_flux_y(i, j, k, ibg::GFIBG, args...) = conditional_flux_cfc(i, j, k, ibg, zero(eltype(ibg)), isopycnally_rotated_advective_tracer_flux_y(i, j, k, ibg.underlying_grid, args...))
-@inline _isopycnally_rotated_advective_tracer_flux_z(i, j, k, ibg::GFIBG, args...) = conditional_flux_ccf(i, j, k, ibg, zero(eltype(ibg)), isopycnally_rotated_advective_tracer_flux_z(i, j, k, ibg.underlying_grid, args...))
+@inline _isopycnally_rotated_advective_tracer_flux_x(i, j, k, ibg::GFIBG, adv, U, c, b) = ifelse(near_any_boundary(i, j, k, ibg, adv), _advective_tracer_flux_x(i, j, k, ibg, adv.upwind_scheme, U.u, c), isopycnally_rotated_advective_tracer_flux_x(i, j, k, ibg.underlying_grid, adv, U, c, b))
+@inline _isopycnally_rotated_advective_tracer_flux_y(i, j, k, ibg::GFIBG, adv, U, c, b) = ifelse(near_any_boundary(i, j, k, ibg, adv), _advective_tracer_flux_y(i, j, k, ibg, adv.upwind_scheme, U.v, c), isopycnally_rotated_advective_tracer_flux_y(i, j, k, ibg.underlying_grid, adv, U, c, b))
+@inline _isopycnally_rotated_advective_tracer_flux_z(i, j, k, ibg::GFIBG, adv, U, c, b) = ifelse(near_any_boundary(i, j, k, ibg, adv), _advective_tracer_flux_z(i, j, k, ibg, adv.upwind_scheme, U.w, c), isopycnally_rotated_advective_tracer_flux_z(i, j, k, ibg.underlying_grid, adv, U, c, b))
 
 @inline function advective_tracer_fluxes_x(i, j, k, grid, scheme::IsopycnallyRotatedUpwindScheme, U, c) 
 

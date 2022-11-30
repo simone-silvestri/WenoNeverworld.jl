@@ -17,7 +17,7 @@ new_degree = 1/4
 
 grid     = NeverworldGrid(arch,  1/4)
 grid_aux = NeverworldGrid(CPU(), 1/4)
-Hx, Hy, Hz = halo_size(grid)
+Hx, Hy, Hz = halo_size(grid_aux)
 
 # Extend the vertical advection scheme
 interp_init = false
@@ -46,7 +46,7 @@ vertical_diffusivity = VerticalScalarDiffusivity(ν = 1e-4, κ = (; b = 1e-5, c 
 
 for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, tracer_advection) in enumerate(tracer_advections)
 
-    if idx_mom == 1 && idx_trac < 3 
+    if idx_trac < 3 
         nothing
     else
         if idx_mom == 1
@@ -76,7 +76,7 @@ for (idx_mom, momentum_advection) in enumerate(momentum_advections), (idx_trac, 
         b_mean = quantile(b_init[:], 0.7)
         c_init = zeros(size(b_init)...)
 
-        for i in 1:size(grid, 1), j in 1:size(grid, 2), k in 1:size(grid, 3)
+        for i in 1:size(grid_aux, 1), j in 1:size(grid_aux, 2), k in 1:size(grid_aux, 3)
 
             x = xnode(Center(), Center(), Center(), i, j, k, grid_aux)
             y = ynode(Center(), Center(), Center(), i, j, k, grid_aux)
