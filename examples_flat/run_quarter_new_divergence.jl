@@ -18,7 +18,7 @@ grid      = NeverworldGrid(arch, new_degree)
 
 # Extend the vertical advection scheme
 interp_init = false
-init_file   = "files_four_isopycnal_new_bathy/neverworld_quarter_isopycnal_checkpoint_iteration3742601.jld2" 
+init_file   = "files_four_new_divergence_new_bathy/neverworld_quarter_new_divergence_checkpoint_iteration4246601.jld2" 
 
 # Simulation parameters
 Δt        = 10minutes
