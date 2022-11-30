@@ -13,7 +13,7 @@ function checkpoint_fields(file)
     v = YFaceField(grid)
     w = ZFaceField(grid)
     b = CenterField(grid)
-
+    
     Hx, Hy, Hz = halo_size(grid)
     for (var, name) in zip((u, v, w, b), ("u", "v", "w", "b"))
         set!(var, file[name * "/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz])
@@ -140,7 +140,7 @@ end
 
 using Oceananigans.Operators: Δzᶜᶠᶜ
 
-function calculate_MOC(v::Field)
+function calculate_eulerian_MOC(v::Field)
         
     v̄ = compute!(Field(Integral(v, dims = 1)))
 
@@ -156,7 +156,7 @@ function calculate_MOC(v::Field)
     return ψ
 end
 
-function calculate_MOC(v::FieldTimeSeries)
+function calculate_eulerian_MOC(v::FieldTimeSeries)
 
     v̄ = time_average(v)
     ψ = calculate_MOC(v̄)
