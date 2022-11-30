@@ -115,9 +115,15 @@ end
 
     FT = eltype(grid)
 
-    @inbounds ψ₀ = (f(i-2, j, k, grid, args...), f(i-1, j, k, grid, args...), f(i,   j, k, grid, args...))
-    @inbounds ψ₁ = (f(i-1, j, k, grid, args...), f(i,   j, k, grid, args...), f(i+1, j, k, grid, args...))
-    @inbounds ψ₂ = (f(i,   j, k, grid, args...), f(i+1, j, k, grid, args...), f(i+2, j, k, grid, args...))
+    f₋₂ = @inbounds f(i-2, j, k, grid, args...)
+    f₋₁ = @inbounds f(i-1, j, k, grid, args...)
+    f₀  = @inbounds f(i,   j, k, grid, args...)
+    f₊₁ = @inbounds f(i+1, j, k, grid, args...)
+    f₊₂ = @inbounds f(i+2, j, k, grid, args...)
+
+    ψ₀ = (f₋₂, f₋₁, f₀)
+    ψ₁ = (f₋₁, f₀,  f₊₁)
+    ψ₂ = (f₀,  f₊₁, f₊₂)
     
     return weno_reconstruction(FT, ψ₀, ψ₁, ψ₂)
 end
@@ -126,9 +132,15 @@ end
     
     FT = eltype(grid)
 
-    @inbounds ψ₀ = (v[i, j-2, k], v[i, j-1, k], v[i, j,   k])
-    @inbounds ψ₁ = (v[i, j-1, k], v[i, j,   k], v[i, j+1, k])
-    @inbounds ψ₂ = (v[i, j,   k], v[i, j+1, k], v[i, j+2, k])
+    f₋₂ = @inbounds f(i, j-2, k, grid, args...)
+    f₋₁ = @inbounds f(i, j-1, k, grid, args...)
+    f₀  = @inbounds f(i, j,   k, grid, args...)
+    f₊₁ = @inbounds f(i, j+1, k, grid, args...)
+    f₊₂ = @inbounds f(i, j+2, k, grid, args...)
+
+    ψ₀ = (f₋₂, f₋₁, f₀)
+    ψ₁ = (f₋₁, f₀,  f₊₁)
+    ψ₂ = (f₀,  f₊₁, f₊₂)
     
     return weno_reconstruction(FT, ψ₀, ψ₁, ψ₂)
 end

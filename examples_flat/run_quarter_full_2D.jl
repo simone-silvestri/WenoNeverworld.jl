@@ -28,7 +28,6 @@ include("../src/new_divergence.jl")
 
 import Oceananigans.Advection: vertical_vorticity_U, vertical_vorticity_V
 
-
 @inline function vertical_vorticity_U(i, j, k, grid, scheme::WENOVectorInvariant{N, FT, XT, YT, ZT, VI}, u, v) where {N, FT, XT, YT, ZT, VI}
     v̂  =  ℑxᶠᵃᵃ(i, j, k, grid, ℑyᵃᶜᵃ, Δx_qᶜᶠᶜ, v) / Δxᶠᶜᶜ(i, j, k, grid) 
     ζᴸ = _center_interpolate_xᶠᵃᵃ(i, j, k, grid,  _left_biased_interpolate_yᵃᶜᵃ, scheme, ζ₃ᶠᶠᶜ, VI, u, v)
