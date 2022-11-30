@@ -28,6 +28,8 @@ include("../src/new_divergence.jl")
 
 tracer_advection = WENO(grid.underlying_grid) 
 
+free_surface = ImplicitFreeSurface(solver_method = :PreconditionedConjugateGradient)
+
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, tracer_advection)
 
