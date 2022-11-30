@@ -37,9 +37,16 @@ fifth_order_coeffs = (9.0, -116.0, 2134.0, -116.0, 9.0) ./ 1920
 Optimal coefficients obtained assuming all stencils are perfectly smooth (`β₀ = β₁ = β₂`)
 and the reconstruction is fifth order
 """
-const OC₀ =  - 9.0 / 80
-const OC₁ =   98.0 / 80
-const OC₂ =  - 9.0 / 80
+const σ⁺ = 214/80
+const σ⁻ =  67/40
+
+const OC₀⁺ =   9.0 / 80 / σ⁺
+const OC₁⁺ =  49.0 / 20 / σ⁺
+const OC₂⁺ =   9.0 / 80 / σ⁺
+
+const OC₀⁻ =   9.0 / 40 / σ⁻
+const OC₁⁻ =  49.0 / 40 / σ⁻
+const OC₂⁻ =   9.0 / 40 / σ⁻
 
 """
 To calculate the smoothness coefficients
@@ -50,9 +57,9 @@ where
 
 `pᵣ(x) = ∑ₘ₌₀³∑ⱼ₌₀ᵐ⁻¹ v̂ᵢ₋ᵣ₊ⱼ Δx`
 """
-@inline   left_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * (3ψ[1] - 4ψ[2] +  ψ[3])^two_32
+@inline   left_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * ( ψ[1] - 4ψ[2] + 3ψ[3])^two_32
 @inline center_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * ( ψ[1]         -  ψ[3])^two_32
-@inline  right_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * ( ψ[1] - 4ψ[2] + 3ψ[3])^two_32
+@inline  right_biased_β(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * (3ψ[1] - 4ψ[2] +  ψ[3])^two_32
 
 @inline function centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
 
@@ -60,27 +67,37 @@ where
     β₁ = center_biased_β(FT, ψ₁)
     β₂ =  right_biased_β(FT, ψ₂)
 
-    α₀ = FT(OC₀) / (β₀ + FT(ε))^two_32
-    α₁ = FT(OC₁) / (β₁ + FT(ε))^two_32
-    α₂ = FT(OC₂) / (β₂ + FT(ε))^two_32
+    α₀⁺ = FT(OC₀⁺) / (β₀ + FT(ε))^two_32
+    α₁⁺ = FT(OC₁⁺) / (β₁ + FT(ε))^two_32
+    α₂⁺ = FT(OC₂⁺) / (β₂ + FT(ε))^two_32
 
-    Σα = α₀ + α₁ + α₂
-    w₀ = α₀ / Σα
-    w₁ = α₁ / Σα
-    w₂ = α₂ / Σα
+    α₀⁻ = FT(OC₀⁻) / (β₀ + FT(ε))^two_32
+    α₁⁻ = FT(OC₁⁻) / (β₁ + FT(ε))^two_32
+    α₂⁻ = FT(OC₂⁻) / (β₂ + FT(ε))^two_32
 
-    return w₀, w₁, w₂
+    Σα⁺ = α₀⁺ + α₁⁺ + α₂⁺
+    w₀⁺ = α₀⁺ / Σα⁺
+    w₁⁺ = α₁⁺ / Σα⁺
+    w₂⁺ = α₂⁺ / Σα⁺
+
+    Σα⁻ = α₀⁻ + α₁⁻ + α₂⁻
+    w₀⁻ = α₀⁻ / Σα⁻
+    w₁⁻ = α₁⁻ / Σα⁻
+    w₂⁻ = α₂⁻ / Σα⁻
+
+    return w₀⁺, w₁⁺, w₂⁺, w₀⁻, w₁⁻, w₂⁻
 end
 
 @inline function weno_reconstruction(FT, ψ₀, ψ₁, ψ₂)
 
-    w₀, w₁, w₂ = centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
+    w₀⁺, w₁⁺, w₂⁺, w₀⁻, w₁⁻, w₂⁻ = centered_reconstruction_weights(FT, ψ₀, ψ₁, ψ₂)
 
     ψ̂₀ = sum(ψ₀ .* C₀)
-    ψ̂₁ = sum(ψ₀ .* C₀)
+    ψ̂₁ = sum(ψ₁ .* C₁)
     ψ̂₂ = sum(ψ₂ .* C₂)
 
-    return ψ̂₀ * w₀ + ψ̂₁ * w₁ + ψ̂₂ * w₂
+    return σ⁺ * (ψ̂₀ * w₀⁺ + ψ̂₁ * w₁⁺ + ψ̂₂ * w₂⁺) - 
+           σ⁻ * (ψ̂₀ * w₀⁻ + ψ̂₁ * w₁⁻ + ψ̂₂ * w₂⁻) 
 end
 
 @inline function center_interpolate_xᶠᵃᵃ(i, j, k, grid, u)
@@ -150,27 +167,27 @@ end
 @inline _center_interpolate_xᶠᵃᵃ(i, j, k, grid, f::Function, args...) = 
         ifelse(near_boundary_center_xᶠᵃᵃ(i, j, k, grid),  f(i, j, k, grid, args...), center_interpolate_xᶠᵃᵃ(i, j, k, grid, f, args...))
 
-@inline flux_div_xyᶜᶜᶠ(i, j, k, grid, Qu, Qv) = δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, Qu) + δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, Qv)
+@inline flux_div_xyᶜᶜᶠ(i, j, k, grid, Qu, Qv) = δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Qu) + δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Qv)
 
 @inline div_xyᶜᶜᶜ(i, j, k, grid, u, v) = 
-    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, Δy_qᶠᶜᶜ, u) +
-                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, Δx_qᶜᶠᶜ, v))
+    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Δy_qᶠᶜᶜ, u) +
+                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Δx_qᶜᶠᶜ, v))
 
 @inline div_xyᶜᶜᶜ(i, j, k, grid::ImmersedBoundaryGrid, u, v) = 
-    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, Δy_qᶠᶜᶜ, u) +
-                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, Δx_qᶜᶠᶜ, v))
+    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Δy_qᶠᶜᶜ, u) +
+                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Δx_qᶜᶠᶜ, v))
 
 @inline div_xyᶜᶜᶠ(i, j, k, grid, u, v) = 
-    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, Δy_qᶠᶜᶠ, u) +
-                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, Δx_qᶜᶠᶠ, v))
+    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Δy_qᶠᶜᶠ, u) +
+                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Δx_qᶜᶠᶠ, v))
 
 @inline div_xyᶜᶜᶠ(i, j, k, grid::ImmersedBoundaryGrid, u, v) = 
-    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, Δy_qᶠᶜᶠ, u) +
-                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, Δx_qᶜᶠᶠ, v))
+    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶜᵃᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, Δy_qᶠᶜᶠ, u) +
+                                δyᵃᶜᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, _center_interpolate_xᶠᵃᵃ, Δx_qᶜᶠᶠ, v))
                             
 @inline function advective_tracer_flux_x(i, j, k, grid, scheme::UpwindScheme, U, c) 
 
-    ũ  =       _center_interpolate_xᶠᵃᵃ(i, j, k, grid, U)
+    ũ  =       _center_interpolate_yᵃᶠᵃ(i, j, k, grid, _center_interpolate_xᶠᵃᵃ, U)
     cᴸ =  _left_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, c)
     cᴿ = _right_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, c)
 
@@ -179,7 +196,7 @@ end
 
 @inline function advective_tracer_flux_y(i, j, k, grid, scheme::UpwindScheme, V, c)
 
-    ṽ  =       _center_interpolate_yᵃᶠᵃ(i, j, k, grid, V)
+    ṽ  =       _center_interpolate_xᶠᵃᵃ(i, j, k, grid, _center_interpolate_yᵃᶠᵃ, V)
     cᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, c)
     cᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, c)
 
