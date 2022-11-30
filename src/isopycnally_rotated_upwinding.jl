@@ -40,7 +40,7 @@ Adapt.adapt_structure(to, scheme::IsopycnallyRotatedUpwindScheme{N, FT}) where {
 
 
 import Oceananigans.Models.HydrostaticFreeSurfaceModels: hydrostatic_free_surface_tracer_tendency
-using Oceananigans.Models.HydrostaticFreeSurfaceModels: ∇_dot_qᶜ, immersed_∇_dot_qᶜ
+using Oceananigans.Models.HydrostaticFreeSurfaceModels: ∇_dot_qᶜ, immersed_∇_dot_qᶜ, hydrostatic_fields
 
 @inline function hydrostatic_free_surface_tracer_tendency(i, j, k, grid,
                                                           val_tracer_index::Val{tracer_index},
