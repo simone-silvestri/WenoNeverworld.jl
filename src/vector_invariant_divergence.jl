@@ -41,13 +41,19 @@ for (interp, dir, val, cT) in zip([:xᶠᵃᵃ, :yᵃᶠᵃ, :zᵃᵃᶠ], [:x, 
     end
 end
 
+using Oceananigans.Operators
+
+@inline div_xyᶠᶠᶜ(i, j, k, grid, u, v) = 
+    1 / Azᶜᶜᶜ(i, j, k, grid) * (δxᶠᵃᵃ(i, j, k, grid, Δy_qᶜᶠᶜ, ℑxyᶜᶠᵃ, u) +
+                                δyᵃᶠᵃ(i, j, k, grid, Δx_qᶠᶜᶜ, ℑxyᶠᶜᵃ, v))
+
 using Oceananigans.Operators: ℑxyᶠᶠᵃ, div_xyᶜᶜᶜ
 
-@inline divergence_left_stencil(i, j, k, grid, scheme, ::Val{1}, u, v) = @inbounds left_stencil_x(i, j, k, scheme, ℑxyᶠᶠᵃ, grid, div_xyᶜᶜᶜ, u, v)
-@inline divergence_left_stencil(i, j, k, grid, scheme, ::Val{2}, u, v) = @inbounds left_stencil_y(i, j, k, scheme, ℑxyᶠᶠᵃ, grid, div_xyᶜᶜᶜ, u, v)
+@inline divergence_left_stencil(i, j, k, grid, scheme, ::Val{1}, u, v) = @inbounds left_stencil_x(i, j, k, scheme, div_xyᶜᶜᶜ, grid, u, v)
+@inline divergence_left_stencil(i, j, k, grid, scheme, ::Val{2}, u, v) = @inbounds left_stencil_y(i, j, k, scheme, div_xyᶜᶜᶜ, grid, u, v)
 
-@inline divergence_right_stencil(i, j, k, grid, scheme, ::Val{1}, u, v) = @inbounds right_stencil_x(i, j, k, scheme, ℑxyᶠᶠᵃ, grid, div_xyᶜᶜᶜ, u, v)
-@inline divergence_right_stencil(i, j, k, grid, scheme, ::Val{2}, u, v) = @inbounds right_stencil_y(i, j, k, scheme, ℑxyᶠᶠᵃ, grid, div_xyᶜᶜᶜ, u, v)
+@inline divergence_right_stencil(i, j, k, grid, scheme, ::Val{1}, u, v) = @inbounds right_stencil_x(i, j, k, scheme, div_xyᶜᶜᶜ, grid, u, v)
+@inline divergence_right_stencil(i, j, k, grid, scheme, ::Val{2}, u, v) = @inbounds right_stencil_y(i, j, k, scheme, div_xyᶜᶜᶜ, grid, u, v)
 
 using Oceananigans.Advection: ZWENO, Cl, Cr
 
