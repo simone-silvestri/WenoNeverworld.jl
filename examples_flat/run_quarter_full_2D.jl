@@ -21,7 +21,7 @@ interp_init = false
 init_file   = "files_four_isopycnal_new_bathy/neverworld_quarter_isopycnal_checkpoint_iteration3742601.jld2" 
 
 # Simulation parameters
-Δt        = 10minutes
+Δt        = 2minutes
 stop_time = 100years
 
 include("../src/new_divergence.jl")
@@ -34,7 +34,8 @@ using Oceananigans.Advection: WENOVectorInvariant,
 		    _left_biased_interpolate_xᶜᵃᵃ,
 		   _right_biased_interpolate_yᵃᶜᵃ,
 		   _right_biased_interpolate_xᶜᵃᵃ,
-		    	    upwind_biased_product
+		    	    upwind_biased_product,
+			    VorticityStencil
 
 @inline function vertical_vorticity_U(i, j, k, grid, scheme::WENOVectorInvariant{N, FT, XT, YT, ZT, VI}, u, v) where {N, FT, XT, YT, ZT, VI}
     v̂  =  ℑxᶠᵃᵃ(i, j, k, grid, ℑyᵃᶜᵃ, Δx_qᶜᶠᶜ, v) / Δxᶠᶜᶜ(i, j, k, grid) 
@@ -55,9 +56,9 @@ tracer_advection = WENO(grid.underlying_grid)
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, tracer_advection)
 
-increase_simulation_Δt!(simulation, cutoff_time = 50days,  new_Δt = 5.0minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 200days, new_Δt = 7.5minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 300days, new_Δt = 10minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 75years, new_Δt = 5.0minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 76years, new_Δt = 7.5minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 77years, new_Δt = 10minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"

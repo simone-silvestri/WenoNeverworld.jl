@@ -187,7 +187,7 @@ function weno_neverworld_simulation(; grid,
 
         @info @sprintf("Time: % 12s, it: %d, max(|u|, |v|, |w|): (%.2e, %.2e , %.2e) ms⁻¹, Δt: %.2e s, wall time: %s", 
             prettytime(sim.model.clock.time),
-            sim.model.clock.iteration, maximum(abs, u), maximum(abs, v), maximum(abs, w), sim.Δt,
+	    sim.model.clock.iteration, maximum(abs, u), maximum(abs, v), maximum(abs, w), sim.Δt,
             prettytime(wall_time))
 
         start_time[1] = time_ns()

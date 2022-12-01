@@ -9,9 +9,9 @@ using Oceananigans.Advection: AbstractUpwindBiasedAdvectionScheme,
                                    _right_biased_interpolate_yᵃᶠᵃ,
                                    _right_biased_interpolate_zᵃᵃᶠ,
                                             upwind_biased_product,
-                                          advective_tracer_flux_x,
-                                          advective_tracer_flux_y,
-                                          advective_tracer_flux_z
+                                         _advective_tracer_flux_x,
+                                         _advective_tracer_flux_y,
+                                         _advective_tracer_flux_z
                                             
 
 import Oceananigans.Advection: div_Uc

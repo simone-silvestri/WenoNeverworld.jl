@@ -21,7 +21,7 @@ interp_init = true
 init_file   = "files_lowres_new_bathy/restart_file_15_years.jld2" 
 
 # Simulation parameters
-Δt        = 0.5minutes
+Δt        = 0.2minutes
 stop_time = 7000days
 
 vertical_diffusivity = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
@@ -29,6 +29,7 @@ vertical_diffusivity = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), �
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, vertical_diffusivity)
 
+increase_simulation_Δt!(simulation, cutoff_time = 200days,  new_Δt = 1.0minutes)
 increase_simulation_Δt!(simulation, cutoff_time = 500days,  new_Δt = 2.0minutes)
 
 # Let's goo!

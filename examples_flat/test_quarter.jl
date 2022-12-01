@@ -10,7 +10,7 @@ using Oceananigans.Units
 using Oceananigans.TurbulenceClosures
 using Oceananigans.Models.HydrostaticFreeSurfaceModels: Fields
 
-filename = "baroclinic_adjustment_orig"
+filename = "baroclinic_adjustment"
 
 # Architecture
 architecture  = GPU()
@@ -66,8 +66,7 @@ include("../src/isopycnally_rotated_upwinding.jl")
 upwind_scheme   = WENO()
 centered_scheme = Centered(order = 6)
 
-# tracer_advection = IsopycnallyRotatedUpwindScheme(upwind_scheme, centered_scheme)
-tracer_advection = WENO()
+tracer_advection = IsopycnallyRotatedUpwindScheme(upwind_scheme, centered_scheme)
 
 model = HydrostaticFreeSurfaceModel(grid = grid,
                                     coriolis = coriolis,

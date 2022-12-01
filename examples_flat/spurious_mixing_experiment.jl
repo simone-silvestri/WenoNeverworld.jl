@@ -32,7 +32,7 @@ include("../src/isopycnally_rotated_upwinding.jl")
 tadv2 = WENO(grid.underlying_grid)
 tadv4 = IsopycnallyRotatedUpwindScheme(tadv2, Centered(grid.underlying_grid, order = 6))
 
-tracer_advections = [tadv2, tadv4]
+tracer_advections = [tadv4, tadv2]
 
 momentum_advections = [VectorInvariant(), WENO(vector_invariant = VelocityStencil())]
 

@@ -3,18 +3,17 @@ using Oceananigans.Units
 using WenoNeverworld
 using WenoNeverworld: bathymetry_with_ridge
 using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization, HorizontalDivergenceScalarDiffusivity
-using Oceananigans.TurbulenceClosures: HorizontalDivergenceScalarBiharmonicDiffusivity
+using Oceananigans.TurbulenceClosures: HorizontalDivergenceScalarBiharmonicDiffusivity, HorizontalDivergenceFormulation
 using WenoNeverworld: geometric_νhb
+using Oceananigans.Advection: VelocityStencil
 
 output_dir    = joinpath(@__DIR__, "../files_four_divergence_new_bathy")
 @show output_prefix = output_dir * "/neverworld_quarter_new_divergence"
 
-arch   = GPU()
-old_degree = 1
+arch = GPU()
 new_degree = 1/4
 
-orig_grid = NeverworldGrid(arch, old_degree; longitude = (-5, 65)) 
-grid      = NeverworldGrid(arch, new_degree)
+grid = NeverworldGrid(arch, new_degree)
 
 # Extend the vertical advection scheme
 interp_init = false
@@ -26,11 +25,13 @@ stop_time = 100years
 
 include("../src/vector_invariant_divergence.jl")
 
-tracer_advection   = WENO(grid.underlying_grid) 
-momentum_advection = WENO(vector_invariant = DivergenceStencil())
+using WenoNeverworld: geometric_νhb
 
+tracer_advection   = WENO(grid.underlying_grid) 
+momentum_advection = WENO(VelocityStencil())
+biharmonic_viscosity = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 20days)
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, tracer_advection, momentum_advection)
+simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, tracer_advection, momentum_advection, biharmonic_viscosity)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
