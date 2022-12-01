@@ -162,7 +162,7 @@ using Oceananigans.Advection: vertical_vorticity_U, vertical_vorticity_V
 using Oceananigans.Advection: _advective_momentum_flux_Wu, 
                               _advective_momentum_flux_Wv,
                               _advective_momentum_flux_Uu,
-                              _advective_momentum_flux_VV
+                              _advective_momentum_flux_Vv
 
 using Oceananigans.Advection:  _left_biased_interpolate_xᶠᵃᵃ,
                                _left_biased_interpolate_yᵃᶠᵃ,
