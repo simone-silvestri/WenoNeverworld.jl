@@ -18,29 +18,24 @@ grid      = NeverworldGrid(arch, new_degree)
 
 # Extend the vertical advection scheme
 interp_init = false
-init_file   = "files_four_new_divergence_new_bathy/neverworld_quarter_new_divergence_checkpoint_iteration4246601.jld2" 
+init_file   = "files_four_new_bathy/neverworld_quarter_checkpoint_iteration3742601.jld2.jld2" 
 
 # Simulation parameters
 Δt        = 10minutes
 stop_time = 100years
 
-include("../src/new_divergence.jl")
+include("../src/vector_invariant_divergence.jl")
 
-tracer_advection = WENO(grid.underlying_grid) 
-
-free_surface = ImplicitFreeSurface(solver_method = :PreconditionedConjugateGradient)
+tracer_advection   = WENO(grid.underlying_grid) 
+momentum_advection = WENO(vector_invariant = DivergenceStencil())
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, tracer_advection)
-
-increase_simulation_Δt!(simulation, cutoff_time = 50days,  new_Δt = 5.0minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 200days, new_Δt = 7.5minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 300days, new_Δt = 10minutes)
+simulation = weno_neverworld_simulation(; grid, orig_grid, Δt, stop_time, interp_init, init_file, tracer_advection, momentum_advection)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
-overwrite_existing = false
+overwrite_existing = true
 standard_outputs!(simulation, output_prefix; overwrite_existing)
 
 # initializing the time for wall_time calculation
