@@ -157,7 +157,10 @@ using Oceananigans.Advection: vertical_vorticity_U, vertical_vorticity_V
     + vertical_advection_V(i, j, k, grid, scheme, U)  # Horizontal vorticity / vertical advection term
     + bernoulli_head_V(i, j, k, grid, scheme, U.u, U.v))     # Bernoulli head term
 
-using Oceananigans.Advection: _advective_momentum_flux_Wu, _advective_momentum_flux_Wv
+using Oceananigans.Advection: _advective_momentum_flux_Wu, 
+                              _advective_momentum_flux_Wv,
+                              _advective_momentum_flux_Uu,
+                              _advective_momentum_flux_VV
 
 using Oceananigans.Advection:  _left_biased_interpolate_xᶠᵃᵃ,
                                _left_biased_interpolate_yᵃᶠᵃ,
@@ -195,7 +198,7 @@ end
     uterm =  1/Vᶠᶜᶜ(i, j, k, grid) * δxᶠᵃᵃ(i, j, k, grid, _advective_momentum_flux_Uu, scheme, u, u)
     vterm = ∂yᶜᶠᶜ(i, j, k, grid, ℑyᵃᶜᵃ, ϕ², v)
 
-    return uterm + vterm
+    return 0.5 * (uterm + vterm)
 end
 
 @inline function bernoulli_head_U(i, j, k, grid, scheme::WENOVectorInvariant, u, v)
@@ -203,5 +206,5 @@ end
     vterm =  1/Vᶜᶠᶜ(i, j, k, grid) * δyᵃᶠᵃ(i, j, k, grid, _advective_momentum_flux_Vv, scheme, v, v)
     uterm = ∂xᶠᶜᶜ(i, j, k, grid, ℑxᶜᵃᵃ, ϕ², u)
 
-    return uterm + vterm
+    return 0.5 * (uterm + vterm)
 end
