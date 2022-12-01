@@ -110,3 +110,81 @@ for bias in (:left_biased, :right_biased)
         end
     end
 end
+
+import Oceananigans.Advection: WENO
+using Oceananigans.Advection: compute_reconstruction_coefficients
+
+function WENO(vector_invariant::SmoothnessStencil, FT::DataType=Float64; 
+              order = 5,
+              grid = nothing, 
+              zweno = true,
+              bounds = nothing)
+
+    if !(grid isa Nothing) 
+        FT = eltype(grid)
+    end
+
+    mod(order, 2) == 0 && throw(ArgumentError("WENO reconstruction scheme is defined only for odd orders"))
+
+    if order < 3
+        # WENO(order = 1) is equivalent to UpwindBiased(order = 1)
+        return UpwindBiased(order = 1)
+    else
+        VI = typeof(vector_invariant)
+        N  = Int((order + 1) ÷ 2)
+
+        weno_coefficients = compute_reconstruction_coefficients(grid, FT, :WENO; order = N)
+        buffer_scheme   = WENO(FT; grid, order = order - 2, zweno, vector_invariant, bounds)
+        advecting_velocity_scheme = Centered(FT; grid, order = order - 1)
+    end
+
+    return WENO{N, FT, VI, zweno}(weno_coefficients..., bounds, buffer_scheme, advecting_velocity_scheme)
+end
+
+import Oceananigans.Advection: vertical_advection_U, vertical_advection_V
+import Oceananigans.Advection: U_dot_∇u, U_dot_∇v
+
+using Oceananigans.Advection: vertical_vorticity_U, vertical_vorticity_V, bernoulli_head_U, bernoulli_head_V
+
+@inline U_dot_∇u(i, j, k, grid, scheme::WENOVectorInvariant, U) = (
+    + vertical_vorticity_U(i, j, k, grid, scheme, U.u, U.v)  # Vertical relative vorticity term
+    + vertical_advection_U(i, j, k, grid, scheme, U)  # Horizontal vorticity / vertical advection term
+    + bernoulli_head_U(i, j, k, grid, scheme, U.u, U.v))     # Bernoulli head term
+    
+@inline U_dot_∇v(i, j, k, grid, scheme::WENOVectorInvariant, U) = (
+    + vertical_vorticity_V(i, j, k, grid, scheme, U.u, U.v)  # Vertical relative vorticity term
+    + vertical_advection_V(i, j, k, grid, scheme, U)  # Horizontal vorticity / vertical advection term
+    + bernoulli_head_V(i, j, k, grid, scheme, U.u, U.v))     # Bernoulli head term
+
+using Oceananigans.Advection: _advective_momentum_flux_Wu, _advective_momentum_flux_Wv
+
+using Oceananigans.Advection:  _left_biased_interpolate_xᶠᵃᵃ,
+                               _left_biased_interpolate_yᵃᶠᵃ,
+                              _right_biased_interpolate_xᶠᵃᵃ,
+                              _right_biased_interpolate_yᵃᶠᵃ
+
+@inline function vertical_advection_U(i, j, k, grid, scheme, U)
+
+    u, v, w = U
+
+    @inbounds û = u[i, j, k] 
+    δᴸ =  _left_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, div_xyᶜᶜᶜ, VorticityStencil, u, v)
+    δᴿ = _right_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, div_xyᶜᶜᶜ, VorticityStencil, u, v)
+    δflux = upwind_biased_product(û, δᴸ, δᴿ) 
+    wterm =  1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wu, scheme, w, u)
+
+    return wterm + δflux
+end
+
+@inline function vertical_advection_V(i, j, k, grid, scheme, U)
+
+    u, v, w = U
+
+    @inbounds v̂ = v[i, j, k] 
+    δᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, div_xyᶜᶜᶜ, VorticityStencil, u, v)
+    δᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, div_xyᶜᶜᶜ, VorticityStencil, u, v)
+    δflux = upwind_biased_product(v̂, δᴸ, δᴿ) 
+    wterm =  1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wv, scheme, w, v)
+
+    return wterm + δflux
+end
