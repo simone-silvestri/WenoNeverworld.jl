@@ -84,6 +84,8 @@ for (side, coeff) in zip([:left, :right], (:Cl, :Cr))
     end
 end
 
+using Oceananigans.Advection: VorticityStencil
+
 for bias in (:left_biased, :right_biased)
     for (d, dir) in zip((:x, :y), (:xᶜᵃᵃ, :yᵃᶜᵃ))
         interp     = Symbol(bias, :_interpolate_, dir)

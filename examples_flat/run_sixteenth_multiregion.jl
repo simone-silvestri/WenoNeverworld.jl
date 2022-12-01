@@ -5,6 +5,23 @@ using WenoNeverworld: bathymetry_with_ridge
 using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization, HorizontalDivergenceScalarDiffusivity
 using Oceananigans.TurbulenceClosures: HorizontalDivergenceScalarBiharmonicDiffusivity
 using WenoNeverworld: geometric_νhb
+using Oceananigans.BoundaryConditions: ContinuousBoundaryFunction
+
+import Oceananigans.Utils: getregion, _getregion
+
+@inline getregion(cf::ContinuousBoundaryFunction{X, Y, Z, I}, i) where {X, Y, Z, I} =
+    ContinuousBoundaryFunction{X, Y, Z, I}(cf.func,
+                                           _getregion(cf.parameters, i),
+                                           cf.field_dependencies,
+                                           cf.field_dependencies_indices,
+                                           cf.field_dependencies_interp)
+
+@inline _getregion(cf::ContinuousBoundaryFunction{X, Y, Z, I}, i) where {X, Y, Z, I} =
+    ContinuousBoundaryFunction{X, Y, Z, I}(cf.func,
+                                           getregion(cf.parameters, i),
+                                           cf.field_dependencies,
+                                           cf.field_dependencies_indices,
+                                           cf.field_dependencies_interp)
 
 output_dir    = joinpath(@__DIR__, "../files_sixteen_new_bathy")
 @show output_prefix = output_dir * "/neverworld_sixteenth"
@@ -14,11 +31,13 @@ old_degree = 1
 new_degree = 1/16
 
 orig_grid = NeverworldGrid(arch, old_degree; longitude = (-5, 65)) 
-grid      = MultiRegionGrid(NeverworldGrid(arch, new_degree), partition = XPartition(2), devices = 2)
+grid      = NeverworldGrid(arch, new_degree)
+
+grid = MultiRegionGrid(grid.underlying_grid, partition = XPartition(2), devices = 2)
 
 # Extend the vertical advection scheme
-interp_init = true
-init_file   = "files_lowres_new_bathy/restart_file_15_years.jld2" 
+interp_init = false
+init_file   = nothing #"files_lowres_new_bathy/restart_file_15_years.jld2" 
 
 # Simulation parameters
 Δt        = 0.5minutes

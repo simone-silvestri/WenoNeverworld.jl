@@ -216,6 +216,12 @@ end
 end
 
 import Oceananigans.Models.HydrostaticFreeSurfaceModels: Az_∇h²ᶜᶜᶜ
+import Oceananigans.Models.HydrostaticFreeSurfaceModels: ∫ᶻ_Ax_∂x_ηᶠᶜᶜ, ∫ᶻ_Ay_∂y_ηᶜᶠᶜ
+
+
+# Kernels that act on vertically integrated / surface quantities
+@inline ∫ᶻ_Ax_∂x_ηᶠᶜᶜ(i, j, k, grid, ∫ᶻ_Axᶠᶜᶜ, f::Function, args...) = @inbounds ∫ᶻ_Axᶠᶜᶜ[i, j, k] * ∂xᶠᶜᶠ(i, j, k, grid, f, args...)
+@inline ∫ᶻ_Ay_∂y_ηᶜᶠᶜ(i, j, k, grid, ∫ᶻ_Ayᶜᶠᶜ, f::Function, args...) = @inbounds ∫ᶻ_Ayᶜᶠᶜ[i, j, k] * ∂yᶜᶠᶠ(i, j, k, grid, f, args...)
 
 @inline Az_∇h²ᶜᶜᶜ(i, j, k, grid, ∫ᶻ_Axᶠᶜᶜ, ∫ᶻ_Ayᶜᶠᶜ, η) =
     (δxᶜᵃᵃ(i, j, k, grid, ∫ᶻ_Ax_∂x_ηᶠᶜᶜ, ∫ᶻ_Axᶠᶜᶜ, _center_interpolate_xᶠᵃᵃ, _center_interpolate_yᵃᶠᵃ, η) +

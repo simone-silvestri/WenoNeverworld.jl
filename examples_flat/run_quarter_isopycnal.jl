@@ -18,14 +18,36 @@ grid      = NeverworldGrid(arch, new_degree)
 
 # Extend the vertical advection scheme
 interp_init = false
-init_file   = "files_four_new_bathy/neverworld_quarter_checkpoint_iteration2763401.jld2" 
+init_file   = "files_four_isopycnal_new_bathy/neverworld_quarter_isopycnal_checkpoint_iteration3742601.jld2" 
 
 # Simulation parameters
 Δt        = 10minutes
-stop_time = 75years
+stop_time = 100years
 
-upwind_advection = WENO()
-center_advection = Centered(order = 6)
+using Oceananigans.Advection: compute_reconstruction_coefficients
+import Oceananigans.Advection: Centered
+
+function Centered(FT::DataType = Float64; grid = nothing, order = 2) 
+
+    if !(grid isa Nothing) 
+        FT = eltype(grid)
+    end
+
+    mod(order, 2) != 0 && throw(ArgumentError("Centered reconstruction scheme is defined only for even orders"))
+
+    N  = Int(order ÷ 2)
+    if N > 1
+        coefficients = compute_reconstruction_coefficients(grid, FT, :Centered; order)
+        buffer_scheme = Centered(FT; grid, order = order - 2)
+    else
+        coefficients    = Tuple(nothing for i in 1:6)
+        buffer_scheme = nothing
+    end
+    return Centered{N, FT}(coefficients..., buffer_scheme)
+end
+
+upwind_advection = WENO(grid.underlying_grid)
+center_advection = Centered(grid.underlying_grid, order = 6)
 
 include("../src/isopycnally_rotated_upwinding.jl")
 
