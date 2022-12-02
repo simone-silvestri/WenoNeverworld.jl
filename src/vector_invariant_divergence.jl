@@ -195,6 +195,8 @@ end
     return wterm + δflux
 end
 
+@inline ϕ²(i, j, k, grid, c) = c[i, j, k]^2
+
 @inline function bernoulli_head_U(i, j, k, grid, scheme::WENOVectorInvariant, u, v)
 
     uterm =  1/Vᶠᶜᶜ(i, j, k, grid) * δxᶠᵃᵃ(i, j, k, grid, _advective_momentum_flux_Uu, scheme, u, u)
