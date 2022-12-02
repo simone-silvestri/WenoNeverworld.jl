@@ -7,8 +7,8 @@ using Oceananigans.TurbulenceClosures: HorizontalDivergenceScalarBiharmonicDiffu
 using WenoNeverworld: geometric_νhb
 using Oceananigans.Advection: VelocityStencil
 
-output_dir    = joinpath(@__DIR__, "../files_four_divergence_new_bathy")
-@show output_prefix = output_dir * "/neverworld_quarter_new_divergence"
+output_dir    = joinpath(@__DIR__, "../files_final_test")
+@show output_prefix = output_dir * "/neverworld_final_test"
 
 arch = GPU()
 new_degree = 1/4
