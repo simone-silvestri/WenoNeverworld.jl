@@ -26,7 +26,7 @@ stop_time = 100years
 
 tracer_advection   = WENO(grid.underlying_grid) 
 upwind_scheme      = WENO(VelocityStencil())
-momentum_advection = GlobalVectorInvariant(; upwind_scheme)
+momentum_advection = GlobalVectorInvariant(; upwind_scheme, vertical_scheme = upwind_scheme)
 
 biharmonic_viscosity = nothing
 
