@@ -178,10 +178,10 @@ using Oceananigans.Advection:  _left_biased_interpolate_xᶠᵃᵃ,
     + vertical_advection_V(i, j, k, grid, scheme, U))
 
 @inline vertical_advection_U(i, j, k, grid, scheme::WENOVectorInvariant, U) = 
-    1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wu, scheme.vertical_scheme, U.w, U.u)
+    1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wu, scheme, U.w, U.u)
 
 @inline vertical_advection_V(i, j, k, grid, scheme::WENOVectorInvariant, U) = 
-     1/Vᶜᶠᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wv, scheme.vertical_scheme, U.w, U.v)
+     1/Vᶜᶠᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wv, scheme, U.w, U.v)
 
 @inline δ_plus_∂xu(i, j, k, grid, u, v) = div_xyᶜᶜᶜ(i, j, k, grid, u, v) + ∂xᶜᶜᶜ(i, j, k, grid, u)
 @inline ζ_plus_∂yu(i, j, k, grid, u, v) =   - ζ₃ᶠᶠᶜ(i, j, k, grid, u, v) + ∂yᶠᶠᶜ(i, j, k, grid, u)
