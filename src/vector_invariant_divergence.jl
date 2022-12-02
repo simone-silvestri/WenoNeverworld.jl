@@ -200,7 +200,7 @@ end
 @inline function bernoulli_head_U(i, j, k, grid, scheme::WENOVectorInvariant, u, v)
 
     uterm =  1/Vᶠᶜᶜ(i, j, k, grid) * δxᶠᵃᵃ(i, j, k, grid, _advective_momentum_flux_Uu, scheme, u, u)
-    vterm = ∂yᶜᶠᶜ(i, j, k, grid, ℑyᵃᶜᵃ, ϕ², v)
+    vterm = ∂xᶠᶜᶜ(i, j, k, grid, ℑyᵃᶜᵃ, ϕ², v)
 
     return 0.5 * (uterm + vterm)
 end
@@ -208,7 +208,7 @@ end
 @inline function bernoulli_head_V(i, j, k, grid, scheme::WENOVectorInvariant, u, v)
 
     vterm =  1/Vᶜᶠᶜ(i, j, k, grid) * δyᵃᶠᵃ(i, j, k, grid, _advective_momentum_flux_Vv, scheme, v, v)
-    uterm = ∂xᶠᶜᶜ(i, j, k, grid, ℑxᶜᵃᵃ, ϕ², u)
+    uterm = ∂yᶜᶠᶜ(i, j, k, grid, ℑxᶜᵃᵃ, ϕ², u)
 
     return 0.5 * (uterm + vterm)
 end
