@@ -1,5 +1,6 @@
 using Oceananigans.TurbulenceClosures
 using Oceananigans.Grids: min_Δx, min_Δy
+using Oceananigans.Operators
 using Oceananigans.Operators: Δxᶜᶜᶜ, Δyᶜᶜᶜ, ℑxyᶜᶜᵃ, ζ₃ᶠᶠᶜ, div_xyᶜᶜᶜ
 using Oceananigans.Operators: Δx, Δy
 using Oceananigans.Operators: ℑxyz
@@ -47,7 +48,7 @@ end
    
     dynamic_visc = sqrt( p.C₁ * (∂xζ^2 + ∂yζ^2) + p.C₂ * (∂xδ^2 + ∂yδ^2) ) / 8
  
-    A = Area(i, j, k, grid, lx, ly, lz)
+    A = p.Area(i, j, k, grid, lx, ly, lz)
     visc₁ = dynamic_visc * A^2.5
     visc₂ = A^2 / p.λ
 
