@@ -147,7 +147,7 @@ import Oceananigans.Advection: vertical_advection_U, vertical_advection_V
 import Oceananigans.Advection: bernoulli_head_U, bernoulli_head_V
 import Oceananigans.Advection: U_dot_∇u, U_dot_∇v
 
-using Oceananigans.Advection: vertical_vorticity_U, vertical_vorticity_V
+import Oceananigans.Advection: vertical_vorticity_U, vertical_vorticity_V
 
 @inline U_dot_∇u(i, j, k, grid, scheme::WENOVectorInvariant, U) = (
     + vertical_vorticity_U(i, j, k, grid, scheme, U.u, U.v)  # Vertical relative vorticity term
@@ -195,20 +195,104 @@ end
     return wterm + δflux
 end
 
-@inline ϕ²(i, j, k, grid, c) = c[i, j, k]^2
-
 @inline function bernoulli_head_U(i, j, k, grid, scheme::WENOVectorInvariant, u, v)
 
-    uterm =  1/Vᶠᶜᶜ(i, j, k, grid) * δxᶠᵃᵃ(i, j, k, grid, _advective_momentum_flux_Uu, scheme, u, u)
-    vterm = ∂xᶠᶜᶜ(i, j, k, grid, ℑyᵃᶜᵃ, ϕ², v)
+    @inbounds û = u[i, j, k]
+    ∂uᴸ =  _left_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, ∂xᶜᶜᶜ, u)
+    ∂uᴿ = _right_biased_interpolate_xᶠᵃᵃ(i, j, k, grid, scheme, ∂xᶜᶜᶜ, u)
 
-    return 0.5 * (uterm + vterm)
+    @inbounds v̂ = ℑxᶠᵃᵃ(i, j, k, grid, ℑyᵃᶜᵃ, Δx_qᶜᶠᶜ, v) / Δxᶠᶜᶜ(i, j, k, grid) 
+    ∂vᴸ =  _left_biased_interpolate_yᵃᶜᵃ(i, j, k, grid, scheme, ∂xᶠᶠᶜ, v)
+    ∂vᴿ = _right_biased_interpolate_yᵃᶜᵃ(i, j, k, grid, scheme, ∂xᶠᶠᶜ, v)
+
+    return upwind_biased_product(û, ∂uᴸ, ∂uᴿ) + upwind_biased_product(v̂, ∂vᴸ, ∂vᴿ)
 end
 
 @inline function bernoulli_head_V(i, j, k, grid, scheme::WENOVectorInvariant, u, v)
 
-    vterm =  1/Vᶜᶠᶜ(i, j, k, grid) * δyᵃᶠᵃ(i, j, k, grid, _advective_momentum_flux_Vv, scheme, v, v)
-    uterm = ∂yᶜᶠᶜ(i, j, k, grid, ℑxᶜᵃᵃ, ϕ², u)
+    @inbounds û = ℑyᵃᶠᵃ(i, j, k, grid, ℑxᶜᵃᵃ, Δy_qᶠᶜᶜ, u) / Δyᶜᶠᶜ(i, j, k, grid)
+    ∂uᴸ =  _left_biased_interpolate_xᶜᵃᵃ(i, j, k, grid, scheme, ∂yᶠᶠᶜ, u)
+    ∂uᴿ = _right_biased_interpolate_xᶜᵃᵃ(i, j, k, grid, scheme, ∂yᶠᶠᶜ, u)
 
-    return 0.5 * (uterm + vterm)
+    @inbounds v̂ = v[i, j, k]
+    ∂vᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, ∂yᶜᶜᶜ, v)
+    ∂vᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, ∂yᶜᶜᶜ, v)
+
+    return upwind_biased_product(û, ∂uᴸ, ∂uᴿ) + upwind_biased_product(v̂, ∂vᴸ, ∂vᴿ)
 end
+
+
+# @inline function vertical_vorticity_U(i, j, k, grid, scheme::WENOVectorInvariant{N, FT, XT, YT, ZT, VI}, u, v) where {N, FT, XT, YT, ZT, VI}
+#     v̂  =  ℑxᶠᵃᵃ(i, j, k, grid, ℑyᵃᶜᵃ, Δx_qᶜᶠᶜ, v) / Δxᶠᶜᶜ(i, j, k, grid) 
+#     ζᴸ =  _multi_dimensional_reconstruction_x(i, j, k, grid, scheme,  _left_biased_interpolate_yᵃᶜᵃ, ζ₃ᶠᶠᶜ, VI, u, v)
+#     ζᴿ =  _multi_dimensional_reconstruction_x(i, j, k, grid, scheme, _right_biased_interpolate_yᵃᶜᵃ, ζ₃ᶠᶠᶜ, VI, u, v)
+#     return - upwind_biased_product(v̂, ζᴸ, ζᴿ) 
+# end
+
+# @inline function vertical_vorticity_V(i, j, k, grid, scheme::WENOVectorInvariant{N, FT, XT, YT, ZT, VI}, u, v) where {N, FT, XT, YT, ZT, VI}
+#     û  =  ℑyᵃᶠᵃ(i, j, k, grid, ℑxᶜᵃᵃ, Δy_qᶠᶜᶜ, u) / Δyᶜᶠᶜ(i, j, k, grid)
+#     ζᴸ =  _multi_dimensional_reconstruction_y(i, j, k, grid, scheme,  _left_biased_interpolate_xᶜᵃᵃ, ζ₃ᶠᶠᶜ, VI, u, v)
+#     ζᴿ =  _multi_dimensional_reconstruction_y(i, j, k, grid, scheme, _right_biased_interpolate_xᶜᵃᵃ, ζ₃ᶠᶠᶜ, VI, u, v)
+#     return + upwind_biased_product(û, ζᴸ, ζᴿ) 
+# end
+
+# @inline _multi_dimensional_reconstruction_x(args...) = multi_dimensional_reconstruction_x(args...)
+# @inline _multi_dimensional_reconstruction_y(args...) = multi_dimensional_reconstruction_y(args...)
+
+
+# const ε = 1e-6
+# const two_32 = Int32(2)
+
+# const σ⁺ = 214/80
+# const σ⁻ =  67/40
+
+# ## Figure them out!
+# const γ₀¹  =   9.0 / 80 / σ⁺
+# const γ₁¹  =  49.0 / 20 / σ⁺
+# const γ₂¹  =   9.0 / 80 / σ⁺
+
+# const γ₀²⁺ =   9.0 / 80 / σ⁺
+# const γ₁²⁺ =  49.0 / 20 / σ⁺
+# const γ₂²⁺ =   9.0 / 80 / σ⁺
+
+# const γ₀²⁻ =   9.0 / 40 / σ⁻
+# const γ₁²⁻ =  49.0 / 40 / σ⁻
+# const γ₂²⁻ =   9.0 / 40 / σ⁻
+
+# const γ₀³  =   9.0 / 40 / σ⁻
+# const γ₁³  =  49.0 / 40 / σ⁻
+# const γ₂³  =   9.0 / 40 / σ⁻
+
+# ## Figure them out!
+# const a₀¹ = (2 - 3*sqrt(15), -4 + 12*sqrt(15), 62 - 9 * sqrt(15)) / 60
+# const a₁¹ = (2 - 3*sqrt(15), -4 + 12*sqrt(15), 62 - 9 * sqrt(15)) / 60
+# const a₂¹ = (2 - 3*sqrt(15), -4 + 12*sqrt(15), 62 - 9 * sqrt(15)) / 60
+
+# const a₀² = (2 - 3*sqrt(15), -4 + 12*sqrt(15), 62 - 9 * sqrt(15)) / 60
+# const a₁² = (2 - 3*sqrt(15), -4 + 12*sqrt(15), 62 - 9 * sqrt(15)) / 60
+# const a₂² = (2 - 3*sqrt(15), -4 + 12*sqrt(15), 62 - 9 * sqrt(15)) / 60
+
+# const a₀³ = (2 - 3*sqrt(15), -4 + 12*sqrt(15), 62 - 9 * sqrt(15)) / 60
+# const a₁³ = (2 - 3*sqrt(15), -4 + 12*sqrt(15), 62 - 9 * sqrt(15)) / 60
+# const a₂³ = (2 - 3*sqrt(15), -4 + 12*sqrt(15), 62 - 9 * sqrt(15)) / 60
+
+# @inline function multi_dimensional_reconstruction_y(i, j, k, grid, scheme, _interpolate_x, f::Function, VI, args...)
+
+#     Q₋₂ = _interpolate_x(i, j, k, grid, scheme, f, VI, args...)
+#     Q₋₁ = _interpolate_x(i, j, k, grid, scheme, f, VI, args...)
+#     Q₀  = _interpolate_x(i, j, k, grid, scheme, f, VI, args...)
+#     Q₊₁ = _interpolate_x(i, j, k, grid, scheme, f, VI, args...)
+#     Q₊₂ = _interpolate_x(i, j, k, grid, scheme, f, VI, args...)
+
+#     S₀ = (Q₋₂, Q₋₁, Q₀)
+#     S₁ = (Q₋₁, Q₀ , Q₊₁)
+#     S₂ = (Q₀ , Q₊₁, Q₊₂)
+
+#     q = zeros(3)
+
+#     @unroll for j in 1:3
+
+
+#     end
+
+# end
