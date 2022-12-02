@@ -1,12 +1,11 @@
 struct CenterVerticalScheme end
-struct CenterKineticScheme end
 
-struct UpwindVectorInvariant{N, FT, U, V, K} <: AbstractAdvectionScheme{N, FT}
+struct UpwindVectorInvariant{N, FT, U, V} <: AbstractAdvectionScheme{N, FT}
     upwind_scheme         :: U
     vertical_scheme       :: V
 
     function UpwindVectorInvariant{N, FT}(upwind_scheme::U, vertical_scheme::V) where {N, FT, U, V}
-        return new{N, FT, U, V, K}(upwind_scheme, vertical_scheme)
+        return new{N, FT, U, V}(upwind_scheme, vertical_scheme)
     end
 end
 
@@ -38,6 +37,8 @@ end
 ####
 #### Vertical advection terms
 ####
+
+const ConservativeVerticalVectorInvariant = UpwindVectorInvariant{<:Any, <:Any, <:Any, <:CenterVerticalScheme}
 
 @inline vertical_advection_U(i, j, k, grid, scheme::ConservativeVerticalVectorInvariant, U) = vertical_advection_U(i, j, k, grid, scheme.vertical_scheme, U)
 @inline vertical_advection_V(i, j, k, grid, scheme::ConservativeVerticalVectorInvariant, U) = vertical_advection_V(i, j, k, grid, scheme.vertical_scheme, U)
