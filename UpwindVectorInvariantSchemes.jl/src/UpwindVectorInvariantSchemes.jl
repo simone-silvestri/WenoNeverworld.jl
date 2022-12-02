@@ -1,11 +1,12 @@
 module UpwindVectorInvariantSchemes
 
 export UpwindVectorInvariant, GlobalVectorInvariant, UpwindKineticScheme, UpwindVerticalScheme
+export WENO, VelocityStencil, VorticityStencil
 
 using Oceananigans
 using WenoNeverworld
 using Oceananigans.Advection: AbstractAdvectionScheme
-using Oceananigans.Advection: VorticityStencil
+import Oceananigans.Advection: WENO, VorticityStencil, VelocityStencil
 
 import Oceananigans.Advection: vertical_advection_U, vertical_advection_V
 import Oceananigans.Advection: bernoulli_head_U, bernoulli_head_V
@@ -14,7 +15,6 @@ import Oceananigans.Advection: vertical_vorticity_U, vertical_vorticity_V
 
 @inline smoothness_stencil(scheme) = VorticityStencil
 
-import Oceananigans.Advection: WENO
 using Oceananigans.Advection
 using Oceananigans.Advection: compute_reconstruction_coefficients, SmoothnessStencil
 
