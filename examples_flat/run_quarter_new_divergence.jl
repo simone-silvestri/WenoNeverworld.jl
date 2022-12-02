@@ -30,6 +30,7 @@ using WenoNeverworld: geometric_νhb
 tracer_advection   = WENO(grid.underlying_grid) 
 momentum_advection = WENO(VelocityStencil())
 biharmonic_viscosity = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 20days)
+
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, tracer_advection, momentum_advection, biharmonic_viscosity)
 
