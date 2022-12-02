@@ -4,22 +4,19 @@ struct CenterKineticScheme end
 struct UpwindVectorInvariant{N, FT, U, V, K} <: AbstractAdvectionScheme{N, FT}
     upwind_scheme         :: U
     vertical_scheme       :: V
-    kinetic_energy_scheme :: K
 
-    function UpwindVectorInvariant{N, FT}(upwind_scheme::U, vertical_scheme::V, kinetic_energy_scheme::K) where {N, FT, U, V, K}
-        return new{N, FT, U, V, K}(upwind_scheme, vertical_scheme, kinetic_energy_scheme)
+    function UpwindVectorInvariant{N, FT}(upwind_scheme::U, vertical_scheme::V) where {N, FT, U, V}
+        return new{N, FT, U, V, K}(upwind_scheme, vertical_scheme)
     end
 end
 
 function UpwindVectorInvariant(; upwind_scheme::AbstractAdvectionScheme{N, FT} = VectorInvariant(), 
-    vertical_scheme       = CenterVerticalScheme(), 
-    kinetic_energy_scheme = CenterKineticScheme()) where {N, FT}
+                                 vertical_scheme = CenterVerticalScheme()) where {N, FT}
 
-    return UpwindVectorInvariant{N, FT}(upwind_scheme, vertical_scheme, kinetic_energy_scheme)
+    return UpwindVectorInvariant{N, FT}(upwind_scheme, vertical_scheme)
 end
 
-@inline vertical_scheme(scheme::UpwindVectorInvariant)       = string(nameof(typeof(scheme.vertical_scheme)))
-@inline kinetic_energy_scheme(scheme::UpwindVectorInvariant) = string(nameof(typeof(scheme.kinetic_energy_scheme)))
+@inline vertical_scheme(scheme::UpwindVectorInvariant) = string(nameof(typeof(scheme.vertical_scheme)))
 @inline smoothness_stencil(::UpwindVectorInvariant{<:Any, <:Any, <:WENO{N, FT, XT, YT, ZT, VI}}) where {N, FT, XT, YT, ZT, VI} = VI
 
 @inline U_dot_∇u(i, j, k, grid, scheme::UpwindVectorInvariant, U) = (
@@ -32,14 +29,8 @@ end
     + vertical_advection_V(i, j, k, grid, scheme, U)                               # Horizontal vorticity / vertical advection term
     + bernoulli_head_V(i, j, k, grid, scheme, U.u, U.v))                           # Bernoulli head term
 
-const ConservativeVerticalVectorInvariant = UpwindVectorInvariant{<:Any, <:Any, <:Any, CenterVerticalScheme}
-const ConservativeKineticVectorInvariant  = UpwindVectorInvariant{<:Any, <:Any, <:Any, <:Any, CenterKineticScheme}
-
-@inline bernoulli_head_U(i, j, k, grid, scheme::ConservativeKineticVectorInvariant, u, v) = bernoulli_head_U(i, j, k, grid, scheme.kinetic_energy_scheme, u, v)
-@inline bernoulli_head_V(i, j, k, grid, scheme::ConservativeKineticVectorInvariant, u, v) = bernoulli_head_V(i, j, k, grid, scheme.kinetic_energy_scheme, u, v)
-
-@inline bernoulli_head_U(i, j, k, grid, ::CenterKineticScheme, u, v) = ∂xᶠᶜᶜ(i, j, k, grid, Khᶜᶜᶜ, u, v)
-@inline bernoulli_head_V(i, j, k, grid, ::CenterKineticScheme, u, v) = ∂yᶜᶠᶜ(i, j, k, grid, Khᶜᶜᶜ, u, v)
+@inline bernoulli_head_U(i, j, k, grid, ::UpwindVectorInvariant, u, v) = ∂xᶠᶜᶜ(i, j, k, grid, Khᶜᶜᶜ, u, v)
+@inline bernoulli_head_V(i, j, k, grid, ::UpwindVectorInvariant, u, v) = ∂yᶜᶠᶜ(i, j, k, grid, Khᶜᶜᶜ, u, v)
 
 @inline ϕ²(i, j, k, grid, ϕ)       = @inbounds ϕ[i, j, k]^2
 @inline Khᶜᶜᶜ(i, j, k, grid, u, v) = (ℑxᶜᵃᵃ(i, j, k, grid, ϕ², u) + ℑyᵃᶜᵃ(i, j, k, grid, ϕ², v)) / 2

@@ -14,7 +14,6 @@ function GlobalVectorInvariant(; upwind_scheme::AbstractAdvectionScheme{N, FT} =
 end
 
 @inline vertical_scheme(scheme::GlobalVectorInvariant)       = string(nameof(typeof(scheme.vertical_scheme)))
-@inline kinetic_energy_scheme(scheme::GlobalVectorInvariant) = string(nameof(typeof(scheme.upwind_scheme)))
 @inline smoothness_stencil(::GlobalVectorInvariant{<:Any, <:Any, <:WENO{N, FT, XT, YT, ZT, VI}}) where {N, FT, XT, YT, ZT, VI} = VI
 
 @inline U_dot_∇u(i, j, k, grid, scheme::GlobalVectorInvariant, U) = (
@@ -29,13 +28,13 @@ end
     1/Vᶠᶜᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wu, scheme.vertical_scheme, U.w, U.u)
 
 @inline vertical_advection_V(i, j, k, grid, scheme::GlobalVectorInvariant, U) = 
-     1/Vᶜᶠᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wv, scheme.vertical_scheme, U.w, U.v)
+    1/Vᶜᶠᶜ(i, j, k, grid) * δzᵃᵃᶜ(i, j, k, grid, _advective_momentum_flux_Wv, scheme.vertical_scheme, U.w, U.v)
 
-@inline δ_plus_∂xu(i, j, k, grid, u, v) = div_xyᶜᶜᶜ(i, j, k, grid, u, v) + ∂xᶜᶜᶜ(i, j, k, grid, u)
-@inline ζ_plus_∂yu(i, j, k, grid, u, v) =   - ζ₃ᶠᶠᶜ(i, j, k, grid, u, v) + ∂yᶠᶠᶜ(i, j, k, grid, u)
-@inline δ_plus_∂yv(i, j, k, grid, u, v) = div_xyᶜᶜᶜ(i, j, k, grid, u, v) + ∂yᶜᶜᶜ(i, j, k, grid, v)
-@inline ζ_plus_∂xv(i, j, k, grid, u, v) =     ζ₃ᶠᶠᶜ(i, j, k, grid, u, v) + ∂xᶠᶠᶜ(i, j, k, grid, v)
-     
+@inline δ_plus_∂xu(i, j, k, grid, u, v) = div_xyᶜᶜᶜ(i, j, k, grid, u, v) + δxᶜᵃᵃ(i, j, k, grid, Δy_qᶠᶜᶜ, u) / Azᶜᶜᶜ(i, j, k, grid)
+@inline ζ_plus_∂yu(i, j, k, grid, u, v) =   - ζ₃ᶠᶠᶜ(i, j, k, grid, u, v) + δyᵃᶠᵃ(i, j, k, grid, Δx_qᶠᶜᶜ, u) / Azᶠᶠᶜ(i, j, k, grid)
+@inline δ_plus_∂yv(i, j, k, grid, u, v) = div_xyᶜᶜᶜ(i, j, k, grid, u, v) + δyᵃᶜᵃ(i, j, k, grid, Δx_qᶜᶠᶜ, v) / Azᶜᶜᶜ(i, j, k, grid)
+@inline ζ_plus_∂xv(i, j, k, grid, u, v) =     ζ₃ᶠᶠᶜ(i, j, k, grid, u, v) + δxᶠᵃᵃ(i, j, k, grid, Δy_qᶜᶠᶜ, v) / Azᶠᶠᶜ(i, j, k, grid)
+                    
 @inline function upwinded_vector_invariant_U(i, j, k, grid, scheme::GlobalVectorInvariant, u, v)
     
     VI = smoothness_stencil(scheme)

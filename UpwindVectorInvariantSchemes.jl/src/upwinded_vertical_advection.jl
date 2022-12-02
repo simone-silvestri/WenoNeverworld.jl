@@ -1,8 +1,6 @@
 struct UpwindVerticalScheme end
-struct ConservativeUpwindVerticalScheme end
 
-const UpwindVerticalVectorInvariant             = UpwindVectorInvariant{<:Any, <:Any, <:Any, UpwindVerticalScheme}
-const ConservativeUpwindVerticalVectorInvariant = UpwindVectorInvariant{<:Any, <:Any, <:Any, ConservativeUpwindVerticalScheme}
+const UpwindVerticalVectorInvariant = UpwindVectorInvariant{<:Any, <:Any, <:Any, UpwindVerticalScheme}
 
 @inline function vertical_advection_U(i, j, k, grid, scheme::UpwindVerticalVectorInvariant, U)
 
