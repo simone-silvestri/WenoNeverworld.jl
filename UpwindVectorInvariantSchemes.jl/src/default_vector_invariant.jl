@@ -32,11 +32,14 @@ end
     + vertical_advection_V(i, j, k, grid, scheme, U)                               # Horizontal vorticity / vertical advection term
     + bernoulli_head_V(i, j, k, grid, scheme, U.u, U.v))                           # Bernoulli head term
 
-const ConservativeVerticalVectorInvariant = UpwindVectorInvariant{<:Any, CenterVerticalScheme}
-const ConservativeKineticVectorInvariant  = UpwindVectorInvariant{<:Any, <:Any, CenterKineticScheme}
+const ConservativeVerticalVectorInvariant = UpwindVectorInvariant{<:Any, <:Any, <:Any, CenterVerticalScheme}
+const ConservativeKineticVectorInvariant  = UpwindVectorInvariant{<:Any, <:Any, <:Any, <:Any, CenterKineticScheme}
 
-@inline bernoulli_head_U(i, j, k, grid, scheme::ConservativeKineticVectorInvariant, u, v) = ∂xᶠᶜᶜ(i, j, k, grid, Khᶜᶜᶜ, u, v)
-@inline bernoulli_head_V(i, j, k, grid, scheme::ConservativeKineticVectorInvariant, u, v) = ∂yᶜᶠᶜ(i, j, k, grid, Khᶜᶜᶜ, u, v)
+@inline bernoulli_head_U(i, j, k, grid, scheme::ConservativeKineticVectorInvariant, u, v) = bernoulli_head_U(i, j, k, grid, scheme.kinetic_energy_scheme, u, v)
+@inline bernoulli_head_V(i, j, k, grid, scheme::ConservativeKineticVectorInvariant, u, v) = bernoulli_head_V(i, j, k, grid, scheme.kinetic_energy_scheme, u, v)
+
+@inline bernoulli_head_U(i, j, k, grid, ::CenterKineticScheme, u, v) = ∂xᶠᶜᶜ(i, j, k, grid, Khᶜᶜᶜ, u, v)
+@inline bernoulli_head_V(i, j, k, grid, ::CenterKineticScheme, u, v) = ∂yᶜᶠᶜ(i, j, k, grid, Khᶜᶜᶜ, u, v)
 
 @inline ϕ²(i, j, k, grid, ϕ)       = @inbounds ϕ[i, j, k]^2
 @inline Khᶜᶜᶜ(i, j, k, grid, u, v) = (ℑxᶜᵃᵃ(i, j, k, grid, ϕ², u) + ℑyᵃᶜᵃ(i, j, k, grid, ϕ², v)) / 2
@@ -45,8 +48,12 @@ const ConservativeKineticVectorInvariant  = UpwindVectorInvariant{<:Any, <:Any, 
 #### Vertical advection terms
 ####
 
+@inline vertical_advection_U(i, j, k, grid, scheme::ConservativeVerticalVectorInvariant, U) = vertical_advection_U(i, j, k, grid, scheme.vertical_scheme, U)
+@inline vertical_advection_V(i, j, k, grid, scheme::ConservativeVerticalVectorInvariant, U) = vertical_advection_V(i, j, k, grid, scheme.vertical_scheme, U)
+
+@inline vertical_advection_U(i, j, k, grid, ::CenterVerticalScheme, U) =  ℑzᵃᵃᶜ(i, j, k, grid, ζ₂wᶠᶜᶠ, U.u, U.w) / Azᶠᶜᶜ(i, j, k, grid)
+@inline vertical_advection_V(i, j, k, grid, ::CenterVerticalScheme, U) =  ℑzᵃᵃᶜ(i, j, k, grid, ζ₁wᶜᶠᶠ, U.v, U.w) / Azᶜᶠᶜ(i, j, k, grid)
+
 @inbounds ζ₂wᶠᶜᶠ(i, j, k, grid, u, w) = ℑxᶠᵃᵃ(i, j, k, grid, Az_qᶜᶜᶠ, w) * ∂zᶠᶜᶠ(i, j, k, grid, u) 
 @inbounds ζ₁wᶜᶠᶠ(i, j, k, grid, v, w) = ℑyᵃᶠᵃ(i, j, k, grid, Az_qᶜᶜᶠ, w) * ∂zᶜᶠᶠ(i, j, k, grid, v) 
     
-@inline vertical_advection_U(i, j, k, grid, ::ConservativeVerticalVectorInvariant, U) =  ℑzᵃᵃᶜ(i, j, k, grid, ζ₂wᶠᶜᶠ, U.u, U.w) / Azᶠᶜᶜ(i, j, k, grid)
-@inline vertical_advection_V(i, j, k, grid, ::ConservativeVerticalVectorInvariant, U) =  ℑzᵃᵃᶜ(i, j, k, grid, ζ₁wᶜᶠᶠ, U.v, U.w) / Azᶜᶠᶜ(i, j, k, grid)

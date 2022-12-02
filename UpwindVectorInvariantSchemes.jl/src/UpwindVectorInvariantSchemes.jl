@@ -18,6 +18,8 @@ import Oceananigans.Advection: WENO
 using Oceananigans.Advection
 using Oceananigans.Advection: compute_reconstruction_coefficients, SmoothnessStencil
 
+using Oceananigans.Operators
+
 function WENO(vector_invariant::SmoothnessStencil, FT::DataType=Float64; 
               order = 5,
               grid = nothing, 
