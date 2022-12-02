@@ -4,5 +4,6 @@ authors = ["Simone Silvestri <silvestri.simone0@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 Oceananigans = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
 WenoNeverworld = "dc645f23-3555-4f2f-8f6e-8cb879a663f8"

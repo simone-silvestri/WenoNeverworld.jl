@@ -24,9 +24,9 @@ init_file   = "../files_four_new_bathy/neverworld_quarter_checkpoint_iteration37
 Δt        = 10minutes
 stop_time = 100years
 
-tracer_advection   = WENO(grid.underlying_grid) 
-upwind_scheme      = WENO(VelocityStencil())
-momentum_advection = GlobalVectorInvariant(; upwind_scheme, vertical_scheme = upwind_scheme)
+tracer_advection = WENO(grid.underlying_grid) 
+upwind_scheme    = WENO(VelocityStencil())
+momentum_advection = GlobalVectorInvariant(; upwind_scheme, vertical_scheme = tracer_advection)
 
 biharmonic_viscosity = nothing
 

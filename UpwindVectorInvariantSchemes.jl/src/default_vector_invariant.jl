@@ -9,11 +9,18 @@ struct UpwindVectorInvariant{N, FT, U, V} <: AbstractAdvectionScheme{N, FT}
     end
 end
 
+using Oceananigans.Grids: AbstractHorizontallyCurvilinearGrid
+
+validate_momentum_advection(momentum_advection::UpwindVectorInvariant, grid::AbstractHorizontallyCurvilinearGrid) = momentum_advection
+
 function UpwindVectorInvariant(; upwind_scheme::AbstractAdvectionScheme{N, FT} = VectorInvariant(), 
                                  vertical_scheme = CenterVerticalScheme()) where {N, FT}
 
     return UpwindVectorInvariant{N, FT}(upwind_scheme, vertical_scheme)
 end
+
+Adapt.adapt_structure(to, scheme::UpwindVectorInvariant{N, FT}) where {N, FT} =
+        UpwindVectorInvariant{N, FT}(Adapt.adapt(to, scheme.upwind_scheme), Adapt.adapt(to, vertical_scheme))
 
 @inline vertical_scheme(scheme::UpwindVectorInvariant) = string(nameof(typeof(scheme.vertical_scheme)))
 @inline smoothness_stencil(::UpwindVectorInvariant{<:Any, <:Any, <:WENO{N, FT, XT, YT, ZT, VI}}) where {N, FT, XT, YT, ZT, VI} = VI

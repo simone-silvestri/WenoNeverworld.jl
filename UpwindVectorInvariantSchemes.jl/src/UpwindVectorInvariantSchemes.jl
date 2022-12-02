@@ -6,6 +6,7 @@ export WENO, VelocityStencil, VorticityStencil
 using Oceananigans
 using WenoNeverworld
 using Oceananigans.Advection
+using Adapt
 
 using Oceananigans.Advection: AbstractAdvectionScheme
 import Oceananigans.Advection: WENO, VorticityStencil, VelocityStencil
@@ -33,6 +34,8 @@ using Oceananigans.Advection: upwind_biased_product
 using Oceananigans.Advection: compute_reconstruction_coefficients, SmoothnessStencil
 
 using Oceananigans.Operators
+
+import Oceananigans.Models.HydrostaticFreeSurfaceModels: validate_momentum_advection
 
 @inline smoothness_stencil(scheme) = VorticityStencil
 
