@@ -5,6 +5,8 @@ export WENO, VelocityStencil, VorticityStencil
 
 using Oceananigans
 using WenoNeverworld
+using Oceananigans.Advection
+
 using Oceananigans.Advection: AbstractAdvectionScheme
 import Oceananigans.Advection: WENO, VorticityStencil, VelocityStencil
 
@@ -13,12 +15,26 @@ import Oceananigans.Advection: bernoulli_head_U, bernoulli_head_V
 import Oceananigans.Advection: U_dot_∇u, U_dot_∇v
 import Oceananigans.Advection: vertical_vorticity_U, vertical_vorticity_V
 
-@inline smoothness_stencil(scheme) = VorticityStencil
+using Oceananigans.Advection: _advective_momentum_flux_Wu, 
+                              _advective_momentum_flux_Wv,
+                              _advective_momentum_flux_Uu,
+                              _advective_momentum_flux_Vv
 
-using Oceananigans.Advection
+using Oceananigans.Advection:  _left_biased_interpolate_xᶠᵃᵃ,
+                               _left_biased_interpolate_yᵃᶠᵃ,
+                              _right_biased_interpolate_xᶠᵃᵃ,
+                              _right_biased_interpolate_yᵃᶠᵃ,
+                               _left_biased_interpolate_xᶜᵃᵃ,
+                               _left_biased_interpolate_yᵃᶜᵃ,
+                              _right_biased_interpolate_xᶜᵃᵃ,
+                              _right_biased_interpolate_yᵃᶜᵃ
+
+using Oceananigans.Advection: upwind_biased_product
 using Oceananigans.Advection: compute_reconstruction_coefficients, SmoothnessStencil
 
 using Oceananigans.Operators
+
+@inline smoothness_stencil(scheme) = VorticityStencil
 
 function WENO(vector_invariant::SmoothnessStencil, FT::DataType=Float64; 
               order = 5,
