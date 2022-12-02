@@ -205,7 +205,7 @@ end
     ∂vᴸ =  _left_biased_interpolate_yᵃᶜᵃ(i, j, k, grid, scheme, ∂xᶠᶠᶜ, v)
     ∂vᴿ = _right_biased_interpolate_yᵃᶜᵃ(i, j, k, grid, scheme, ∂xᶠᶠᶜ, v)
 
-    return upwind_biased_product(û, ∂uᴸ, ∂uᴿ) + upwind_biased_product(û, ∂vᴸ, ∂vᴿ)
+    return upwind_biased_product(û, ∂uᴸ, ∂uᴿ) + upwind_biased_product(v̂, ∂vᴸ, ∂vᴿ)
 end
 
 @inline function bernoulli_head_V(i, j, k, grid, scheme::WENOVectorInvariant, u, v)
@@ -218,7 +218,7 @@ end
     ∂vᴸ =  _left_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, ∂yᶜᶜᶜ, v)
     ∂vᴿ = _right_biased_interpolate_yᵃᶠᵃ(i, j, k, grid, scheme, ∂yᶜᶜᶜ, v)
 
-    return upwind_biased_product(û, ∂uᴸ, ∂uᴿ) + upwind_biased_product(û, ∂vᴸ, ∂vᴿ)
+    return upwind_biased_product(û, ∂uᴸ, ∂uᴿ) + upwind_biased_product(v̂, ∂vᴸ, ∂vᴿ)
 end
 
 
