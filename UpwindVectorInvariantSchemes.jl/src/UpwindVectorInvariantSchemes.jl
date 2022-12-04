@@ -41,7 +41,7 @@ import Oceananigans.Models.HydrostaticFreeSurfaceModels: validate_momentum_advec
 
 include("extend_weno_properties.jl")
 include("default_vector_invariant.jl")
-include("upwinded_vertical_advection.jl")
+include("vertical_advection_treatment.jl")
 include("global_upwind_vector_invariant.jl")
 
 end 

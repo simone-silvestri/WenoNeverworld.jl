@@ -7,9 +7,6 @@ using Oceananigans.Advection: WENOVectorInvariant,
 		   _right_biased_interpolate_xᶜᵃᵃ,
 		    	    upwind_biased_product
 
-using Oceananigans.Advection: SmoothnessStencil
-
-
 function WENO(vector_invariant::SmoothnessStencil, FT::DataType=Float64; 
               order = 5,
               grid = nothing, 

@@ -25,14 +25,8 @@ init_file   = "../files_four_new_bathy/neverworld_quarter_checkpoint_iteration37
 stop_time = 100years
 
 flux_form_weno        = WENO(grid.underlying_grid) 
-vector_invariant_weno = WENO(VelocityStencil())
-momentum_advection    = GlobalVectorInvariant(; ζ_upwind_scheme = vector_invariant_weno, vertical_scheme = WENO())
-
-vertical_diffusivity = nothing
-biharmonic_viscosity = nothing
-
-# Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, tracer_advection = flux_form_weno, momentum_advection, vertical_diffusivity, biharmonic_viscosity)
+vector_invariant_weno = WENO(VorticityStencil())
+momentum_advection    = GlobalVectorInvariant(; upwind_scheme = vector_invariant_weno, vertical_scheme = WENO())
 
 biharmonic_viscosity = nothing
 

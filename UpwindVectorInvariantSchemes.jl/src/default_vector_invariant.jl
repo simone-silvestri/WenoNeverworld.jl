@@ -1,5 +1,3 @@
-struct CenterVerticalScheme end
-
 struct UpwindVectorInvariant{N, FT, U, V} <: AbstractAdvectionScheme{N, FT}
     upwind_scheme         :: U
     vertical_scheme       :: V
@@ -40,19 +38,3 @@ Adapt.adapt_structure(to, scheme::UpwindVectorInvariant{N, FT}) where {N, FT} =
 
 @inline ϕ²(i, j, k, grid, ϕ)       = @inbounds ϕ[i, j, k]^2
 @inline Khᶜᶜᶜ(i, j, k, grid, u, v) = (ℑxᶜᵃᵃ(i, j, k, grid, ϕ², u) + ℑyᵃᶜᵃ(i, j, k, grid, ϕ², v)) / 2
-
-####
-#### Vertical advection terms
-####
-
-const ConservativeVerticalVectorInvariant = UpwindVectorInvariant{<:Any, <:Any, <:Any, <:CenterVerticalScheme}
-
-@inline vertical_advection_U(i, j, k, grid, scheme::ConservativeVerticalVectorInvariant, U) = vertical_advection_U(i, j, k, grid, scheme.vertical_scheme, U)
-@inline vertical_advection_V(i, j, k, grid, scheme::ConservativeVerticalVectorInvariant, U) = vertical_advection_V(i, j, k, grid, scheme.vertical_scheme, U)
-
-@inline vertical_advection_U(i, j, k, grid, ::CenterVerticalScheme, U) =  ℑzᵃᵃᶜ(i, j, k, grid, ζ₂wᶠᶜᶠ, U.u, U.w) / Azᶠᶜᶜ(i, j, k, grid)
-@inline vertical_advection_V(i, j, k, grid, ::CenterVerticalScheme, U) =  ℑzᵃᵃᶜ(i, j, k, grid, ζ₁wᶜᶠᶠ, U.v, U.w) / Azᶜᶠᶜ(i, j, k, grid)
-
-@inbounds ζ₂wᶠᶜᶠ(i, j, k, grid, u, w) = ℑxᶠᵃᵃ(i, j, k, grid, Az_qᶜᶜᶠ, w) * ∂zᶠᶜᶠ(i, j, k, grid, u) 
-@inbounds ζ₁wᶜᶠᶠ(i, j, k, grid, v, w) = ℑyᵃᶠᵃ(i, j, k, grid, Az_qᶜᶜᶠ, w) * ∂zᶜᶠᶠ(i, j, k, grid, v) 
-    
