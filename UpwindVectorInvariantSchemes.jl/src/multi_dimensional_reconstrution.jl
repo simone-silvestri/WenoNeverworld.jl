@@ -109,7 +109,7 @@ function fifth_order_weno_reconstruction(FT, S₀, S₁, S₂)
 
     q² = σ⁺ * q²⁺ - σ⁻ * q²⁻
 
-    return sqrt(π) * (q¹ / 6 + 2 * q² / 3 + q³ / 6)
+    return (q¹ / 6 + 2 * q² / 3 + q³ / 6)
 end
 
 @inline   left_biased_β_constant(FT, ψ) = @inbounds FT(13/12) * (ψ[1] - 2ψ[2] + ψ[3])^two_32 + FT(1/4) * ( ψ[1] - 4ψ[2] + 3ψ[3])^two_32
