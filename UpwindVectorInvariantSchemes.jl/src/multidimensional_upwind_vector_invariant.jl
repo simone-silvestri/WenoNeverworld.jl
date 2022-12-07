@@ -13,8 +13,8 @@ end
 validate_momentum_advection(momentum_advection::MultiDimensionalVectorInvariant, grid::AbstractHorizontallyCurvilinearGrid) = momentum_advection
 
 function MultiDimensionalVectorInvariant(; ζ_upwind_scheme::AbstractAdvectionScheme{N, FT} = WENO(VelocityStencil()), 
-                                 δ_upwind_scheme = WENO(VorticityStencil()), 
-                                 vertical_scheme = Centered(), kwargs...) where {N, FT}
+                                           δ_upwind_scheme = WENO(VorticityStencil()), 
+                                           vertical_scheme = Centered(), kwargs...) where {N, FT}
 
     return MultiDimensionalVectorInvariant{N, FT}(ζ_upwind_scheme, δ_upwind_scheme, vertical_scheme)
 end

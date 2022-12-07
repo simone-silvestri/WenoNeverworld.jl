@@ -56,7 +56,7 @@ const a₂³ = (62 - 9*sqrt(15), -4 + 12*sqrt(15),  2 - 3 * sqrt(15)) ./ 60
     return w₀, w₁, w₂
 end
 
-function fifth_order_weno_reconstruction(FT, S₀, S₁, S₂)
+@inline function fifth_order_weno_reconstruction(FT, S₀, S₁, S₂)
 
     q̂₀¹ = a₀¹[1] * S₀[1] + a₀¹[2] * S₀[2] + a₀¹[3] * S₀[3]
     q̂₁¹ = a₁¹[1] * S₁[1] + a₁¹[2] * S₁[2] + a₁¹[3] * S₁[3]
@@ -74,12 +74,11 @@ function fifth_order_weno_reconstruction(FT, S₀, S₁, S₂)
     β₁ = center_biased_β_constant(FT, S₁)
     β₂ =  right_biased_β_constant(FT, S₂)
 
-    w₀¹, w₁¹, w₂¹ = centered_reconstruction_weights(FT, β₀, β₁, β₂, γ₀¹, γ₁¹, γ₂¹)
-    w₀³, w₁³, w₂³ = centered_reconstruction_weights(FT, β₀, β₁, β₂, γ₀³, γ₁³, γ₂³)
-
+    w₀¹,  w₁¹,  w₂¹  = centered_reconstruction_weights(FT, β₀, β₁, β₂, γ₀¹,  γ₁¹,  γ₂¹)
     w₀²⁺, w₁²⁺, w₂²⁺ = centered_reconstruction_weights(FT, β₀, β₁, β₂, γ₀²⁺, γ₁²⁺, γ₂²⁺)
     w₀²⁻, w₁²⁻, w₂²⁻ = centered_reconstruction_weights(FT, β₀, β₁, β₂, γ₀²⁻, γ₁²⁻, γ₂²⁻)
-
+    w₀³,  w₁³,  w₂³  = centered_reconstruction_weights(FT, β₀, β₁, β₂, γ₀³,  γ₁³,  γ₂³)
+    
     q¹ = w₀¹ * q̂₀¹ + w₁¹ * q̂₁¹ + w₂¹ * q̂₂¹
     q³ = w₀³ * q̂₀³ + w₁³ * q̂₁³ + w₂³ * q̂₂³
 
@@ -90,6 +89,7 @@ function fifth_order_weno_reconstruction(FT, S₀, S₁, S₂)
 
     return q¹ / 6 + 2 * q² / 3 + q³ / 6
 end
+
 @inline function multi_dimensional_reconstruction_x(i, j, k, grid, scheme, _interpolate_y, f::Function, VI::Type{<:SmoothnessStencil}, args...)
 
     FT = eltype(grid)
