@@ -2,7 +2,7 @@ using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Advection: VelocityStencil, VorticityStencil, boundary_buffer
 using UpwindVectorInvariantSchemes
-using UpwindVectorInvariantSchemes: smoothness_stencil, vertical_scheme, kinetic_energy_scheme
+using UpwindVectorInvariantSchemes: smoothness_stencil, vertical_scheme
 
 using Printf
 using GLMakie
@@ -50,7 +50,6 @@ function run_bickley_jet(;
     outputs = merge(model.velocities, model.tracers, (; ζ=∂x(v) - ∂y(u))) #, η=model.free_surface.η))
 
     experiment_name = experiment_name * "_$(vertical_scheme(momentum_advection))"
-    experiment_name = experiment_name * "_$(kinetic_energy_scheme(momentum_advection))"
 
     @show output_name = "bickley_jet_Nh_$(Nh)_" * experiment_name * "_$(smoothness_stencil(momentum_advection))"
 
@@ -109,25 +108,14 @@ function visualize_bickley_jet(name)
     end
 end
 
-stencils       = [VorticityStencil(), VelocityStencil()]
+stencils       = [VelocityStencil(), VorticityStencil()]
 upwind_schemes = [WENO(stencil) for stencil in stencils]
 
-centered_advection_schemes    = [UpwindVectorInvariant(; upwind_scheme) for upwind_scheme in upwind_schemes]
-kinetic_advection_schemes     = [UpwindVectorInvariant(; upwind_scheme, kinetic_energy_scheme = UpwindKineticScheme()) for upwind_scheme in upwind_schemes]
-vertical_advection_schemes    = [UpwindVectorInvariant(; upwind_scheme, vertical_scheme = UpwindVerticalScheme()) for upwind_scheme in upwind_schemes]
-full_upwind_advection_schemes = [UpwindVectorInvariant(; upwind_scheme, kinetic_energy_scheme = UpwindKineticScheme(), vertical_scheme = UpwindVerticalScheme()) for upwind_scheme in upwind_schemes]
-
-global_advection_schemes        = [GlobalVectorInvariant(; upwind_scheme) for upwind_scheme in upwind_schemes]
-upwind_global_advection_schemes = [GlobalVectorInvariant(; upwind_scheme, vertical_scheme = upwind_scheme) for upwind_scheme in upwind_schemes]
+# centered_advection_schemes = [UpwindVectorInvariant(; upwind_scheme) for upwind_scheme in upwind_schemes]
+global_advection_schemes   = [GlobalVectorInvariant(; ζ_upwind_scheme = upwind_scheme) for upwind_scheme in upwind_schemes]
 
 for Nx in [64]
-    for advection in [centered_advection_schemes..., 
-                      kinetic_advection_schemes..., 
-                      vertical_advection_schemes..., 
-                      full_upwind_advection_schemes..., 
-                      global_advection_schemes..., 
-                      upwind_global_advection_schemes...]
-
+    for advection in [global_advection_schemes...]
         experiment_name = run_bickley_jet(arch=CPU(), momentum_advection=advection, Nh=Nx)
         visualize_bickley_jet(experiment_name)
     end
