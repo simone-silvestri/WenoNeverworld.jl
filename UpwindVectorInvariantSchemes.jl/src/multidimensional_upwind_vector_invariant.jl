@@ -21,8 +21,8 @@ end
 
 Adapt.adapt_structure(to, scheme::MultiDimensionalVectorInvariant{N, FT}) where {N, FT} =
 MultiDimensionalVectorInvariant{N, FT}(Adapt.adapt(to, scheme.ζ_upwind_scheme), 
-                                     Adapt.adapt(to, scheme.δ_upwind_scheme), 
-                                     Adapt.adapt(to, scheme.vertical_scheme))
+                                       Adapt.adapt(to, scheme.δ_upwind_scheme), 
+                                       Adapt.adapt(to, scheme.vertical_scheme))
 
 @inline vertical_scheme(scheme::MultiDimensionalVectorInvariant) = string(nameof(typeof(scheme.vertical_scheme)))
 @inline smoothness_stencil(::MultiDimensionalVectorInvariant{<:Any, <:Any, <:WENO{N, FT, XT, YT, ZT, VI}}) where {N, FT, XT, YT, ZT, VI} = VI

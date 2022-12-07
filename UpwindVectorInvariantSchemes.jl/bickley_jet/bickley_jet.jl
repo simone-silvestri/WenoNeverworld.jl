@@ -5,7 +5,10 @@ using UpwindVectorInvariantSchemes
 using UpwindVectorInvariantSchemes: smoothness_stencil, vertical_scheme
 
 using Printf
-using GLMakie
+using CairoMakie
+
+using CUDA
+CUDA.device!(2)
 
 include("bickley_utils.jl")
 
@@ -47,9 +50,7 @@ function run_bickley_jet(;
 
     # Output: primitive fields + computations
     u, v, w = model.velocities
-    outputs = merge(model.velocities, model.tracers, (; ζ=∂x(v) - ∂y(u))) #, η=model.free_surface.η))
-
-    experiment_name = experiment_name * "_$(vertical_scheme(momentum_advection))"
+    outputs = merge(model.velocities, model.tracers, (; ζ=∂x(v) - ∂y(u))) 
 
     @show output_name = "bickley_jet_Nh_$(Nh)_" * experiment_name * "_$(smoothness_stencil(momentum_advection))"
 
@@ -111,12 +112,13 @@ end
 stencils       = [VelocityStencil(), VorticityStencil()]
 upwind_schemes = [WENO(stencil) for stencil in stencils]
 
-# centered_advection_schemes = [UpwindVectorInvariant(; upwind_scheme) for upwind_scheme in upwind_schemes]
-global_advection_schemes   = [GlobalVectorInvariant(; ζ_upwind_scheme = upwind_scheme) for upwind_scheme in upwind_schemes]
+twodim_advection_schemes  = [MultiDimensionalVectorInvariant(; ζ_upwind_scheme = upwind_scheme) for upwind_scheme in upwind_schemes]
+global_advection_schemes  = [GlobalVectorInvariant(; ζ_upwind_scheme = upwind_scheme)           for upwind_scheme in upwind_schemes]
+default_advection_schemes = [DefaultVectorInvariant(; upwind_scheme = upwind_scheme)            for upwind_scheme in upwind_schemes]
 
-for Nx in [64]
-    for advection in [global_advection_schemes...]
-        experiment_name = run_bickley_jet(arch=CPU(), momentum_advection=advection, Nh=Nx)
+for Nx in [128, 256]
+    for advection in [twodim_advection_schemes..., global_advection_schemes..., default_advection_schemes...]
+        experiment_name = run_bickley_jet(arch=GPU(), momentum_advection=advection, Nh=Nx)
         visualize_bickley_jet(experiment_name)
     end
 end

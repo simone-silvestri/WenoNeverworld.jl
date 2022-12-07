@@ -2,7 +2,7 @@ struct DefaultVectorInvariant{N, FT, U} <: AbstractAdvectionScheme{N, FT}
     upwind_scheme         :: U
 
     function DefaultVectorInvariant{N, FT}(upwind_scheme::U) where {N, FT, U, V}
-        return new{N, FT, U, V}(upwind_scheme)
+        return new{N, FT, U}(upwind_scheme)
     end
 end
 
@@ -10,10 +10,8 @@ using Oceananigans.Grids: AbstractHorizontallyCurvilinearGrid
 
 validate_momentum_advection(momentum_advection::DefaultVectorInvariant, grid::AbstractHorizontallyCurvilinearGrid) = momentum_advection
 
-function DefaultVectorInvariant(; upwind_scheme::AbstractAdvectionScheme{N, FT} = VectorInvariant()) where {N, FT}
-
-    return DefaultVectorInvariant{N, FT}(upwind_scheme)
-end
+DefaultVectorInvariant(; upwind_scheme::AbstractAdvectionScheme{N, FT} = VectorInvariant()) where {N, FT} = 
+     DefaultVectorInvariant{N, FT}(upwind_scheme)
 
 Adapt.adapt_structure(to, scheme::DefaultVectorInvariant{N, FT}) where {N, FT} =
         DefaultVectorInvariant{N, FT}(Adapt.adapt(to, scheme.upwind_scheme), Adapt.adapt(to, vertical_scheme))

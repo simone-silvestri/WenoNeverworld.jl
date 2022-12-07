@@ -1,3 +1,6 @@
 *.jld2
 *.png
 *.mp4
+*.eps
+*.mat
+*.svg
