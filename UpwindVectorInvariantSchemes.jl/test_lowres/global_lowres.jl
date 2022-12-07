@@ -9,16 +9,16 @@ using Oceananigans.Advection: VelocityStencil
 using UpwindVectorInvariantSchemes
 
 output_dir    = joinpath(@__DIR__, "./")
-@show output_prefix = output_dir * "/global_upwinding"
+@show output_prefix = output_dir * "/global_upwinding_lowres"
 
 arch = GPU()
-new_degree = 1/4
+new_degree = 1
 
 grid = NeverworldGrid(arch, new_degree)
 
 # Extend the vertical advection scheme
 interp_init = false
-init_file   = "../files_four_new_bathy/neverworld_quarter_checkpoint_iteration3742601.jld2" 
+init_file   = nothing
 
 # Simulation parameters
 Δt        = 10minutes
