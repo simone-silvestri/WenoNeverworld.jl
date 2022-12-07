@@ -40,7 +40,7 @@ import Oceananigans.Models.HydrostaticFreeSurfaceModels: validate_momentum_advec
 @inline smoothness_stencil(scheme) = VorticityStencil
 
 include("extend_weno_properties.jl")
-include("multi_dimensional_reconstrution.jl")
+include("multi_dimensional_reconstruction.jl")
 include("default_vector_invariant.jl")
 include("global_upwind_vector_invariant.jl")
 include("multidimensional_upwind_vector_invariant.jl")

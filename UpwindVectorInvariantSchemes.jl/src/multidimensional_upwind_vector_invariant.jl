@@ -26,7 +26,6 @@ MultiDimensionalVectorInvariant{N, FT}(Adapt.adapt(to, scheme.ζ_upwind_scheme),
 
 @inline vertical_scheme(scheme::MultiDimensionalVectorInvariant) = string(nameof(typeof(scheme.vertical_scheme)))
 @inline smoothness_stencil(::MultiDimensionalVectorInvariant{<:Any, <:Any, <:WENO{N, FT, XT, YT, ZT, VI}}) where {N, FT, XT, YT, ZT, VI} = VI
-@inline smoothness_stencil(::WENO{N, FT, XT, YT, ZT, VI}) where {N, FT, XT, YT, ZT, VI} = VI
 
 @inline U_dot_∇u(i, j, k, grid, scheme::MultiDimensionalVectorInvariant, U) = (
     + upwinded_vector_invariant_U(i, j, k, grid, scheme, U.u, U.v)      
