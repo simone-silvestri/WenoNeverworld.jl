@@ -56,7 +56,7 @@ end
 @inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Az(i, j, k, grid, lx, ly, lz)^2 / λ
 @inline    cosine_νhb(i, j, k, grid, lx, ly, lz, clock, fields, ν) = ν * hack_cosd(ynode(ly, j, grid))^3
 
-default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), convective_κz = 1.0)
+default_convective_adjustment = RiBasedVerticalDiffusivity()
 default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter         = FluxTapering(1e-2)
@@ -99,12 +99,12 @@ function weno_neverworld_simulation(; grid,
                                       convective_adjustment = default_convective_adjustment,
                                       biharmonic_viscosity  = default_biharmonic_viscosity,
                                       vertical_diffusivity  = default_vertical_diffusivity,
-                                      gm_redi_diffusivities = nothing,
+                                      gm_redi_diffusivities = (1000, 1000),
                                       tapering = default_slope_limiter,
                                       coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme()),
                                       free_surface = ImplicitFreeSurface(),
                                       momentum_advection = WENO(vector_invariant = VelocityStencil()),
-				                      tracer_advection   = WENO(), 
+				                      tracer_advection   = WENO(grid.underlying_grid), 
                                       interp_init = false,
                                       init_file = nothing,
                                       Δt = 5minutes,
