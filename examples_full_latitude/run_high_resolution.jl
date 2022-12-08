@@ -10,9 +10,6 @@ output_dir    = joinpath(@__DIR__, "./")
 arch   = GPU()
 new_degree = 1/4
 
-using CUDA
-CUDA.device!(1)
-
 grid = NeverworldGrid(arch, new_degree, latitude = (-70, 70))
 
 interp_init = false
