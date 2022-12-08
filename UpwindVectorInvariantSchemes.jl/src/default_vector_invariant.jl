@@ -11,10 +11,10 @@ using Oceananigans.Grids: AbstractHorizontallyCurvilinearGrid
 validate_momentum_advection(momentum_advection::DefaultVectorInvariant, grid::AbstractHorizontallyCurvilinearGrid) = momentum_advection
 
 DefaultVectorInvariant(; upwind_scheme::AbstractAdvectionScheme{N, FT} = VectorInvariant()) where {N, FT} = 
-     DefaultVectorInvariant{N, FT}(upwind_scheme)
+    DefaultVectorInvariant{N, FT}(upwind_scheme)
 
 Adapt.adapt_structure(to, scheme::DefaultVectorInvariant{N, FT}) where {N, FT} =
-        DefaultVectorInvariant{N, FT}(Adapt.adapt(to, scheme.upwind_scheme), Adapt.adapt(to, vertical_scheme))
+        DefaultVectorInvariant{N, FT}(Adapt.adapt(to, scheme.upwind_scheme))
 
 @inline smoothness_stencil(::DefaultVectorInvariant{<:Any, <:Any, <:WENO{N, FT, XT, YT, ZT, VI}}) where {N, FT, XT, YT, ZT, VI} = VI
 
