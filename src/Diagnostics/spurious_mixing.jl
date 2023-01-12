@@ -9,6 +9,17 @@ VolumeField(grid, loc=(Center, Center, Center);  indices = default_indices(3)) =
 
 DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655) = compute!(Field(ρ₀ * (1 - g * b)))
 
+function HeightField(grid, loc = (Center, Center, Center))  
+
+    zf = Field(loc, grid)
+
+    for k in 1:size(zf, 3)
+        interior(zf, :, :, k) .= znode(loc[3](), k, grid)
+    end
+
+    return zf
+end
+
 function calculate_z★_diagnostics(b::FieldTimeSeries)
 
     times = b.times
@@ -103,66 +114,119 @@ end
     end
 end
 
-using Oceananigans.Fields: condition_operand
+@inline function calculate_κeff(b::FieldTimeSeries, ψint; blevels = collect(0.0:0.001:0.06))
 
-@inline function calculate_residual_MOC(v::FieldTimeSeries, b::FieldTimeSeries; blevels = 0.0:0.001:0.06)
+    grid = b.grid
+    arch = architecture(grid)
+
+    Nb         = length(blevels)
+    Nx, Ny, Nz = size(grid)
+    Nt         = length(b.times) 
+    
+    strat       = [zeros(Nx, Ny, Nb) for iter in 1:Nt]
+    stratint    = [zeros(Nx, Ny, Nb) for iter in 1:Nt]
+    stratavgint = zeros(Ny, Nb)
+
+    ψint2 = zeros(Ny, Nb)
+
+    for iter in 1:Nt
+        @info "time $iter of $(length(b.times))"
+
+        bz = compute!(Field(∂z(b[iter])))
+        psi_event = launch!(arch, grid, :xy, _cumulate_stratification!, stratint[iter], strat[iter], bz, b[iter], blevels, grid, Nz; dependencies = device_event(arch))
+        wait(device(arch), psi_event)
+    end
+
+    for iter in 1:Nt
+        for i in 20:220
+            stratavgint .+= stratint[iter][i, :, :] / Nt
+        end
+    end
+
+    Δb = blevels[2] - blevels[1]
+
+    for j in 1:Ny
+        ψint2[j, 1] = Δb * ψint[j, 1]
+        for blev in 2:Nb
+            ψint2[j, blev] = ψint2[j, blev-1] + Δb * ψint[j, blev]
+        end
+    end
+
+    return ψint2 ./ stratavgint
+end
+
+@kernel function _cumulate_stratification!(stratint, strat, bz, b, blevels, grid, Nz)
+    i, j = @index(Global, NTuple)
+
+    Nb = length(blevels)
+    Δb = blevels[2] - blevels[1]
+
+    @unroll for k in 1:Nz
+        if b[i, j, k] < blevels[end]
+            blev = searchsortedfirst(blevels, b[i, j, k])
+            strat[i, j, blev] += bz[i, j, k] * Ayᶜᶠᶜ(i, j, k, grid) 
+        end
+    end
+
+    stratint[i, j, 1] = Δb * strat[i, j, 1]
+    bmax = maximum(b[i, j, :])
+    @unroll for blev in 2:Nb
+        if bmax > blevels[blev]
+            stratint[i, j, blev] = stratint[i, j, blev-1] + Δb * strat[i, j, blev]
+        end
+    end
+end
+
+@inline function calculate_residual_MOC(v::FieldTimeSeries, b::FieldTimeSeries; blevels = collect(0.0:0.001:0.06))
 
     grid = v.grid
     arch = architecture(grid)
-
-    Δb = blevels[2] - blevels[1]
 
     Nb         = length(blevels)
     Nx, Ny, Nz = size(grid)
     Nt         = length(v.times) 
     
-    ψ    = zeros(Ny, Nb)
-    ψint = zeros(Ny, Nb)
+    ψ       = [zeros(Nx, Ny, Nb) for iter in 1:Nt]
+    ψint    = [zeros(Nx, Ny, Nb) for iter in 1:Nt]
+    ψavgint = zeros(Ny, Nb)
 
-    for iter in Nt-1:Nt
+    for iter in 1:Nt
         @info "time $iter of $(length(v.times))"
-        
-        for j in 1:Ny
-            for i in 1:Nx, k in 1:Nz
-                blev = searchsortedfirst(blevels, b[iter][i, j, k])
-                ψ[j, blev] .+= v[iter][i, j, k] * Ayᶜᶠᶜ(i, j, k, v.grid) / Nt
-            end
+        psi_event = launch!(arch, grid, :xy, _cumulate_v_velocities!, ψint[iter], ψ[iter], b[iter], v[iter], blevels, grid, Nz; dependencies = device_event(arch))
+        wait(device(arch), psi_event)
+    end
+
+    for iter in 1:Nt
+        for i in 20:220
+            ψavgint .+= ψint[iter][i, :, :] / Nt
         end
     end
 
-    ψint[:, 1] .= ψ[:, 1]
-
-    for blev in 2:Nb
-        ψint[:, blev] = ψint[:, blev-1] + Δb * ψ[:, blev]
-    end
-
-    return ψint
+    return ψavgint
 end
 
-# @kernel function _calculate_ψ!(ψ, vdzdb, b, column, Nz, blevels)
-#     i, j = @index(Global, NTuple)
+@kernel function _cumulate_v_velocities!(ψint, ψ, b, v, blevels, grid, Nz)
+    i, j = @index(Global, NTuple)
 
-#     if column[i, j, 1] == Nz
+    Nb = length(blevels)
+    Δb = blevels[2] - blevels[1]
 
-#         Δb = blevels[2] - blevels[1]
+    @unroll for k in 1:Nz
+        if b[i, j, k] < blevels[end]
+            blev = searchsortedfirst(blevels, b[i, j, k])
+            ψ[i, j, blev] += v[i, j, k] * Ayᶜᶠᶜ(i, j, k, grid) 
+        end
+    end
 
-#         integ = Array(interior(vdzdb, i, j, :))
-#         bcol  = Array(interior(b, i, j, :))
+    ψint[i, j, 1] = Δb * ψ[i, j, 1]
+    bmax = maximum(b[i, j, :])
+    @unroll for blev in 2:Nb
+        if bmax > blevels[blev]
+            ψint[i, j, blev] = ψint[i, j, blev-1] + Δb * ψ[i, j, blev]
+        end
+    end
 
-#         perm  = sortperm(bcol)
-#         b_arr = bcol[perm]
-#         i_arr = integ[perm]
-        
-#         ψ[i, j, 1] = 0.0
-#         @unroll for k in 2:length(blevels)
-#             ψ[i, j, k] =  ψ[i, j, k-1] - Δb * linear_interpolate(b_arr, i_arr, blevels[k])
-#         end 
-#     else
-#         @unroll for (k, bi) in enumerate(blevels)
-#             ψ[i, j, k] = 1e10
-#         end 
-#     end
-# end
+end
 
 @inline function linear_interpolate(x, y, x₀)
     i₁ = searchsortedfirst(x, x₀)

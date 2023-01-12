@@ -50,7 +50,6 @@ function power_spectrum_1d_x(var, x, y; windowing = onefunc)
     return Spectrum(spectra, freqs)
 end
 
-    
 function power_spectrum_1d_y(var, x, y; windowing = onefunc)
     Nx  = length(x)
     Ny  = length(y)

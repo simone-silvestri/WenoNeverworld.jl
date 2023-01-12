@@ -1,4 +1,5 @@
 using Oceananigans.TurbulenceClosures
+using Oceananigans.TurbulenceClosures: HorizontalFormulation
 using Oceananigans.Grids: min_Δx, min_Δy
 using Oceananigans.Operators
 using Oceananigans.Operators: Δxᶜᶜᶜ, Δyᶜᶜᶜ, ℑxyᶜᶜᵃ, ζ₃ᶠᶠᶜ, div_xyᶜᶜᶜ
@@ -63,6 +64,40 @@ function leith_viscosity(formulation; C_vort = 2.0, C_div = 2.0, λ = 10days, Ar
     visc = ScalarBiharmonicDiffusivity(formulation; 
                                        ν=νhb_leith_final, discrete_form=true,  
                                        parameters = (; C₁, C₂, λ, Area))
+
+    @show typeof(visc.ν)
+
+    return visc
+end
+
+@inline function νhb_leith_laplacian_final(i, j, k, grid, lx, ly, lz, clock, fields, p)
+    
+    location = (lx, ly, lz)
+    from_∂xζ = (Center(), Face(), Center()) 
+    from_∂yζ = (Face(), Center(), Center()) 
+    from_∂xδ = (Face(), Center(), Center()) 
+    from_∂yδ = (Center(), Face(), Center()) 
+	
+    ∂xζ = ℑxyz(i, j, k, grid, from_∂xζ, location, ∂xᶜᶠᶜ, ζ₃ᶠᶠᶜ, fields.u, fields.v)
+    ∂yζ = ℑxyz(i, j, k, grid, from_∂yζ, location, ∂yᶠᶜᶜ, ζ₃ᶠᶠᶜ, fields.u, fields.v)
+    ∂xδ = ℑxyz(i, j, k, grid, from_∂xδ, location, ∂xᶠᶜᶜ, div_xyᶜᶜᶜ, fields.u, fields.v)
+    ∂yδ = ℑxyz(i, j, k, grid, from_∂yδ, location, ∂yᶜᶠᶜ, div_xyᶜᶜᶜ, fields.u, fields.v)
+   
+    dynamic_visc = sqrt( p.C₁ * (∂xζ^2 + ∂yζ^2) + p.C₂ * (∂xδ^2 + ∂yδ^2) ) 
+ 
+    A = p.Area(i, j, k, grid, lx, ly, lz)
+
+    return dynamic_visc * A^(3/2)
+end
+
+function leith_laplacian_viscosity(formulation = HorizontalFormulation(); C_vort = 1.0, C_div = 1.0, Area = Δ²ᵃᵃᵃ)
+
+    @show C₁ = (C_vort / π)^6 
+    @show C₂ = (C_div  / π)^6 
+
+    visc = ScalarDiffusivity(formulation; 
+                             ν=νhb_leith_laplacian_final, discrete_form=true,  
+                             parameters = (; C₁, C₂, Area))
 
     @show typeof(visc.ν)
 

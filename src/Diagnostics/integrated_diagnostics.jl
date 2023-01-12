@@ -59,14 +59,23 @@ function limit_timeseries!(field::FieldTimeSeries, times)
     return new_field
 end
 
-function add_kinetic_energy_from_timeseries!(fields::Dict)
+function reduce_output_size!(old_file_name, new_file_name; limit_to = 20, variables = ("u", "v", "w", "b"))
 
-    E = FieldTimeSeries{Center, Center, Center}(fields[:u].grid, fields[:u].times)
+    var_dict = all_fieldtimeseries(old_file_name; variables)
+    times = var_dict[Symbol(variables[1])].times[end - limit_to:end]
+    limit_timeseries!(var_dict, times)
 
-    for t in 1:length(E.times)
+    jldsave(new_file_name, vars = var_dict)
+end
+
+function add_kinetic_energy_from_timeseries!(fields::Dict, iterations = 1:length(fields[:u2].times))
+
+    E = FieldTimeSeries{Center, Center, Center}(fields[:u].grid, fields[:u].times[iterations])
+
+    for (i, t) in enumerate(iterations)
         u2 = fields[:u2][t]
         v2 = fields[:v2][t]
-        set!(E[t], compute!(Field(@at (Center, Center, Center) 0.5 * (u2 + v2))))
+        set!(E[i], compute!(Field(@at (Center, Center, Center) 0.5 * (u2 + v2))))
     end
 
     fields[:E] = E
@@ -102,11 +111,12 @@ end
 function kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries)
 
     energy = Float64[]
+    vol = VolumeField(u.grid)
 
     for (i, time) in enumerate(u.times)
         @info "integrating time $(prettytime(time)) of $(prettytime(u.times[end]))"
         ke = Field(u[i]^2 + v[i]^2)
-        push!(energy, compute!(Field(Integral(ke)))[1, 1, 1])
+        push!(energy, sum(compute!(Field(ke * vol))))
     end
 
     return energy
@@ -164,11 +174,11 @@ function calculate_eulerian_MOC(v::FieldTimeSeries)
     return ψ
 end
 
-function time_average(field::FieldTimeSeries)
+function time_average(field::FieldTimeSeries, iterations = 1:length(field.times))
     avg = similar(field[1])
     fill!(avg, 0)
 
-    for t in 1:length(field.times)
+    for t in iterations
         avg .+= field[t] ./ length(field.times)
     end
 

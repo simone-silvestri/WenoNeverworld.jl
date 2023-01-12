@@ -4,6 +4,7 @@ export NeverworldGrid, weno_neverworld_simulation, standard_outputs!, checkpoint
 export increase_simulation_Δt!, update_simulation_clock!, run_simulation!
 
 using CUDA
+using KernelAbstractions: @kernel, @index
 using Printf
 using JLD2
 using Oceananigans
