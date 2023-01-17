@@ -1,7 +1,7 @@
 # The bathymetry is defined for a latitude range of -70 ≤ φ ≤ 0
 # and a longitude range of 0 ≤ λ ≤ 60
 
-function cubic_profile(x, x1, x2, y1, y2, d1, d2)
+@inline function cubic_profile(x, x1, x2, y1, y2, d1, d2)
     A = [ x1^3 x1^2 x1 1.0
           x2^3 x2^2 x2 1.0
           3*x1^2 2*x1 1.0 0.0

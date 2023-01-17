@@ -42,16 +42,14 @@ end
     end
 end
 
-const reference_salinity = 35.0
-
 @inline function salinity_flux(x, y, z)
     if y < -20
-        return cubic_profile(y, -70.0, -20.0, -2e-8, 2e-8, 0.0, 0.0) .* reference_salinity
+        return cubic_profile(y, -70.0, -20.0, -2e-8, 2e-8, 0.0, 0.0) .* 35.0
     elseif y < 0
-        return cubic_profile(y, -20.0, 0.0, 2e-8, -4e-8, 0.0, 0.0) .* reference_salinity
+        return cubic_profile(y, -20.0, 0.0, 2e-8, -4e-8, 0.0, 0.0) .* 35.0
     elseif y < 20
-        return cubic_profile(y, 0.0, 20.0, -4e-8, 2e-8, 0.0, 0.0) .* reference_salinity
+        return cubic_profile(y, 0.0, 20.0, -4e-8, 2e-8, 0.0, 0.0) .* 35.0
     else
-        return cubic_profile(y, 20.0, 70.0, 2e-8, -2e-8, 0.0, 0.0) .* reference_salinity
+        return cubic_profile(y, 20.0, 70.0, 2e-8, -2e-8, 0.0, 0.0) .* 35.0
     end
 end
