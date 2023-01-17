@@ -2,7 +2,8 @@ using WenoNeverworld
 using WenoNeverworld.Diagnostics
 using Oceananigans
 using Oceananigans.Operators
-using CairoMakie
+using GLMakie
+using FFTW 
 
 using Statistics: mean
 
@@ -27,6 +28,37 @@ eight  = limit_timeseries!(eight , times8)
 
 @info "finished loading instantaneous files"
 
+function calculate_noise(v)
+    Nx, Ny, Nz = size(v)
+
+    nx, ny, nz = (Nx - 100, Ny - 100, Nz - 20)
+
+    χ = zeros(nx, ny, nz)
+
+    for i in 51:Nx-50, j in 51:Ny-50, k in 21:Nz
+         vm = 0.5 * v[i, j, k] + 0.25 * (v[i-1, j, k] + v[i+1, j, k])
+         χ[i-50, j-50, k-20] = abs(v[i, j, k] - vm)
+    end
+
+    @info "done calculating noise"
+    return χ
+end
+
+# finalc = length(center[:v].times)
+# finalw = length(  weno[:v].times)
+# finall = length( leith[:v].times)
+# finale = length( eight[:v].times)
+
+# χc = calculate_noise(center[:v][finalc])
+# χw = calculate_noise(  weno[:v][finalw])
+# χl = calculate_noise( leith[:v][finall])
+# χe = calculate_noise( eight[:v][finale])
+
+# χ̄c = dropdims(mean(χc, dims = (1, 3)), dims = (1, 3))
+# χ̄w = dropdims(mean(χw, dims = (1, 3)), dims = (1, 3))
+# χ̄l = dropdims(mean(χl, dims = (1, 3)), dims = (1, 3))
+# χ̄e = dropdims(mean(χe, dims = (1, 3)), dims = (1, 3))
+
 """
 Time-averaged variables
 """
@@ -50,6 +82,11 @@ Mean Kinetic energy and Enstrophy
 """
 
 using WenoNeverworld.Diagnostics: VerticalVorticityField
+
+WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(center)
+WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(weno  )
+WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(leith )
+WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(eight )
 
 function mean_kinetic_energy_and_enstrophy(var, var_avg)
     ū = time_average(var_avg[:u])
@@ -92,35 +129,58 @@ function mean_kinetic_energy_and_enstrophy(var, var_avg)
     return (; Etot, Ωtot, Ē, Ω̄, Eflucmean1, Ωflucmean1, IIEtot, IIĒ, IIEfluc1, IIEfluc2, IIΩtot, IIΩ̄, IIΩfluc1, IIΩfluc2)
 end
 
+function barotropic_and_baroclinic_energy(var)
+
+    Ebt  = FieldTimeSeries{Center, Center, Center}(var[:u].grid, var[:u].times)
+    Ebtf = FieldTimeSeries{Center, Center, Center}(var[:u].grid, var[:u].times)
+
+    for i in 1:length(var[:u].times)
+        @info "doing time $i"
+        ubt  = compute!(Field(Integral(var[:u][i], dims = 3)))
+        vbt  = compute!(Field(Integral(var[:v][i], dims = 3)))
+        vel  = (u = ubt, v = vbt)
+        Eint = compute!(Field(Integral(var[:E][i], dims = 3)))
+        set!(Ebt[i],  WenoNeverworld.Diagnostics.KineticEnergyField(vel))
+        set!(Ebtf[i], compute!(Field(Ebt[i] / Eint)))
+    end
+
+    return compute!(Field(Average(time_average(Ebtf), dims = 1)))
+end
+
+btc = barotropic_and_baroclinic_energy(center)
+btw = barotropic_and_baroclinic_energy(weno)
+btl = barotropic_and_baroclinic_energy(leith)
+bte = barotropic_and_baroclinic_energy(eight)
+
 center_avg = mean_kinetic_energy_and_enstrophy(center, center_avg)
 weno_avg   = mean_kinetic_energy_and_enstrophy(weno  , weno_avg  )
 leith_avg  = mean_kinetic_energy_and_enstrophy(leith , leith_avg )
 eight_avg  = mean_kinetic_energy_and_enstrophy(eight , eight_avg )
 
-ϕ   = ynodes(leith_avg.IIEtot)
-ϕf  = ynodes(leith_avg.IIΩtot)
-ϕ8  = ynodes(eight_avg.IIEtot)
-ϕ8f = ynodes(eight_avg.IIΩtot)
+ϕ   = ynodes(leith[:E][1])
+ϕf  = ynodes(leith[:ζ][1])
+ϕ8  = ynodes(eight[:E][1])
+ϕ8f = ynodes(eight[:ζ][1])
 
 fig = Figure()
 ax = Axis(fig[1, 1])
 
-lines!(ax, ϕ8, interior(eight_avg.IIEflucmean1,  1, :, 1), color = :black, linestyle = :dash)
-lines!(ax, ϕ,  interior(center_avg.IIEflucmean1, 1, :, 1), color = :blue,  linestyle = :dash)
-lines!(ax, ϕ,  interior(weno_avg.IIEflucmean1,   1, :, 1), color = :red,   linestyle = :dash)
-lines!(ax, ϕ,  interior(leith_avg.IIEflucmean1,  1, :, 1), color = :green, linestyle = :dash)
+lines!(ax, ϕ8, interior(eight_avg.IIEfluc1,  1, :, 1), color = :black, linestyle = :dash)
+lines!(ax, ϕ,  interior(center_avg.IIEfluc1, 1, :, 1), color = :blue,  linestyle = :dash)
+lines!(ax, ϕ,  interior(weno_avg.IIEfluc1,   1, :, 1), color = :red,   linestyle = :dash)
+lines!(ax, ϕ,  interior(leith_avg.IIEfluc1,  1, :, 1), color = :green, linestyle = :dash)
 
-lines!(ax, ϕ8, interior(eight_avg.IIEflucmean1,  1, :, 1) .+ interior(eight_avg.IIĒ,  1, :, 1), color = :black, linestyle = :dash)
-lines!(ax, ϕ,  interior(center_avg.IIEflucmean1, 1, :, 1) .+ interior(center_avg.IIĒ, 1, :, 1), color = :blue,  linestyle = :dash)
-lines!(ax, ϕ,  interior(weno_avg.IIEflucmean1,   1, :, 1) .+ interior(weno_avg.IIĒ,   1, :, 1), color = :red,   linestyle = :dash)
-lines!(ax, ϕ,  interior(leith_avg.IIEflucmean1,  1, :, 1) .+ interior(leith_avg.IIĒ,  1, :, 1), color = :green, linestyle = :dash)
+lines!(ax, ϕ8, interior(eight_avg.IIEfluc1,  1, :, 1) .+ interior(eight_avg.IIĒ,  1, :, 1), color = :black)
+lines!(ax, ϕ,  interior(center_avg.IIEfluc1, 1, :, 1) .+ interior(center_avg.IIĒ, 1, :, 1), color = :blue )
+lines!(ax, ϕ,  interior(weno_avg.IIEfluc1,   1, :, 1) .+ interior(weno_avg.IIĒ,   1, :, 1), color = :red  )
+lines!(ax, ϕ,  interior(leith_avg.IIEfluc1,  1, :, 1) .+ interior(leith_avg.IIĒ,  1, :, 1), color = :green)
 
 ax = Axis(fig[1, 2])
 
-lines!(ax, ϕ8f, interior(eight_avg.IIΩflucmean1,  1, :, 1), color = :black, linestyle = :dash)
-lines!(ax, ϕf,  interior(center_avg.IIΩflucmean1, 1, :, 1), color = :blue,  linestyle = :dash)
-lines!(ax, ϕf,  interior(weno_avg.IIΩflucmean1,   1, :, 1), color = :red,   linestyle = :dash)
-lines!(ax, ϕf,  interior(leith_avg.IIΩflucmean1,  1, :, 1), color = :green, linestyle = :dash)
+lines!(ax, ϕ8f, interior(eight_avg.IIΩfluc1,  1, :, 1), color = :black, linestyle = :dash)
+lines!(ax, ϕf,  interior(center_avg.IIΩfluc1, 1, :, 1), color = :blue,  linestyle = :dash)
+lines!(ax, ϕf,  interior(weno_avg.IIΩfluc1,   1, :, 1), color = :red,   linestyle = :dash)
+lines!(ax, ϕf,  interior(leith_avg.IIΩfluc1,  1, :, 1), color = :green, linestyle = :dash)
 
 lines!(ax, ϕ8f, interior(eight_avg.IIΩtot,  1, :, 1), color = :black)
 lines!(ax, ϕf,  interior(center_avg.IIΩtot, 1, :, 1), color = :blue)
@@ -128,110 +188,148 @@ lines!(ax, ϕf,  interior(weno_avg.IIΩtot,   1, :, 1), color = :red)
 lines!(ax, ϕf,  interior(leith_avg.IIΩtot,  1, :, 1), color = :green)
 
 display(fig)
-CairoMakie.save("tot_energy.eps", fig)
 
-# fig = Figure(resolution = (800, 400))
-# ax = Axis(fig[1, 1])
-
-# lines!(ax, ϕ, interior(IIEflucweno1  , 1, :, 1), color = :blue)
-# lines!(ax, ϕ, interior(IIEfluccenter1, 1, :, 1), color = :red)
-
-# lines!(ax, ϕ, interior(IIEtotweno  , 1, :, 1), color = :blue, linestyle = :dash)
-# lines!(ax, ϕ, interior(IIEtotcenter, 1, :, 1), color = :red, linestyle = :dash)
-
-# ylims!(ax, (0, 2e9))
-
-# ax = Axis(fig[1, 2])
-
-# lines!(ax, ϕf, interior(IIΩflucweno1  , 1, :, 1), color = :blue)
-# lines!(ax, ϕf, interior(IIΩfluccenter1, 1, :, 1), color = :red)
-
-# lines!(ax, ϕf, interior(IIΩtotweno  , 1, :, 1), color = :blue, linestyle = :dash)
-# lines!(ax, ϕf, interior(IIΩtotcenter, 1, :, 1), color = :red, linestyle = :dash)
-
-# display(fig)
-# CairoMakie.save("tot_energy2.eps", fig)
+# CairoMakie.save("tot_energy.eps", fig)
 
 # WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(center)
 # WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(weno)
+# WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(leith)
+# WenoNeverworld.Diagnostics.add_kinetic_energy_and_vorticity_timeseries!(eight)
 
-# λ  = xnodes(Eflucweno)
+# λ  = xnodes(leith[:E][1])
+# λ8 = xnodes(eight[:E][1])
 
-# IEtotweno   = compute!(Field(Integral(weno[:E][length(times)],   dims = 3)))
-# IEtotcenter = compute!(Field(Integral(center[:E][length(times)], dims = 3)))
+# IEtotweno   = compute!(Field(Integral(  weno[:E][length(times4)], dims = 3)))
+# IEtotcenter = compute!(Field(Integral(center[:E][length(times4)], dims = 3)))
+# IEtotleith  = compute!(Field(Integral( leith[:E][length(times4)], dims = 3)))
+# IEtoteight  = compute!(Field(Integral( eight[:E][length(times8)], dims = 3)))
 
-# fig = Figure()
+
+# fig = Figure(resolution = (7000, 2000))
 # ax  = Axis(fig[1, 1], title = "depth-integrated TKE, weno scheme", xlabel = L"\lambda", ylabel = L"\phi")
-# heatmap!(ax, λ, ϕ, log10.(interior(IEtotweno,   :, :, 1) .+ 1e-20), colorrange = (0, log10(1e3)), colormap = :magma)
+# # heatmap!(ax, λ, ϕ, log10.(interior(IEtotweno,   :, :, 1) .+ 1e-20), colorrange = (0, log10(1e3)), colormap = :magma)
+# heatmap!(ax, λ, ϕ, log10.(interior(weno[:E][1], :, :, 65) .+ 1e-20), colorrange = (-5, 0), colormap = :magma, interpolate = true)
 
 # ax = Axis(fig[1, 2], title = "depth-integrated TKE, centered scheme", xlabel = L"\lambda", ylabel = L"\phi")
-# hm = heatmap!(ax, λ, ϕ, log10.(interior(IEtotcenter, :, :, 1) .+ 1e-20), colorrange = (0, log10(1e3)), colormap = :magma)
-# cb = Colorbar(fig[1, 3], hm)
-# cb.ticks = ([1, 2, 3], ["10¹", "10²", "10³"])
+# heatmap!(ax, λ, ϕ, log10.(interior(center[:E][1], :, :, 65) .+ 1e-20), colorrange = (-5, 0), colormap = :magma, interpolate = true)
+
+# ax = Axis(fig[1, 3], title = "depth-integrated TKE, leith scheme", xlabel = L"\lambda", ylabel = L"\phi")
+# heatmap!(ax, λ, ϕ, log10.(interior(leith[:E][1], :, :, 65) .+ 1e-20), colorrange = (-5, 0), colormap = :magma, interpolate = true)
+
+# ax = Axis(fig[1, 4], title = "depth-integrated TKE, eight", xlabel = L"\lambda", ylabel = L"\phi")
+# hm = heatmap!(ax, λ8, ϕ8, log10.(interior(eight[:E][1], :, :, 65) .+ 1e-20), colorrange = (-5, 0), colormap = :magma, interpolate = true)
+
+# cb = Colorbar(fig[1, 5], hm)
 
 # display(fig)
 
 # CairoMakie.save("sim_energy2.png", fig)
 
-# function geographic2cartesian(λ, φ; r=1)
-#     Nλ = length(λ)
-#     Nφ = length(φ)
+"""
+Calculate energy (Ê) and enstrophy (Ω̂) spectra on a transect in the channel
+"""
 
-#     λ = repeat(reshape(λ, Nλ, 1), 1, Nφ) 
-#     φ = repeat(reshape(φ, 1, Nφ), Nλ, 1)
+# using WenoNeverworld.Diagnostics: average_spectra, hann_window
 
-#     λ_azimuthal = λ .+ 180  # Convert to λ ∈ [0°, 360°]
-#     φ_azimuthal = 90 .- φ   # Convert to φ ∈ [0°, 180°] (0° at north pole)
+# variables = ("v", )
 
-#     x = @. r * cosd(λ_azimuthal) * sind(φ_azimuthal)
-#     y = @. r * sind(λ_azimuthal) * sind(φ_azimuthal)
-#     z = @. r * cosd(φ_azimuthal)
+# csp = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/quarter_centered/global_upwinding_snapshots.jld2"; variables);
+# wsp = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/quarter/global_upwinding_snapshots.jld2"; variables);
+# lsp = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/quarter_leith/global_upwinding_snapshots.jld2"; variables);
+# esp = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/eighth/global_upwinding_eight_snapshots.jld2"; variables);
 
-#     return x, y, z
-# end
+# times4 = csp[:v].times[end-80:end]
+# times8 = esp[:v].times[end-80:end]
 
-# """
-# Calculate energy (Ê) and enstrophy (Ω̂) spectra on a transect in the channel
-# """
+# csp = limit_timeseries!(csp, times4) 
+# wsp = limit_timeseries!(wsp, times4) 
+# lsp = limit_timeseries!(lsp, times4) 
+# esp = limit_timeseries!(esp, times8) 
 
-using WenoNeverworld.Diagnostics: average_spectra, hann_window
+# lim14 = (20:21)
+# lim18 = (20:21) .* 2
 
-Êcenter = average_spectra(Efluccenter, Colon(), 80:81; k = 65)
-Êweno   = average_spectra(Eflucweno,   Colon(), 80:81; k = 65)
+# lim14 = (60:61)
+# lim18 = (60:61) .* 2
 
-Ω̂center = average_spectra(Efluccenter, Colon(), 117:118; k = 65, windowing = hann_window)
-Ω̂weno   = average_spectra(Eflucweno,   Colon(), 117:118; k = 65, windowing = hann_window)
+# lim24 = (120:121)
+# lim28 = (120:121) .* 2
 
-@show ϕ[200]
+# lim34 = (180:181)
+# lim38 = (180:181) .* 2
 
-NxE = length(xnodes(weno[:v][1]))
-Nxζ = length(xnodes(weno[:u][1]))
+# Êcenter = average_spectra(csp[:v], Colon(), lim14; k = 68)
+# Êweno   = average_spectra(wsp[:v], Colon(), lim14; k = 68)
+# Êleith  = average_spectra(lsp[:v], Colon(), lim14; k = 68)
+# Êeight  = average_spectra(esp[:v], Colon(), lim18; k = 68)
 
-fx = Êcenter.freq[2:end]
-fxE = fftfreq(NxE, 1 / Δxᶜᶜᶜ(1, 1, 1, weno[:v].grid))[1:Int(NxE ÷ 2)] .* 1e3 # in 1/km
-fxζ = fftfreq(Nxζ, 1 / Δxᶠᶠᶜ(1, 1, 1, weno[:u].grid))[1:Int(Nxζ ÷ 2)] .* 1e3 # in 1/km
+# Ω̂center = average_spectra(csp[:v], Colon(), lim24; k = 68, windowing = hann_window)
+# Ω̂weno   = average_spectra(wsp[:v], Colon(), lim24; k = 68, windowing = hann_window)
+# Ω̂leith  = average_spectra(lsp[:v], Colon(), lim24; k = 68, windowing = hann_window)
+# Ω̂eight  = average_spectra(esp[:v], Colon(), lim28; k = 68, windowing = hann_window)
 
-fig = Figure(resolution = (800, 350))
-ax = Axis(fig[1, 1], title = "energy spectra at 50ᵒ S", yscale = log10, xscale = log10,
-                            xlabel = "Wavenumber 1/km", ylabel = L"E_k")
-lines!(ax, fxE[2:end], Êcenter.spec[2:end], color = :red,   label = "center momentum scheme")
-lines!(ax, fxE[2:end], Êweno.spec[2:end],   color = :blue,  label = "WENO momentum scheme")
-lines!(ax, fxE[10:end-51],   0.0006 .* fx[10:end-50].^(-5/3), color = :grey, linewidth = 2, linestyle = :dashdot)
-lines!(ax, fxE[end-100:end], 0.0055 .* fx[end-100:end].^(-3),  color = :grey, linewidth = 2, linestyle = :dashdot)
+# Ncenter = average_spectra(csp[:v], Colon(), lim34; k = 68, windowing = hann_window)
+# Nweno   = average_spectra(wsp[:v], Colon(), lim34; k = 68, windowing = hann_window)
+# Nleith  = average_spectra(lsp[:v], Colon(), lim34; k = 68, windowing = hann_window)
+# Neight  = average_spectra(esp[:v], Colon(), lim38; k = 68, windowing = hann_window)
 
-ax = Axis(fig[1, 2], title = "energy spectra at 10ᵒ S", yscale = log10, xscale = log10,
-                            xlabel = "Wavenumber 1/km", ylabel = L"E_k")
-lines!(ax, fxE[2:end], Ω̂center.spec[2:end], color = :red,   label = "center momentum scheme")
-lines!(ax, fxE[2:end], Ω̂weno.spec[2:end],   color = :blue,  label = "WENO momentum scheme")
-lines!(ax, fxE[10:end-51],   0.0006 .* fx[10:end-50].^(-5/3), color = :grey, linewidth = 2, linestyle = :dashdot)
-lines!(ax, fxE[end-100:end], 0.0055 .* fx[end-100:end].^(-3), color = :grey, linewidth = 2, linestyle = :dashdot)
+# NxE  = length(xnodes(wsp[:v][1]))
+# Nx8E = length(xnodes(esp[:v][1]))
+# Nxζ  = length(xnodes(wsp[:v][1]))
 
-display(fig)
-CairoMakie.save("spectra2.png", fig)
-CairoMakie.save("spectra2.eps", fig)
+# fx   = Êcenter.freq[2:end]
+# fxE  = fftfreq( NxE, 1 / Δxᶜᶜᶜ(1, 1, 1, wsp[:v].grid))[1:Int(NxE ÷ 2)] .* 1e3 # in 1/km
+# fx8E = fftfreq(Nx8E, 1 / Δxᶜᶜᶜ(1, 1, 1, esp[:v].grid))[1:Int(Nx8E ÷ 2)] .* 1e3 # in 1/km
+# fxζ  = fftfreq( Nxζ, 1 / Δxᶠᶠᶜ(1, 1, 1, wsp[:v].grid))[1:Int(Nxζ ÷ 2)] .* 1e3 # in 1/km
 
-""" 
-Calculate MOC
+# color1 = :deepskyblue
+# color2 = :orange1
+# color3 = :firebrick2
+
+# fig = Figure(resolution = (1000, 300))
+# ax = Axis(fig[1, 1], title = "T", yscale = log10, xscale = log10,
+#                             xgridvisible = false, ygridvisible = false, 
+#                             xlabel = "Wavenumber 1/km", ylabel = L"E(k)",
+#                             yticks = ([1e-6, 1e-4, 1e-2], [L"10^{-6}", L"10^{-4}", L"10^{-2}"]),
+#                             xticks = ([1e-3, 1e-2, 1e-1], [L"10^{-3}", L"10^{-2}", L"10^{-1}"]))
+# lines!(ax, fx8E[2:end],  Êeight.spec[2:end], color = :black, linewidth = 2, label = L"W8", linestyle = :dash)
+# lines!(ax,  fxE[2:end],  Êleith.spec[2:end], color = color1, linewidth = 2, label = L"L4")
+# lines!(ax,  fxE[2:end], Êcenter.spec[2:end], color = color2, linewidth = 2, label = L"C4")
+# lines!(ax,  fxE[2:end],   Êweno.spec[2:end], color = color3, linewidth = 2, label = L"W4")
+# lines!(ax, fx8E[end-244:end], 2.8e-9 .* fx8E[end-244:end].^(-3),  color = :grey, linewidth = 1, linestyle = :dashdot)
+
+
+# ax = Axis(fig[1, 2], title = "U", yscale = log10, xscale = log10,
+#                             xlabel = "Wavenumber 1/km", 
+#                             xgridvisible = false, ygridvisible = false,
+#                             yticks = ([1e-6, 1e-4, 1e-2], [L"10^{-6}", L"10^{-4}", L"10^{-2}"]),
+#                             xticks = ([1e-3, 1e-2, 1e-1], [L"10^{-3}", L"10^{-2}", L"10^{-1}"]))
+# lines!(ax, fx8E[2:end],  Ω̂eight.spec[2:end], color = :black, linewidth = 2, label = L"W8", linestyle = :dash)
+# lines!(ax,  fxE[2:end],  Ω̂leith.spec[2:end], color = color1, linewidth = 2, label = L"L4")
+# lines!(ax,  fxE[2:end], Ω̂center.spec[2:end], color = color2, linewidth = 2, label = L"C4")
+# lines!(ax,  fxE[2:end],   Ω̂weno.spec[2:end], color = color3, linewidth = 2, label = L"W4")
+# lines!(ax, fx8E[end-244:end], 2.98e-9 .* fx8E[end-244:end].^(-3), color = :grey, linewidth = 1, linestyle = :dashdot)
+
+# ax = Axis(fig[1, 3], title = "V", yscale = log10, xscale = log10,
+#                             xgridvisible = false, ygridvisible = false, 
+#                             xlabel = "Wavenumber 1/km",
+#                             yticks = ([1e-6, 1e-4, 1e-2], [L"10^{-6}", L"10^{-4}", L"10^{-2}"]),
+#                             xticks = ([1e-3, 1e-2, 1e-1], [L"10^{-3}", L"10^{-2}", L"10^{-1}"]))
+# lines!(ax, fx8E[2:end],  Neight.spec[2:end], color = :black, linewidth = 2, label = L"W8", linestyle = :dash)
+# lines!(ax,  fxE[2:end],  Nleith.spec[2:end], color = color1, linewidth = 2, label = L"L4")
+# lines!(ax,  fxE[2:end], Ncenter.spec[2:end], color = color2, linewidth = 2, label = L"C4")
+# lines!(ax,  fxE[2:end],   Nweno.spec[2:end], color = color3, linewidth = 2, label = L"W4")
+# lines!(ax, fx8E[end-244:end], 2.95e-9 .* fx8E[end-244:end].^(-3), color = :grey, linewidth = 1, linestyle = :dashdot)
+
+# axislegend(ax, position = :lb)
+
+# display(fig)
+
+# using CairoMakie
+# CairoMakie.save("spectra3D.eps", fig)
+
+# """ 
+# Calculate MOC
 # """
 
 # ψ̄intc = WenoNeverworld.Diagnostics.calculate_residual_MOC(center_avg[:v], center_avg[:b])
