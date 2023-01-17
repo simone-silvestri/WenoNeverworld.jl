@@ -78,7 +78,8 @@ end
 @inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz)^2 / λ
 @inline    cosine_νhb(i, j, k, grid, lx, ly, lz, clock, fields, ν) = ν * hack_cosd(ynode(ly, j, grid))^3
 
-default_convective_adjustment = RiBasedVerticalDiffusivity()
+default_convective_adjustment  = RiBasedVerticalDiffusivity()
+seawater_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.2, convective_νz = 0.2)
 default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter         = FluxTapering(1e-2)
@@ -247,7 +248,7 @@ function neverworld_simulation_seawater(; grid,
                                           μ_drag = 0.001,  
                                           λ_T =  7days,
                                           λ_S = 60days,
-                                          convective_adjustment = default_convective_adjustment,
+                                          convective_adjustment = seawater_convective_adjustment,
                                           biharmonic_viscosity  = default_biharmonic_viscosity,
                                           vertical_diffusivity  = default_vertical_diffusivity,
                                           gm_redi_diffusivities = (1000, 1000),
