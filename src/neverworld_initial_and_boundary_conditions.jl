@@ -30,7 +30,7 @@ end
 
 @inline initial_temperature_parabola(x, y, z) = exponential_profile(z; Δ = ΔT) * parabolic_scaling(y)
 
-@inline function initial_salinity(x, y, z)
+@inline function initial_salinity(y, mid_salinity)
     if y < -20
         return cubic_profile(y, -70.0, -20.0, 34.0, 37.0, 0.0, 0.0)
     elseif y < 0
@@ -42,7 +42,7 @@ end
     end
 end
 
-@inline function salinity_flux(x, y, z)
+@inline function salinity_flux(y, mid_flux)
     if y < -20
         return cubic_profile(y, -70.0, -20.0, -2e-8, 2e-8, 0.0, 0.0) .* 35.0
     elseif y < 0

@@ -54,7 +54,7 @@ end
 
     T  = fields.T[i, j, grid.Nz]
     x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
-    Trestoring = p.Sʳ(x, y, z)
+    Trestoring = p.initial_temperature(x, y, z)
 
     return @inbounds p.λ * (T - Trestoring)
 end
@@ -62,27 +62,17 @@ end
 @inline function salinity_top_relaxation(i, j, grid, clock, fields, p) 
 
     S  = fields.S[i, j, grid.Nz]
-    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
-
-    Srestoring = p.Sʳ(x, y, z)
-    Sflux      = p.F(x, y, z)
+    Srestoring = p.Ss[j]
+    Sflux      = p.Fs[j]
 
     return @inbounds p.λ * (S - Srestoring) - Sflux
 end
 
-@inline hack_cosd(φ) = cos(π * φ / 180)
-@inline hack_sind(φ) = sin(π * φ / 180)
-
-@inline Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz) =  (1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2))
-
-@inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz)^2 / λ
-@inline    cosine_νhb(i, j, k, grid, lx, ly, lz, clock, fields, ν) = ν * hack_cosd(ynode(ly, j, grid))^3
-
 default_convective_adjustment  = RiBasedVerticalDiffusivity()
-seawater_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.2, convective_νz = 0.2)
-default_biharmonic_viscosity  = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
-default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
-default_slope_limiter         = FluxTapering(1e-2)
+seawater_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.2)
+default_biharmonic_viscosity   = HorizontalDivergenceScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
+default_vertical_diffusivity   = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
+default_slope_limiter          = FluxTapering(1e-2)
 
 @inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer) = set!(model, b = initial_buoyancy)
 
@@ -103,7 +93,7 @@ default_slope_limiter         = FluxTapering(1e-2)
     set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
 end
 
-@inline initialize_model!(model, ::Val{false}, initial_profiles, grid, orig_grid, init_file, ::SeawaterBuoyancy) = set!(model, T = initial_profiles[1],  S = initial_profiles[2])
+@inline initialize_model!(model, ::Val{false}, initial_profiles, grid, orig_grid, init_file, ::SeawaterBuoyancy) = set!(model, T = initial_profiles[1],  S = 35.0)
 
 @inline function initialize_model!(model, ::Val{true}, initial_temperature, grid, orig_grid, init_file, ::SeawaterBuoyancy)
     Hx, Hy, Hz = halo_size(orig_grid)
@@ -131,7 +121,7 @@ function weno_neverworld_simulation(; grid,
                                       convective_adjustment = default_convective_adjustment,
                                       biharmonic_viscosity  = default_biharmonic_viscosity,
                                       vertical_diffusivity  = default_vertical_diffusivity,
-                                      gm_redi_diffusivities = (1000, 1000),
+                                      gm_redi_diffusivities = nothing,
                                       tapering = default_slope_limiter,
                                       coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme()),
                                       free_surface = ImplicitFreeSurface(),
@@ -215,7 +205,7 @@ function weno_neverworld_simulation(; grid,
     #####
 
     @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
-    initialize_model!(model, Val(interp_init), initial_buoyancy, grid, orig_grid, init_file, buoyancy_model)
+    initialize_model!(model, Val(interp_init), initial_buoyancy, grid, orig_grid, init_file, BuoyancyTracer())
 
     simulation = Simulation(model; Δt, stop_time)
 
@@ -251,7 +241,7 @@ function neverworld_simulation_seawater(; grid,
                                           convective_adjustment = seawater_convective_adjustment,
                                           biharmonic_viscosity  = default_biharmonic_viscosity,
                                           vertical_diffusivity  = default_vertical_diffusivity,
-                                          gm_redi_diffusivities = (1000, 1000),
+                                          gm_redi_diffusivities = (1000.0, 1000.0),
                                           tapering = default_slope_limiter,
                                           coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme()),
                                           free_surface = ImplicitFreeSurface(),
@@ -274,6 +264,8 @@ function neverworld_simulation_seawater(; grid,
     @info "specifying boundary conditions..."
 
     @apply_regionally τw = grid_specific_array(wind_stress, grid)
+    @apply_regionally Ss = grid_specific_array(initial_salinity, grid, scaling = 1.0)
+    @apply_regionally Fs = grid_specific_array(salinity_flux, grid, scaling = 1.0)
 
     u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
 
@@ -295,8 +287,8 @@ function neverworld_simulation_seawater(; grid,
     v_pump_T = Δz_top / λ_T
     v_pump_S = Δz_top / λ_S
 
-    T_top_relaxation_bc = FluxBoundaryCondition(temperature_top_relaxation, discrete_form=true, parameters = (; λ = v_pump_T, Tʳ = initial_temperature))
-    S_top_relaxation_bc = FluxBoundaryCondition(salinity_top_relaxation,    discrete_form=true, parameters = (; λ = v_pump_S, Sʳ = initial_salinity, F = salinity_flux))
+    T_top_relaxation_bc = FluxBoundaryCondition(temperature_top_relaxation, discrete_form=true, parameters = (; λ = v_pump_T, initial_temperature))
+    S_top_relaxation_bc = FluxBoundaryCondition(salinity_top_relaxation,    discrete_form=true, parameters = (; λ = v_pump_S, Ss, Fs))
 
     T_bcs = FieldBoundaryConditions(top = T_top_relaxation_bc)
     S_bcs = FieldBoundaryConditions(top = S_top_relaxation_bc)
