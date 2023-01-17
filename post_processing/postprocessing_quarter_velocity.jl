@@ -3,31 +3,33 @@ using WenoNeverworld.Diagnostics
 using Oceananigans
 using Oceananigans.Operators
 using GLMakie
+<<<<<<< HEAD:examples_flat/postprocessing_quarter_velocity.jl
 using FFTW 
+=======
+>>>>>>> b874995e4c9f30d51771951899d98af7c629b25a:post_processing/postprocessing_quarter_velocity.jl
 
 using Statistics: mean
 
-"""
-Instantaneous variables
-"""
+dir = "./limited_results/"
 
-variables = ("u", "v")
+dict_or_file = :dict
 
-center = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/quarter_centered/global_upwinding_snapshots.jld2"; variables);
-weno   = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/quarter/global_upwinding_snapshots.jld2"; variables);
-leith  = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/quarter_leith/global_upwinding_snapshots.jld2"; variables);
-eight  = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/eighth/global_upwinding_eight_snapshots.jld2"; variables);
+if dict_or_file == :file
+    """
+    Instantaneous variables
+    """
 
-times4 = center[:u].times[end-20:end]
-times8 =  eight[:u].times[end-20:end]
+    variables = ("u", "v")
 
-center = limit_timeseries!(center, times4) 
-weno   = limit_timeseries!(weno  , times4) 
-leith  = limit_timeseries!(leith , times4) 
-eight  = limit_timeseries!(eight , times8) 
+    center = all_fieldtimeseries(dir * "quarter_centered/global_upwinding_snapshots.jld2"; variables);
+    weno   = all_fieldtimeseries(dir * "quarter/global_upwinding_snapshots.jld2"; variables);
+    leith  = all_fieldtimeseries(dir * "quarter_leith/global_upwinding_snapshots.jld2"; variables);
+    eight  = all_fieldtimeseries(dir * "eighth/global_upwinding_eight_snapshots.jld2"; variables);
 
-@info "finished loading instantaneous files"
+    times4 = center[:u].times[end-20:end]
+    times8 =  eight[:u].times[end-20:end]
 
+<<<<<<< HEAD:examples_flat/postprocessing_quarter_velocity.jl
 function calculate_noise(v)
     Nx, Ny, Nz = size(v)
 
@@ -62,20 +64,52 @@ end
 """
 Time-averaged variables
 """
+=======
+    center = limit_timeseries!(center, times4) 
+    weno   = limit_timeseries!(weno  , times4) 
+    leith  = limit_timeseries!(leith , times4) 
+    eight  = limit_timeseries!(eight , times8) 
 
-variables = ("u", "v", "u2", "v2", "ζ", "ζ2")
+    @info "finished loading instantaneous files"
 
-center_avg = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/quarter_centered/global_upwinding_averages.jld2"; variables);
-weno_avg   = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/quarter/global_upwinding_averages.jld2"; variables);
-leith_avg  = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/quarter_leith/global_upwinding_averages.jld2"; variables);
-eight_avg  = all_fieldtimeseries("../UpwindVectorInvariantSchemes.jl/eighth/global_upwinding_eight_averages.jld2"; variables);
+    """
+    Time-averaged variables
+    """
+>>>>>>> b874995e4c9f30d51771951899d98af7c629b25a:post_processing/postprocessing_quarter_velocity.jl
 
-center_avg = limit_timeseries!(center_avg, times4) 
-weno_avg   = limit_timeseries!(weno_avg  , times4) 
-leith_avg  = limit_timeseries!(leith_avg , times4) 
-eight_avg  = limit_timeseries!(eight_avg , times8) 
+    variables = ("u", "v", "u2", "v2", "ζ", "ζ2")
 
-@info "Finished loading averaged files"
+    center_avg = all_fieldtimeseries(dir * "quarter_centered/global_upwinding_averages.jld2"; variables);
+    weno_avg   = all_fieldtimeseries(dir * "quarter/global_upwinding_averages.jld2"; variables);
+    leith_avg  = all_fieldtimeseries(dir * "quarter_leith/global_upwinding_averages.jld2"; variables);
+    eight_avg  = all_fieldtimeseries(dir * "eighth/global_upwinding_eight_averages.jld2"; variables);
+
+    center_avg = limit_timeseries!(center_avg, times4) 
+    weno_avg   = limit_timeseries!(weno_avg  , times4) 
+    leith_avg  = limit_timeseries!(leith_avg , times4) 
+    eight_avg  = limit_timeseries!(eight_avg , times8) 
+
+    @info "Finished loading averaged files"
+
+else
+    """
+    Instantaneous variables
+    """
+
+    center = jldopen(dir * "center.jld2")["vars"]
+    weno   = jldopen(dir * "weno.jld2")["vars"]
+    leith  = jldopen(dir * "leith.jld2")["vars"]
+    eight  = jldopen(dir * "eight.jld2")["vars"]
+
+    """
+    Time-averaged variables
+    """
+    
+    center_avg = jldopen(dir * "center_avg.jld2")["vars"]
+    weno_avg   = jldopen(dir * "weno_avg.jld2")["vars"]
+    leith_avg  = jldopen(dir * "leith_avg.jld2")["vars"]
+    eight_avg  = jldopen(dir * "eight_avg.jld2")["vars"]
+end
 
 """
 Mean Kinetic energy and Enstrophy
@@ -188,6 +222,23 @@ lines!(ax, ϕf,  interior(weno_avg.IIΩtot,   1, :, 1), color = :red)
 lines!(ax, ϕf,  interior(leith_avg.IIΩtot,  1, :, 1), color = :green)
 
 display(fig)
+<<<<<<< HEAD:examples_flat/postprocessing_quarter_velocity.jl
+=======
+# CairoMakie.save("tot_energy.eps", fig)
+
+# fig = Figure(resolution = (800, 400))
+# ax = Axis(fig[1, 1])
+
+# lines!(ax, ϕ, interior(IIEflucweno1  , 1, :, 1), color = :blue)
+# lines!(ax, ϕ, interior(IIEfluccenter1, 1, :, 1), color = :red)
+
+# lines!(ax, ϕ, interior(IIEtotweno  , 1, :, 1), color = :blue, linestyle = :dash)
+# lines!(ax, ϕ, interior(IIEtotcenter, 1, :, 1), color = :red, linestyle = :dash)
+
+# ylims!(ax, (0, 2e9))
+
+# ax = Axis(fig[1, 2])
+>>>>>>> b874995e4c9f30d51771951899d98af7c629b25a:post_processing/postprocessing_quarter_velocity.jl
 
 # CairoMakie.save("tot_energy.eps", fig)
 
@@ -219,6 +270,7 @@ display(fig)
 # ax = Axis(fig[1, 4], title = "depth-integrated TKE, eight", xlabel = L"\lambda", ylabel = L"\phi")
 # hm = heatmap!(ax, λ8, ϕ8, log10.(interior(eight[:E][1], :, :, 65) .+ 1e-20), colorrange = (-5, 0), colormap = :magma, interpolate = true)
 
+<<<<<<< HEAD:examples_flat/postprocessing_quarter_velocity.jl
 # cb = Colorbar(fig[1, 5], hm)
 
 # display(fig)
@@ -327,6 +379,47 @@ Calculate energy (Ê) and enstrophy (Ω̂) spectra on a transect in the channel
 
 # using CairoMakie
 # CairoMakie.save("spectra3D.eps", fig)
+=======
+# """
+# Calculate energy (Ê) and enstrophy (Ω̂) spectra on a transect in the channel
+# """
+
+# using WenoNeverworld.Diagnostics: average_spectra, hann_window
+
+# Êcenter = average_spectra(Efluccenter, Colon(), 80:81; k = 65)
+# Êweno   = average_spectra(Eflucweno,   Colon(), 80:81; k = 65)
+
+# Ω̂center = average_spectra(Efluccenter, Colon(), 117:118; k = 65, windowing = hann_window)
+# Ω̂weno   = average_spectra(Eflucweno,   Colon(), 117:118; k = 65, windowing = hann_window)
+
+# @show ϕ[200]
+
+# NxE = length(xnodes(weno[:v][1]))
+# Nxζ = length(xnodes(weno[:u][1]))
+
+# fx = Êcenter.freq[2:end]
+# fxE = fftfreq(NxE, 1 / Δxᶜᶜᶜ(1, 1, 1, weno[:v].grid))[1:Int(NxE ÷ 2)] .* 1e3 # in 1/km
+# fxζ = fftfreq(Nxζ, 1 / Δxᶠᶠᶜ(1, 1, 1, weno[:u].grid))[1:Int(Nxζ ÷ 2)] .* 1e3 # in 1/km
+
+# fig = Figure(resolution = (800, 350))
+# ax = Axis(fig[1, 1], title = "energy spectra at 50ᵒ S", yscale = log10, xscale = log10,
+#                             xlabel = "Wavenumber 1/km", ylabel = L"E_k")
+# lines!(ax, fxE[2:end], Êcenter.spec[2:end], color = :red,   label = "center momentum scheme")
+# lines!(ax, fxE[2:end], Êweno.spec[2:end],   color = :blue,  label = "WENO momentum scheme")
+# lines!(ax, fxE[10:end-51],   0.0006 .* fx[10:end-50].^(-5/3), color = :grey, linewidth = 2, linestyle = :dashdot)
+# lines!(ax, fxE[end-100:end], 0.0055 .* fx[end-100:end].^(-3),  color = :grey, linewidth = 2, linestyle = :dashdot)
+
+# ax = Axis(fig[1, 2], title = "energy spectra at 10ᵒ S", yscale = log10, xscale = log10,
+#                             xlabel = "Wavenumber 1/km", ylabel = L"E_k")
+# lines!(ax, fxE[2:end], Ω̂center.spec[2:end], color = :red,   label = "center momentum scheme")
+# lines!(ax, fxE[2:end], Ω̂weno.spec[2:end],   color = :blue,  label = "WENO momentum scheme")
+# lines!(ax, fxE[10:end-51],   0.0006 .* fx[10:end-50].^(-5/3), color = :grey, linewidth = 2, linestyle = :dashdot)
+# lines!(ax, fxE[end-100:end], 0.0055 .* fx[end-100:end].^(-3), color = :grey, linewidth = 2, linestyle = :dashdot)
+
+# display(fig)
+# CairoMakie.save("spectra2.png", fig)
+# CairoMakie.save("spectra2.eps", fig)
+>>>>>>> b874995e4c9f30d51771951899d98af7c629b25a:post_processing/postprocessing_quarter_velocity.jl
 
 # """ 
 # Calculate MOC
