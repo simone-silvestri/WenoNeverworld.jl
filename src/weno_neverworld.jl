@@ -111,6 +111,8 @@ function weno_neverworld_simulation(; grid,
                                       init_file = nothing,
                                       Δt = 5minutes,
                                       stop_time = 10years,
+                                      buoyancy_boundary_conditions = true,
+                                      velocity_boundary_conditions = true,
                                       initial_buoyancy = initial_buoyancy_tangent,
 				                      wind_stress  = zonal_wind_stress,
                                       tracers = :b
@@ -126,24 +128,33 @@ function weno_neverworld_simulation(; grid,
 
     # Quadratic bottom drag:
 
-    drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
-    drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
+    if velocity_boundary_conditions
+        drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
+        drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
 
-    u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u) 
-    v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v) 
+        u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u) 
+        v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v) 
 
-    u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ_drag)
-    v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ_drag)
+        u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ_drag)
+        v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ_drag)
 
-    u_bcs = FieldBoundaryConditions(bottom = u_bottom_drag_bc, immersed = u_immersed_bc, top = u_wind_stress_bc)
-    v_bcs = FieldBoundaryConditions(bottom = v_bottom_drag_bc, immersed = v_immersed_bc)
+        u_bcs = FieldBoundaryConditions(bottom = u_bottom_drag_bc, immersed = u_immersed_bc, top = u_wind_stress_bc)
+        v_bcs = FieldBoundaryConditions(bottom = v_bottom_drag_bc, immersed = v_immersed_bc)
+    else
+        u_bcs = FieldBoundaryConditions(top = FluxBoundaryCondition(0.0))
+        v_bcs = FieldBoundaryConditions(top = FluxBoundaryCondition(0.0))
+    end
 
     Δz_top = CUDA.@allowscalar Δzᶜᶜᶜ(1, 1, grid.Nz, grid)
     v_pump = Δz_top / λ_buoy
 
     b_top_relaxation_bc = FluxBoundaryCondition(buoyancy_top_relaxation, discrete_form=true, parameters = (; λ = v_pump, initial_buoyancy))
 
-    b_bcs = FieldBoundaryConditions(top = b_top_relaxation_bc)
+    if buoyancy_boundary_conditions
+        b_bcs = FieldBoundaryConditions(top = b_top_relaxation_bc)
+    else
+        b_bcs = FieldBoundaryConditions(top = FluxBoundaryCondition(0.0))
+    end
 
     #####
     ##### Closures

@@ -23,12 +23,37 @@ function checkpoint_fields(file)
     return (; u, v, w, b)
 end
 
-function all_fieldtimeseries(file; variables = ("u", "v", "w", "b"))
+assumed_location(var) = var == "u" ? (Face, Center, Center) : 
+                        var == "v" ? (Center, Face, Center) : 
+                        var == "w" ? (Center, Center, Face) : 
+                        (Center, Center, Center)
+
+function all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w", "b"), checkpointer = false)
 
     fields = Dict()
 
-    for var in variables
-        fields[Symbol(var)] = FieldTimeSeries(file, var; backend=OnDisk(), architecture=CPU())
+    if !(checkpointer)
+        for var in variables
+            fields[Symbol(var)] = FieldTimeSeries(filename, var; backend=OnDisk(), architecture=CPU())
+        end
+    else
+        files   = readdir(dir)
+        myfiles = filter((x) -> x[1:length(filename)] == filename, files)
+        numbers = parse.(Int, filter.(isdigit, myfiles))
+        times   = numbers
+        
+        grid = jldopen(dir * myfiles[1])["grid"] 
+        perm = sortperm(numbers)
+        myfiles = myfiles[perm]
+        for var in variables
+            field = FieldTimeSeries{assumed_location(var)...}(grid, times)
+            for (idx, file) in enumerate(myfiles)
+                concrete_var = jldopen(dir * file)[var * "/data"]
+                set!(field[idx], concrete_var)
+            end
+
+            fields[Symbol(var)] = field
+        end
     end
 
     return fields
@@ -63,7 +88,7 @@ function reduce_output_size!(old_file_name, new_file_name; limit_to = 20, variab
 
     var_dict = all_fieldtimeseries(old_file_name; variables)
     times = var_dict[Symbol(variables[1])].times[end - limit_to:end]
-    limit_timeseries!(var_dict, times)
+    var_dict = limit_timeseries!(var_dict, times)
 
     jldsave(new_file_name, vars = var_dict)
 end
