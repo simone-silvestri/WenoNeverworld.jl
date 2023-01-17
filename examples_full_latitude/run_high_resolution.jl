@@ -34,11 +34,7 @@ simulation = neverworld_simulation_seawater(; grid, Δt, stop_time, momentum_adv
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
 # Add outputs
-checkpoint_time = 1year
-snapshot_time   = 1year
-surface_time    = 30days
-average_time    = 1year
-standard_outputs!(simulation, output_prefix; checkpoint_time, snapshot_time, surface_time, average_time)
+checkpoint_outputs!(simulation, output_prefix)
 
 # initializing the time for wall_time calculation
 run_simulation!(simulation; interp_init, init_file)
