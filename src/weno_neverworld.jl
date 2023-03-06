@@ -267,9 +267,9 @@ function neverworld_simulation_seawater(; grid,
 
     @info "specifying boundary conditions..."
 
-    @apply_regionally τw = grid_specific_array(wind_stress, grid)
-    @apply_regionally Ss = grid_specific_array(initial_salinity, grid, scaling = 1.0)
-    @apply_regionally Fs = grid_specific_array(salinity_flux, grid, scaling = 1.0)
+    τw =   grid_specific_array(wind_stress, grid)
+    Ss = - grid_specific_array(initial_salinity, grid, scaling = 1.0)
+    Fs =   grid_specific_array(salinity_flux, grid, scaling = 1.0)
 
     u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
 
