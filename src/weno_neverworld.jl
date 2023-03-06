@@ -10,8 +10,8 @@ using Oceananigans.Operators: Δx, Δy, Az
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
-using Oceananigans.Coriolis: WetCellEnstrophyConservingScheme
-using Oceananigans.Advection: VorticityStencil, VelocityStencil
+using Oceananigans.Coriolis: ActiveCellEnstrophyConservingScheme
+using Oceananigans.Advection: DefaultStencil, VelocityStencil
 using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_global_grid
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
@@ -76,6 +76,10 @@ default_slope_limiter          = FluxTapering(1e-2)
 
 @inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer) = set!(model, b = initial_buoyancy)
 
+@inline upwind_vector_invariant(grid) = VectorInvariant(vorticity_scheme = WENO(), 
+                                                       divergence_scheme = WENO(),
+                                                         vertical_scheme = WENO(grid.underlying_grid))
+
 @inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer)
     Hx, Hy, Hz = halo_size(orig_grid)
 
@@ -123,9 +127,9 @@ function weno_neverworld_simulation(; grid,
                                       vertical_diffusivity  = default_vertical_diffusivity,
                                       gm_redi_diffusivities = nothing,
                                       tapering = default_slope_limiter,
-                                      coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme()),
+                                      coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme()),
                                       free_surface = ImplicitFreeSurface(),
-                                      momentum_advection = WENO(vector_invariant = VelocityStencil()),
+                                      momentum_advection = upwind_vector_invariant(grid),
 				                      tracer_advection   = WENO(grid.underlying_grid), 
                                       interp_init = false,
                                       init_file = nothing,
@@ -243,9 +247,9 @@ function neverworld_simulation_seawater(; grid,
                                           vertical_diffusivity  = default_vertical_diffusivity,
                                           gm_redi_diffusivities = (1000.0, 1000.0),
                                           tapering = default_slope_limiter,
-                                          coriolis = HydrostaticSphericalCoriolis(scheme = WetCellEnstrophyConservingScheme()),
+                                          coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme()),
                                           free_surface = ImplicitFreeSurface(),
-                                          momentum_advection = WENO(vector_invariant = VelocityStencil()),
+                                          momentum_advection = upwind_vector_invariant(grid),
                                           tracer_advection   = WENO(grid.underlying_grid), 
                                           interp_init = false,
                                           init_file = nothing,

@@ -210,6 +210,21 @@ function time_average(field::FieldTimeSeries, iterations = 1:length(field.times)
     return avg
 end
 
+function min_time_average(field::FieldTimeSeries)
+    Nx, Ny, _ = size(field.grid)
+    Nt        = length(field.times)
+
+    field_min = zeros(Nt, Ny)
+
+    for t in 1:Nt
+        for j in 1:Ny
+            field_min[t, j] = minimum(filter((x) -> x != 0, Array(interior(field[t], :, j, 69))))
+        end
+    end
+
+    return field_min
+end
+
 function calculate_fluctuations!(fields::Dict, variables)
 
     for var in variables
