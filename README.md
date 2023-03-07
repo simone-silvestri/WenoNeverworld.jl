@@ -46,9 +46,9 @@ standard_outputs!(simulation, output_prefix)
 run_simulation!(simulation; interp_init, init_file)
 ```
 
-## Speed at the surface (1/8, 1/4 WENO, 1/4 Leith)
+### Speed at the surface on 1/16th resolution (WENO approach vs LeithPlus viscosity)
 
-<img width="1067" alt="image" src="https://user-images.githubusercontent.com/33547697/223501084-cdc3b3e2-4ef2-4b4a-8db2-8f93fdb1133c.png">
+https://user-images.githubusercontent.com/33547697/223516118-cfa23e77-88d6-4054-9297-5958bda2f360.mp4
 
 
 
