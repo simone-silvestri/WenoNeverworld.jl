@@ -1,7 +1,3 @@
-#####
-##### Boundary conditions
-#####
-
 using Oceananigans.Utils
 using Oceananigans.Grids: node, halo_size
 using Oceananigans.TurbulenceClosures: FluxTapering
@@ -9,64 +5,11 @@ using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
 using Oceananigans.Operators: Δx, Δy, Az 
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
-using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
 using Oceananigans.Coriolis: ActiveCellEnstrophyConservingScheme
-using Oceananigans.Advection: DefaultStencil, VelocityStencil
-using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_global_grid
 
-@inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
-
-@inline speedᶠᶜᶜ(i, j, k, grid, fields) = (fields.u[i, j, k]^2 + ℑxyᶠᶜᵃ(i, j, k, grid, ϕ², fields.v))^0.5
-@inline speedᶜᶠᶜ(i, j, k, grid, fields) = (fields.v[i, j, k]^2 + ℑxyᶜᶠᵃ(i, j, k, grid, ϕ², fields.u))^0.5
-
-@inline u_bottom_drag(i, j, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, 1] * speedᶠᶜᶜ(i, j, 1, grid, fields)
-@inline v_bottom_drag(i, j, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, 1] * speedᶜᶠᶜ(i, j, 1, grid, fields)
-
-@inline u_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, k] * speedᶠᶜᶜ(i, j, k, grid, fields) 
-@inline v_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, k] * speedᶜᶠᶜ(i, j, k, grid, fields) 
-
-@inline surface_wind_stress(i, j, grid, clock, fields, τ) = τ[j]
-
-@inline function grid_specific_array(wind_stress, grid; scaling = 1000.0)
-
-    Ny   = size(grid, 2)
-    arch = architecture(grid)
-    
-    φ_grid = grid.φᵃᶜᵃ[1:Ny]
-
-    τw = zeros(Ny)
-    for (j, φ) in enumerate(φ_grid)
-        τw[j] = wind_stress(φ, 0.0) ./ scaling
-    end
-
-    return arch_array(arch, -τw)
-end
-
-@inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
-
-    b = fields.b[i, j, grid.Nz]
-    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
-
-    return @inbounds p.λ * (b - p.initial_buoyancy(x, y, z))
-end
-
-@inline function temperature_top_relaxation(i, j, grid, clock, fields, p) 
-
-    T  = fields.T[i, j, grid.Nz]
-    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
-    Trestoring = p.initial_temperature(x, y, z)
-
-    return @inbounds p.λ * (T - Trestoring)
-end
-
-@inline function salinity_top_relaxation(i, j, grid, clock, fields, p) 
-
-    S  = fields.S[i, j, grid.Nz]
-    Srestoring = p.Ss[j]
-    Sflux      = p.Fs[j]
-
-    return @inbounds p.λ * (S - Srestoring) - Sflux
-end
+#####
+##### Default parameterizations for the Neverworld simulation
+#####
 
 default_convective_adjustment  = RiBasedVerticalDiffusivity()
 seawater_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.2)
@@ -74,11 +17,24 @@ default_biharmonic_viscosity   = HorizontalDivergenceScalarBiharmonicDiffusivity
 default_vertical_diffusivity   = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter          = FluxTapering(1e-2)
 
-@inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer) = set!(model, b = initial_buoyancy)
+#####
+##### Default momentum advection
+#####
 
 @inline upwind_vector_invariant(grid) = VectorInvariant(vorticity_scheme = WENO(), 
                                                        divergence_scheme = WENO(),
                                                          vertical_scheme = WENO(grid.underlying_grid))
+
+
+"""
+    function initialize_model!(model, Val(interpolate), initial_buoyancy, grid, orig_grid, init_file, buoyancymodel)
+
+initializes the model according to 
+1. interpolate or not on a finer/coarser grid `Val(interpolate)`
+2. either `b` or `T` and `S`
+
+"""
+@inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer) = set!(model, b = initial_buoyancy)
 
 @inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer)
     Hx, Hy, Hz = halo_size(orig_grid)
@@ -118,6 +74,63 @@ end
     set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
 end
 
+"""
+    function weno_neverworld_simulation(; grid, 
+                                          orig_grid = grid,
+                                          μ_drag = 0.001,  
+                                          λ_buoy = 7days,
+                                          convective_adjustment = default_convective_adjustment,
+                                          biharmonic_viscosity  = default_biharmonic_viscosity,
+                                          vertical_diffusivity  = default_vertical_diffusivity,
+                                          gm_redi_diffusivities = nothing,
+                                          tapering = default_slope_limiter,
+                                          coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme()),
+                                          free_surface = ImplicitFreeSurface(),
+                                          momentum_advection = upwind_vector_invariant(grid),
+    				                      tracer_advection   = WENO(grid.underlying_grid), 
+                                          interp_init = false,
+                                          init_file = nothing,
+                                          Δt = 5minutes,
+                                          stop_time = 10years,
+                                          buoyancy_boundary_conditions = true,
+                                          velocity_boundary_conditions = true,
+                                          initial_buoyancy = initial_buoyancy_tangent,
+    				                      wind_stress  = zonal_wind_stress,
+                                          tracers = :b
+                                          )
+
+returns a neverworld `simulation` using a `BuoyancyTracer` buoyancy model
+
+Keyword arguments
+=================
+
+- `grid` : the neverworld `LatitudeLongitudeGrid`
+- `orig_grid` : if `interp_init == true` we need the original grid to perform the interpolation
+- `μ_drag` : drag coefficient (default 1e-3)
+- `λ_buoy` : restoring time for buoyancy restoration (default = `7days`)
+- `convective_adjustment` : boundary layer parameterization (default = `RiBasedVerticalDiffusivity()`)
+- `biharmonic_viscosity` : horizontal momentum diffusion
+- `vertical_diffusivity` : vertical (background) momentum and tracer diffusion 
+- `gm_redi_diffusivities` : a tuple containing `(κᴳᴹ, κᴿᴱᴰᴵ)`, if `nothing` no gm closure is used 
+                            (default = `nothing`)
+- `tapering` : tapering for the gm-redi closure (default = `FluxTapering(1e-2)`)
+- `coriolis` : coriolis scheme
+- `free_surface` : free surface scheme
+- `momentum_advection` : momentum advection scheme
+- `tracer_advection` : tracer advection scheme
+- `interp_init` : if `false` the simulation will be initialized with `initial_buoyancy` and quiescent flow,
+                  if `true` the simulation will be initialized by interpolating the values in `init_file`
+- `init_file` : initial file used to interpolate variables
+- `Δt` : time step size (constant)
+- `stop_time` : stop time of the simulation
+- `buoyancy_boundary_conditions` : if `true` we use restoring boundary conditions for buoyancy at the top,
+                                   otherwise we use zero flux
+- `velocity_boundary_conditions` : if `true` we impose a wind stress and drag boundary conditions,
+                                   otherwise we use zero flux
+- `initial_buoyancy` : initial buoyancy profile. The top layer is used as a reference for the restoring boundary condition
+- `wind_stress` : wind stress profile. It is used as a top boundary condition for `u`
+- `tracers` : tracers in the simulation
+"""
 function weno_neverworld_simulation(; grid, 
                                       orig_grid = grid,
                                       μ_drag = 0.001,  
@@ -237,12 +250,73 @@ function weno_neverworld_simulation(; grid,
     return simulation
 end
 
+
+"""
+    function neverworld_simulation_seawater(; grid, 
+                                              orig_grid = grid,
+                                              μ_drag = 0.001,  
+                                              λ_T =  7days,
+                                              λ_S = 60days,
+                                              convective_adjustment = default_convective_adjustment,
+                                              biharmonic_viscosity  = default_biharmonic_viscosity,
+                                              vertical_diffusivity  = default_vertical_diffusivity,
+                                              gm_redi_diffusivities = (1000.0, 1000.0),
+                                              tapering = default_slope_limiter,
+                                              coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme()),
+                                              free_surface = ImplicitFreeSurface(),
+                                              momentum_advection = upwind_vector_invariant(grid),
+                                              tracer_advection   = WENO(grid.underlying_grid), 
+                                              interp_init = false,
+                                              init_file = nothing,
+                                              Δt = 5minutes,
+                                              stop_time = 10years,
+                                              initial_temperature = initial_temperature_parabola,
+                                              initial_salinity = initial_salinity,
+                                              salinity_flux = salinity_flux,
+                                              wind_stress  = zonal_wind_stress,
+                                              equation_of_state = LinearEquationOfState(),
+                                              tracers = (:T, :S)
+                                              )
+
+returns a neverworld `simulation` using a `SeawaterBuoyancy` bouyance model
+
+Keyword arguments
+=================
+
+- `grid` : the neverworld `LatitudeLongitudeGrid`
+- `orig_grid` : if `interp_init == true` we need the original grid to perform the interpolation
+- `μ_drag` : drag coefficient (default 1e-3)
+- `λ_T` : restoring time for temperature restoration (default = `7days`)
+- `λ_S` : restoring time for salinity restoration (default = `60days`)
+- `convective_adjustment` : boundary layer parameterization (default = `RiBasedVerticalDiffusivity()`)
+- `biharmonic_viscosity` : horizontal momentum diffusion
+- `vertical_diffusivity` : vertical (background) momentum and tracer diffusion 
+- `gm_redi_diffusivities` : a tuple containing `(κᴳᴹ, κᴿᴱᴰᴵ)`, if `nothing` no gm closure is used 
+                            (default = `(1000, 1000)`)
+- `tapering` : tapering for the gm-redi closure (default = `FluxTapering(1e-2)`)
+- `coriolis` : coriolis scheme
+- `free_surface` : free surface scheme
+- `momentum_advection` : momentum advection scheme
+- `tracer_advection` : tracer advection scheme
+- `interp_init` : if `false` the simulation will be initialized with `initial_buoyancy` and quiescent flow,
+                  if `true` the simulation will be initialized by interpolating the values in `init_file`
+- `init_file` : initial file used to interpolate variables
+- `Δt` : time step size (constant)
+- `stop_time` : stop time of the simulation
+- `initial_temperature` : initial temperature profile. The top layer is used as a reference for the restoring boundary condition
+- `initial_salinity` : initial salinity profile. The top layer is used as a reference for the restoring boundary condition
+- `salinity_flux` : salinity flux profile. It is used as a top boundary condition for `S`
+- `wind_stress` : wind stress profile. It is used as a top boundary condition for `u`
+- `equation_of_state` : equation of state used for `SeawaterBuoyancy`
+- `tracers` : tracers in the simulation
+
+"""
 function neverworld_simulation_seawater(; grid, 
                                           orig_grid = grid,
                                           μ_drag = 0.001,  
                                           λ_T =  7days,
                                           λ_S = 60days,
-                                          convective_adjustment = seawater_convective_adjustment,
+                                          convective_adjustment = default_convective_adjustment,
                                           biharmonic_viscosity  = default_biharmonic_viscosity,
                                           vertical_diffusivity  = default_vertical_diffusivity,
                                           gm_redi_diffusivities = (1000.0, 1000.0),
@@ -258,8 +332,8 @@ function neverworld_simulation_seawater(; grid,
                                           initial_temperature = initial_temperature_parabola,
                                           initial_salinity = initial_salinity,
                                           salinity_flux = salinity_flux,
-                                          equation_of_state = LinearEquationOfState(),
                                           wind_stress  = zonal_wind_stress,
+                                          equation_of_state = LinearEquationOfState(),
                                           tracers = (:T, :S)
                                           )
 
@@ -354,6 +428,12 @@ function neverworld_simulation_seawater(; grid,
     return simulation
 end
 
+"""
+    function run_simulation!(simulation; interp_init = false, init_file = nothing) 
+
+runs the `simulation`. if `interp_init` is `false` and `init_file` is not a `Nothing`
+we pickup from `init_file`
+"""
 function run_simulation!(simulation; interp_init = false, init_file = nothing) 
     
     init = interp_init ? true : (init_file isa Nothing ? true : false)
