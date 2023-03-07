@@ -70,3 +70,73 @@ end
         return cubic_profile(y, 20.0, 70.0, 37.0, 34.0, 0.0, 0.0)
     end
 end
+
+#####
+##### Bottom drag boundary conditions
+#####
+
+@inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
+
+@inline speedᶠᶜᶜ(i, j, k, grid, fields) = (fields.u[i, j, k]^2 + ℑxyᶠᶜᵃ(i, j, k, grid, ϕ², fields.v))^0.5
+@inline speedᶜᶠᶜ(i, j, k, grid, fields) = (fields.v[i, j, k]^2 + ℑxyᶜᶠᵃ(i, j, k, grid, ϕ², fields.u))^0.5
+
+@inline u_bottom_drag(i, j, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, 1] * speedᶠᶜᶜ(i, j, 1, grid, fields)
+@inline v_bottom_drag(i, j, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, 1] * speedᶜᶠᶜ(i, j, 1, grid, fields)
+
+@inline u_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, k] * speedᶠᶜᶜ(i, j, k, grid, fields) 
+@inline v_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, k] * speedᶜᶠᶜ(i, j, k, grid, fields) 
+
+#####
+##### Wind stress boundary condition
+#####
+
+@inline surface_wind_stress(i, j, grid, clock, fields, τ) = τ[j]
+
+#####
+##### Tracers boundary condition
+#####
+
+@inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
+
+    b = fields.b[i, j, grid.Nz]
+    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
+
+    return @inbounds p.λ * (b - p.initial_buoyancy(x, y, z))
+end
+
+@inline function temperature_top_relaxation(i, j, grid, clock, fields, p) 
+
+    T  = fields.T[i, j, grid.Nz]
+    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
+    Trestoring = p.initial_temperature(x, y, z)
+
+    return @inbounds p.λ * (T - Trestoring)
+end
+
+@inline function salinity_top_relaxation(i, j, grid, clock, fields, p) 
+
+    S  = fields.S[i, j, grid.Nz]
+    Srestoring = p.Ss[j]
+    Sflux      = p.Fs[j]
+
+    return @inbounds p.λ * (S - Srestoring) - Sflux
+end
+
+#####
+##### Utility to concretize a boundary function into an array
+#####
+
+@inline function grid_specific_array(boundary_function, grid; scaling = 1000.0)
+
+    Ny   = size(grid, 2)
+    arch = architecture(grid)
+    
+    φ_grid = grid.φᵃᶜᵃ[1:Ny]
+
+    τw = zeros(Ny)
+    for (j, φ) in enumerate(φ_grid)
+        τw[j] = boundary_function(φ, 0.0) ./ scaling
+    end
+
+    return arch_array(arch, -τw)
+end
