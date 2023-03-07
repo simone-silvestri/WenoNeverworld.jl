@@ -3,6 +3,11 @@ using Oceananigans.Grids: xnode, ynode, halo_size
 using Oceananigans.Utils: instantiate
 using Oceananigans.BoundaryConditions
 
+"""
+    function update_simulation_clock!(simulation, init_file)
+
+updates the `clock` of `simulation` with the time in `init_file`
+"""
 function update_simulation_clock!(simulation, init_file)
     clock = jldopen(init_file)["clock"]
     simulation.model.clock.time = clock.time	
@@ -11,6 +16,13 @@ function update_simulation_clock!(simulation, init_file)
     return nothing
 end
 
+"""
+    function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2minutes)
+
+utility to update the `Δt` of a `simulation` after a certain `cutoff_time` with `new_Δt`.
+Note: this function adds a `callback` to simulation, so the order of `increase_simulation_Δt!` 
+matters (i.e. the `Δt` will be updated based on the order of `increase_simulation_Δt!` specified)
+"""
 function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2minutes)
     
     counter = 0
@@ -37,6 +49,12 @@ function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2m
     return nothing
 end
 
+"""
+    function interpolate_per_level(old_vector, old_grid, new_grid, loc)
+
+interpolate `old_vector` (living on `loc`) from `old_grid` to `new_grid` 
+Note: The z-levels of `old_grid` and `new_grid` should be the same!!
+"""
 function interpolate_per_level(old_vector, old_grid, new_grid, loc)
 
     H_new = halo_size(new_grid)
