@@ -45,3 +45,10 @@ standard_outputs!(simulation, output_prefix)
 # Let's run!
 run_simulation!(simulation; interp_init, init_file)
 ```
+
+## Speed at the surface (1/8th WENO, 1/4er WENO, 1/4er Leith)
+
+<img width="1067" alt="image" src="https://user-images.githubusercontent.com/33547697/223501084-cdc3b3e2-4ef2-4b4a-8db2-8f93fdb1133c.png">
+
+
+
