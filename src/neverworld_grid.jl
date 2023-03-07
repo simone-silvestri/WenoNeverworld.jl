@@ -53,7 +53,7 @@ function NeverworldGrid(arch, resolution, FT::DataType = Float64;
                         longitude = (-2, 62), 
                         latitude = (-70, 0), 
                         bathymetry = bathymetry_without_ridge,
-                        z_faces = z_faces_exp(Nz = 69, Lz = 4000.0)) 
+                        z_faces = z_faces_exp()) 
 
     Nx = Int((longitude[2] - longitude[1]) / resolution)
     Ny = Int((latitude[2]  - latitude[1]) / resolution)
