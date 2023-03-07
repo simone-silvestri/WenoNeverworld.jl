@@ -1,6 +1,27 @@
 using Oceananigans.Operators: ζ₃ᶠᶠᶜ
 using Oceananigans.AbstractOperations: KernelFunctionOperation
 
+"""
+    function standard_outputs!(simulation, output_prefix; overwrite_existing = true, 
+                                                          checkpoint_time    = 100days,
+                                                          snapshot_time      = 30days,
+                                                          surface_time       = 5days,
+                                                          average_time       = 30days,
+                                                          average_window     = average_time,
+                                                          average_stride     = 10)
+
+attaches four `JLD2OutputWriter`s to `simulation` with prefix `output_prefix`
+
+Outputs attached
+================
+
+- `snapshots` : snapshots of `u`, `v`, `w` and `b` saved every `snapshot_time`
+- `surface_fields` : snapshots of `u`, `v`, `w` and `b` at the surface saved every `surface_time`
+- `averaged_fields` : averages of `u`, `v`, `w`, `b`, `ζ`, `ζ2`, `u2`, `v2`, `w2`, `b2`, `ub`, `vb`, and `wb` 
+                      saved every `average_time` with a window of `average_window` and stride of `average_stride`
+- `checkpointer` : checkpointer saved every `checkpoint_time`
+
+"""
 function standard_outputs!(simulation, output_prefix; overwrite_existing = true, 
                                                       checkpoint_time    = 100days,
                                                       snapshot_time      = 30days,
@@ -54,6 +75,11 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
     return nothing
 end
 
+"""
+    function checkpoint_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)
+
+attaches a `Checkpointer` to the simulation with prefix `output_prefix` that is saved every `checkpoint_time`
+"""
 function checkpoint_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)
 
     model = simulation.model
@@ -66,6 +92,25 @@ function checkpoint_outputs!(simulation, output_prefix; overwrite_existing = tru
     return nothing
 end
 
+
+"""
+    function reduced_outputs!(simulation, output_prefix; overwrite_existing = true, 
+                                                         checkpoint_time    = 100days,
+                                                         snapshot_time      = 30days,
+                                                         surface_time       = 1days,
+                                                         bottom_time        = 1days)
+
+attaches four `JLD2OutputWriter`s to `simulation` with prefix `output_prefix`
+
+Outputs attached
+================
+
+- `snapshots` : snapshots of `u`, `v`, `w` and `b` saved every `snapshot_time`
+- `surface_fields` : snapshots of `u`, `v`, `w` and `b` at the surface saved every `surface_time`
+- `bottom_fields` : snapshots of `u`, `v`, `w` and `b` at the bottom (`k = 2`) saved every `bottom_time`
+- `checkpointer` : checkpointer saved every `checkpoint_time`
+                                                         
+"""
 function reduced_outputs!(simulation, output_prefix; overwrite_existing = true, 
                                                      checkpoint_time    = 100days,
                                                      snapshot_time      = 30days,
@@ -104,27 +149,3 @@ function reduced_outputs!(simulation, output_prefix; overwrite_existing = true,
                                                             overwrite_existing)
 
 end                                                 
-
-import Oceananigans.OutputWriters: set_time_stepper_tendencies!
-
-function set_time_stepper_tendencies!(timestepper, file, model_fields)
-    for name in propertynames(model_fields)
-        # Tendency "n"
-        try
-            parent_data = file["timestepper/Gⁿ/$name/data"]
-
-            tendencyⁿ_field = timestepper.Gⁿ[name]
-            copyto!(tendencyⁿ_field.data.parent, parent_data)
-
-            # Tendency "n-1"
-            parent_data = file["timestepper/G⁻/$name/data"]
-
-            tendency⁻_field = timestepper.G⁻[name]
-            copyto!(tendency⁻_field.data.parent, parent_data)
-        catch
-            @warn "Could not restore $name tendency from checkpoint."
-        end
-    end
-
-    return nothing
-end
