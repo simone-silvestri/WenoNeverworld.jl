@@ -1,6 +1,12 @@
 # The bathymetry is defined for a latitude range of -70 ≤ φ ≤ 0
 # and a longitude range of 0 ≤ λ ≤ 60
 
+""" 
+    function cubic_profile(x, x1, x2, y1, y2, d1, d2)
+
+returns a cubic function between points `(x1, y1)` and `(x2, y2)`
+with derivative `d1` and `d2`
+"""
 @inline function cubic_profile(x, x1, x2, y1, y2, d1, d2)
     A = [ x1^3 x1^2 x1 1.0
           x2^3 x2^2 x2 1.0
@@ -14,7 +20,7 @@
     return coeff[1] * x^3 + coeff[2] * x^2 + coeff[3] * x + coeff[4]
 end
 
-## define the coasts
+""" coastal rigde in longitude """
 function coastal_ridge_x(x) 
     if x < 0.5
         return 0.0
@@ -27,6 +33,7 @@ function coastal_ridge_x(x)
     end
 end
 
+""" a sharp coast without a ridge """
 function sharp_coast_x(x) 
     if x < 0.5
         return 0.0
@@ -35,6 +42,7 @@ function sharp_coast_x(x)
     end
 end
 
+""" coastal rigde in latitude """
 function coastal_ridge_y(x) 
     if x < 0.5
         return cubic_profile(x, 0.0, 0.5, 0.0, -200, 0.0, 0.0)
@@ -47,7 +55,7 @@ function coastal_ridge_y(x)
     end
 end
 
-# Bottom ridge
+""" bottom atlantic rigde """
 function bottom_ridge_x(x)
     if x < 20
         return -4000
@@ -60,6 +68,7 @@ function bottom_ridge_x(x)
     end
 end
 
+""" smoothed coasts for the inlet and outlet of the channel """
 function bottom_ridge_xy(x, y)
     if y > - 30
         return bottom_ridge_x(x)
@@ -70,7 +79,7 @@ function bottom_ridge_xy(x, y)
     end
 end
         
-# Scotia arc
+""" scotia arc ridge """
 function scotia_arc(x, y)
     radius = sqrt(x^2 + (y + 50)^2)
     if radius < 8
@@ -86,7 +95,7 @@ function scotia_arc(x, y)
     end
 end
 
-# No ridge bathymetry!
+""" bathymetry without the atlantic ridge """
 function bathymetry_without_ridge(x, y; longitudinal_extent = 60) 
     if x < 5 || x > 55
         if x < 0 
@@ -115,7 +124,7 @@ function bathymetry_without_ridge(x, y; longitudinal_extent = 60)
     end
 end
 
-# Full bathymetry!
+""" bathymetry with the atlantic ridge """
 function bathymetry_with_ridge(x, y; longitudinal_extent = 60) 
     if x < 5 || x > 55
         if x < 0 
