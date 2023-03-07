@@ -132,7 +132,6 @@ function add_kinetic_energy_and_vorticity_timeseries!(fields::NamedTuple)
     return merge(fields, (; ζ, E))
 end
 
-
 function kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries)
 
     energy = Float64[]

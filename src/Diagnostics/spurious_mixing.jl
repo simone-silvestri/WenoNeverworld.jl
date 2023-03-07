@@ -2,24 +2,6 @@ using Oceananigans.AbstractOperations: GridMetricOperation
 using Oceananigans.Grids: architecture, znode
 using Oceananigans.Architectures: device, device_event, arch_array
 
-MetricField(loc, grid, metric; indices = default_indices(3)) = compute!(Field(GridMetricOperation(loc, metric, grid); indices))
-
-VolumeField(grid, loc=(Center, Center, Center);  indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.volume; indices)
-  AreaField(grid, loc=(Center, Center, Nothing); indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.Az; indices)
-
-DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655) = compute!(Field(ρ₀ * (1 - g * b)))
-
-function HeightField(grid, loc = (Center, Center, Center))  
-
-    zf = Field(loc, grid)
-
-    for k in 1:size(zf, 3)
-        interior(zf, :, :, k) .= znode(loc[3](), k, grid)
-    end
-
-    return zf
-end
-
 function calculate_z★_diagnostics(b::FieldTimeSeries)
 
     times = b.times
@@ -242,7 +224,7 @@ end
         return y₂
     elseif i₁ == i₂
         isnan(y₁) && @show i₁, i₂, x₁, x₂, y₁, y₂
-        return 
+        return y₂
     else
         if isnan(y₁) || isnan(y₂) || isnan(x₁) || isnan(x₂) 
             @show i₁, i₂, x₁, x₂, y₁, y₂
