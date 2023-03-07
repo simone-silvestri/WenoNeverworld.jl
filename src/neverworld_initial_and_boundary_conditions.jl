@@ -4,6 +4,13 @@ const ΔB   = 6.0e-2
 const ΔT   = 30.0
 const fact = 5.0
 
+"""
+    function zonal_wind_stress(y, mid_wind)
+
+returns the zonal wind as per https://egusphere.copernicus.org/preprints/2022/egusphere-2022-186/egusphere-2022-186.pdf
+as a function of latitude `y` with  `mid_wind` the wind at the equator (`y = 0.0`)
+    
+"""
 @inline function zonal_wind_stress(y, mid_wind)
     if y < -45
         return cubic_profile(y, -70.0, -45.0, 0.0, 0.2, 0.0, 0.0)
@@ -19,6 +26,28 @@ const fact = 5.0
         return cubic_profile(y, 45.0, 70.0, 0.1, 0.0, 0.0, 0.0)
     end
 end
+
+"""
+    function salinity_flux(y, mid_flux)
+
+returns the salinity flux as a function of latitude `y` 
+(similar to https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2020gl089135)
+"""
+@inline function salinity_flux(y)
+    if y < -20
+        return cubic_profile(y, -70.0, -20.0, -2e-8, 2e-8, 0.0, 0.0) .* 35.0
+    elseif y < 0
+        return cubic_profile(y, -20.0, 0.0, 2e-8, -4e-8, 0.0, 0.0) .* 35.0
+    elseif y < 20
+        return cubic_profile(y, 0.0, 20.0, -4e-8, 2e-8, 0.0, 0.0) .* 35.0
+    else
+        return cubic_profile(y, 20.0, 70.0, 2e-8, -2e-8, 0.0, 0.0) .* 35.0
+    end
+end
+
+#####
+##### Functions specifying initial conditions
+#####
 
 @inline exponential_profile(z; Δ = ΔB, Lz = Lz, h = h) = ( Δ * (exp(z / h) - exp( - Lz / h)) / (1 - exp( - Lz / h)) )
 
@@ -39,17 +68,5 @@ end
         return cubic_profile(y, 0.0, 20.0, 35.0, 37.0, 0.0, 0.0)
     else
         return cubic_profile(y, 20.0, 70.0, 37.0, 34.0, 0.0, 0.0)
-    end
-end
-
-@inline function salinity_flux(y, mid_flux)
-    if y < -20
-        return cubic_profile(y, -70.0, -20.0, -2e-8, 2e-8, 0.0, 0.0) .* 35.0
-    elseif y < 0
-        return cubic_profile(y, -20.0, 0.0, 2e-8, -4e-8, 0.0, 0.0) .* 35.0
-    elseif y < 20
-        return cubic_profile(y, 0.0, 20.0, -4e-8, 2e-8, 0.0, 0.0) .* 35.0
-    else
-        return cubic_profile(y, 20.0, 70.0, 2e-8, -2e-8, 0.0, 0.0) .* 35.0
     end
 end
