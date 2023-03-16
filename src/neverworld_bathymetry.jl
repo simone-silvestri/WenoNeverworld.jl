@@ -113,6 +113,7 @@ function bathymetry_without_ridge(x, y; longitudinal_extent = 60)
         else
             return max(coastal_ridge_x(x), 
                        coastal_ridge_y(70 + y),
+                       coastal_ridge_y(70 + y),
                        coastal_ridge_x(longitudinal_extent - x), 
                        scotia_arc(x, y))
         end
@@ -143,6 +144,7 @@ function bathymetry_with_ridge(x, y; longitudinal_extent = 60)
             return max(coastal_ridge_x(x), 
                        coastal_ridge_x(longitudinal_extent - x), 
                        coastal_ridge_y(70 + y),
+                       coastal_ridge_y(70 - y),
                        bottom_ridge_xy(x, y), 
                        bottom_ridge_xy(longitudinal_extent - x, y), 
                        scotia_arc(x, y))
@@ -151,6 +153,7 @@ function bathymetry_with_ridge(x, y; longitudinal_extent = 60)
         return max(coastal_ridge_x(x), 
                    coastal_ridge_x(longitudinal_extent - x), 
                    coastal_ridge_y(70 + y),
+                   coastal_ridge_y(70 - y),
                    bottom_ridge_xy(x, y), 
                    bottom_ridge_xy(longitudinal_extent - x, y), 
                    scotia_arc(x, y))
