@@ -35,10 +35,10 @@ Sₚ = [-2e-8, 2e-8, -4e-8, 2e-8, -2e-8]
 ΔT = 35.0
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, 
-                                          tracer_advection, momentum_advection, 
-                                          biharmonic_viscosity,
-                                          τₚ, Sₚ, ΔT, pickup_data)
+simulation = neverworld_simulation_seawater(; grid, Δt, stop_time, interp_init, init_file, 
+                                              tracer_advection, momentum_advection, 
+                                              biharmonic_viscosity,
+                                              τₚ, Sₚ, ΔT, pickup_data)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
@@ -50,5 +50,5 @@ snapshot_time   = 10years
 standard_seawater_outputs!(simulation, output_prefix; overwrite_existing, checkpoint_time)
 
 # initializing the time for wall_time calculation
-run_simulation!(simulation; interp_init, init_file, pickup_data)
+run_simulation!(simulation; interp_init, init_file)
 

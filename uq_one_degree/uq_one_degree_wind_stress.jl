@@ -35,10 +35,10 @@ Sₚ = [-2e-8, 2e-8, -4e-8, 2e-8, -2e-8]
 ΔT = 30.0
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, 
-                                          tracer_advection, momentum_advection, 
-                                          biharmonic_viscosity, pickup_data, 
-                                          τₚ, Sₚ, ΔT)
+simulation = neverworld_simulation_seawater(; grid, Δt, stop_time, interp_init, init_file, 
+                                              tracer_advection, momentum_advection, 
+                                              biharmonic_viscosity,
+                                              τₚ, Sₚ, ΔT, pickup_data)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"

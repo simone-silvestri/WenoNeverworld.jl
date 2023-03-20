@@ -122,7 +122,7 @@ default_slope_limiter          = FluxTapering(1e-2)
     set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
 end
 
-@inline initialize_model!(model, ::Val{false}, initial_profiles, grid, orig_grid, init_file, ::SeawaterBuoyancy) = set!(model, T = initial_profiles[1],  S = 35.0)
+@inline initialize_model!(model, ::Val{false}, initial_temperature, grid, orig_grid, init_file, ::SeawaterBuoyancy; kw...) = set!(model, T = initial_temperature,  S = 35.0)
 
 @inline function initialize_model!(model, ::Val{true}, initial_temperature, grid, orig_grid, init_file, ::SeawaterBuoyancy; pickup_data = false)
     Hx, Hy, Hz = halo_size(orig_grid)
@@ -286,7 +286,7 @@ function neverworld_simulation_seawater(; grid,
                                           Δt = 5minutes,
                                           stop_time = 10years,
                                           initial_temperature = initial_temperature_parabola,
-                                          restoring_salinity = restoring_salinity_piecewise_cubc,
+                                          restoring_salinity = restoring_salinity_piecewise_cubic,
                                           restoring_temperature = restoring_temperature_parabola, 
                                           salinity_flux = salinity_flux,
                                           equation_of_state = LinearEquationOfState(),
@@ -360,7 +360,7 @@ function neverworld_simulation_seawater(; grid,
     #####
 
     @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
-    initialize_model!(model, Val(interp_init), (initial_temperature, initial_salinity), grid, orig_grid, init_file, SeawaterBuoyancy(); pickup_data)
+    initialize_model!(model, Val(interp_init), initial_temperature, grid, orig_grid, init_file, SeawaterBuoyancy(); pickup_data)
 
     simulation = Simulation(model; Δt, stop_time)
 
