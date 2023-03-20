@@ -26,7 +26,7 @@ using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_glob
 
 @inline surface_wind_stress(i, j, grid, clock, fields, τ) = τ[j]
 
-@inline function grid_specific_array(wind_stress, grid; scaling = 1000.0)
+@inline function wind_stress_array(wind_stress, grid; scaling = 1000.0, τₚ = [0.2, -0.1, -0.02, -0.1, 0.1])
 
     Ny   = size(grid, 2)
     arch = architecture(grid)
@@ -35,10 +35,40 @@ using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_glob
 
     τw = zeros(Ny)
     for (j, φ) in enumerate(φ_grid)
-        τw[j] = wind_stress(φ) ./ scaling
+        τw[j] = wind_stress(φ; τₚ) ./ scaling
     end
 
-    return arch_array(arch, -τw)
+    return arch_array(arch, - τw)
+end
+
+@inline function salinity_flux_array(salinity_flux, grid; Sₚ = [-2e-8, 2e-8, -4e-8, 2e-8, -2e-8])
+
+    Ny   = size(grid, 2)
+    arch = architecture(grid)
+    
+    φ_grid = grid.φᵃᶜᵃ[1:Ny]
+
+    Fs = zeros(Ny)
+    for (j, φ) in enumerate(φ_grid)
+        Fs[j] = salinity_flux(φ; Sₚ) 
+    end
+
+    return arch_array(arch, Fs)
+end
+
+@inline function salinity_restoring_array(salinity_restoring, grid)
+
+    Ny   = size(grid, 2)
+    arch = architecture(grid)
+    
+    φ_grid = grid.φᵃᶜᵃ[1:Ny]
+
+    Ss = zeros(Ny)
+    for (j, φ) in enumerate(φ_grid)
+        Ss[j] = salinity_restoring(φ) 
+    end
+
+    return arch_array(arch, Ss)
 end
 
 @inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
@@ -53,7 +83,7 @@ end
 
     T  = fields.T[i, j, grid.Nz]
     x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
-    Trestoring = p.initial_temperature(x, y, z)
+    Trestoring = p.restoring_temperature(y) * p.ΔT
 
     return @inbounds p.λ * (T - Trestoring)
 end
@@ -73,9 +103,9 @@ default_biharmonic_viscosity   = HorizontalScalarBiharmonicDiffusivity(ν = geom
 default_vertical_diffusivity   = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter          = FluxTapering(1e-2)
 
-@inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer) = set!(model, b = initial_buoyancy)
+@inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer; kw...) = set!(model, b = initial_buoyancy)
 
-@inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer)
+@inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer; kw...)
     Hx, Hy, Hz = halo_size(orig_grid)
 
     b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
@@ -94,7 +124,7 @@ end
 
 @inline initialize_model!(model, ::Val{false}, initial_profiles, grid, orig_grid, init_file, ::SeawaterBuoyancy) = set!(model, T = initial_profiles[1],  S = 35.0)
 
-@inline function initialize_model!(model, ::Val{true}, initial_temperature, grid, orig_grid, init_file, ::SeawaterBuoyancy)
+@inline function initialize_model!(model, ::Val{true}, initial_temperature, grid, orig_grid, init_file, ::SeawaterBuoyancy; pickup_data = false)
     Hx, Hy, Hz = halo_size(orig_grid)
 
     T_init = jldopen(init_file)["T/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
@@ -102,15 +132,19 @@ end
     u_init = jldopen(init_file)["u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     v_init = jldopen(init_file)["v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     w_init = jldopen(init_file)["w/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    η_init = jldopen(init_file)["η/data"][Hx+1:end-Hx, Hy+1:end-Hy, :]
     
-    @info "interpolating fields"
-    T_init = interpolate_per_level(T_init, orig_grid, grid, (Center, Center, Center))
-    S_init = interpolate_per_level(S_init, orig_grid, grid, (Center, Center, Center))
-    u_init = interpolate_per_level(u_init, orig_grid, grid, (Face, Center, Center))
-    v_init = interpolate_per_level(v_init, orig_grid, grid, (Center, Face, Center))
-    w_init = interpolate_per_level(w_init, orig_grid, grid, (Center, Center, Face))
+    if !pickup_data
+        @info "interpolating fields"
+        T_init = interpolate_per_level(T_init, orig_grid, grid, (Center, Center, Center))
+        S_init = interpolate_per_level(S_init, orig_grid, grid, (Center, Center, Center))
+        u_init = interpolate_per_level(u_init, orig_grid, grid, (Face, Center, Center))
+        v_init = interpolate_per_level(v_init, orig_grid, grid, (Center, Face, Center))
+        w_init = interpolate_per_level(w_init, orig_grid, grid, (Center, Center, Face))
+        η_init = interpolate_per_level(η_init, orig_grid, grid, (Center, Center, Face))
+    end
 
-    set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
+    set!(model, b=b_init, u=u_init, v=v_init, w=w_init, η=η_init) 
 end
 
 function weno_neverworld_simulation(; grid, 
@@ -247,14 +281,19 @@ function neverworld_simulation_seawater(; grid,
                                           momentum_advection = VectorInvariant(),
                                           tracer_advection   = WENO(grid.underlying_grid), 
                                           interp_init = false,
+                                          pickup_data = false,
                                           init_file = nothing,
                                           Δt = 5minutes,
                                           stop_time = 10years,
                                           initial_temperature = initial_temperature_parabola,
-                                          initial_salinity = initial_salinity,
+                                          restoring_salinity = restoring_salinity_piecewise_cubc,
+                                          restoring_temperature = restoring_temperature_parabola, 
                                           salinity_flux = salinity_flux,
                                           equation_of_state = LinearEquationOfState(),
                                           wind_stress  = zonal_wind_stress,
+                                          τₚ = [0.2, -0.1, -0.02, -0.1, 0.1],
+                                          Sₚ = [-2e-8, 2e-8, -4e-8, 2e-8, -2e-8],
+                                          ΔT = 30.0,
                                           tracers = (:T, :S)
                                           )
 
@@ -262,9 +301,9 @@ function neverworld_simulation_seawater(; grid,
 
     @info "specifying boundary conditions..."
 
-    τw =   grid_specific_array(wind_stress, grid)
-    Ss = - grid_specific_array(initial_salinity, grid, scaling = 1.0)
-    Fs =   grid_specific_array(salinity_flux, grid, scaling = 1.0)
+    τw = wind_stress_array(wind_stress, grid; τₚ)
+    Ss = salinity_flux_array(salinity_flux, grid; Sₚ)    
+    Fs = salinity_restoring_array(restoring_salinity, grid)
 
     u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
 
@@ -286,7 +325,7 @@ function neverworld_simulation_seawater(; grid,
     v_pump_T = Δz_top / λ_T
     v_pump_S = Δz_top / λ_S
 
-    T_top_relaxation_bc = FluxBoundaryCondition(temperature_top_relaxation, discrete_form=true, parameters = (; λ = v_pump_T, initial_temperature))
+    T_top_relaxation_bc = FluxBoundaryCondition(temperature_top_relaxation, discrete_form=true, parameters = (; λ = v_pump_T, restoring_temperature, ΔT))
     S_top_relaxation_bc = FluxBoundaryCondition(salinity_top_relaxation,    discrete_form=true, parameters = (; λ = v_pump_S, Ss, Fs))
 
     T_bcs = FieldBoundaryConditions(top = T_top_relaxation_bc)
@@ -321,7 +360,7 @@ function neverworld_simulation_seawater(; grid,
     #####
 
     @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
-    initialize_model!(model, Val(interp_init), (initial_temperature, initial_salinity), grid, orig_grid, init_file, SeawaterBuoyancy())
+    initialize_model!(model, Val(interp_init), (initial_temperature, initial_salinity), grid, orig_grid, init_file, SeawaterBuoyancy(); pickup_data)
 
     simulation = Simulation(model; Δt, stop_time)
 

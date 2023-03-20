@@ -4,19 +4,19 @@ const ΔB   = 6.0e-2
 const ΔT   = 30.0
 const fact = 5.0
 
-@inline function zonal_wind_stress(y)
+@inline function zonal_wind_stress(y; τₚ = [0.2, -0.1, -0.02, -0.1, 0.1])
     if y < -45
-        return cubic_profile(y, -70.0, -45.0, 0.0, 0.2, 0.0, 0.0)
+        return cubic_profile(y, -70.0, -45.0, 0.0, τₚ[1], 0.0, 0.0)
     elseif y < -15
-        return cubic_profile(y, -45.0, -15.0, 0.2, -0.1, 0.0, 0.0)
+        return cubic_profile(y, -45.0, -15.0, τₚ[1], τₚ[2], 0.0, 0.0)
     elseif y < 0
-        return cubic_profile(y, -15.0, 0.0, -0.1, -0.02, 0.0, 0.0)
+        return cubic_profile(y, -15.0, 0.0, τₚ[2], τₚ[3], 0.0, 0.0)
     elseif y < 15
-        return cubic_profile(y, 0.0, 15.0, -0.02, -0.1, 0.0, 0.0)
+        return cubic_profile(y, 0.0, 15.0, τₚ[3], τₚ[4], 0.0, 0.0)
     elseif y < 45
-        return cubic_profile(y, 15.0, 45.0, -0.1, 0.1, 0.0, 0.0)
+        return cubic_profile(y, 15.0, 45.0, τₚ[4], τₚ[5], 0.0, 0.0)
     else
-        return cubic_profile(y, 45.0, 70.0, 0.1, 0.0, 0.0, 0.0)
+        return cubic_profile(y, 45.0, 70.0, τₚ[5], 0.0, 0.0, 0.0)
     end
 end
 
@@ -28,9 +28,11 @@ end
 @inline initial_buoyancy_tangent(x, y, z)  = exponential_profile(z) * atan_scaling(y)
 @inline initial_buoyancy_parabola(x, y, z) = exponential_profile(z) * parabolic_scaling(y) 
 
-@inline initial_temperature_parabola(x, y, z) = exponential_profile(z; Δ = ΔT) * parabolic_scaling(y)
+@inline initial_temperature_parabola(x, y, z) = ΔT * parabolic_scaling(y)
 
-@inline function initial_salinity(y, mid_salinity)
+@inline restoring_temperature_parabola(y) = parabolic_scaling(y)
+
+@inline function restoring_salinity_piecewise_cubic(y)
     if y < -20
         return cubic_profile(y, -70.0, -20.0, 34.0, 37.0, 0.0, 0.0)
     elseif y < 0
@@ -42,15 +44,15 @@ end
     end
 end
 
-@inline function salinity_flux(y, mid_flux)
+@inline function salinity_flux(y; Sₚ = [-2e-8, 2e-8, -4e-8, 2e-8, -2e-8])
     if y < -20
-        return cubic_profile(y, -70.0, -20.0, -2e-8, 2e-8, 0.0, 0.0) .* 35.0
+        return cubic_profile(y, -70.0, -20.0, Sₚ[1], Sₚ[2], 0.0, 0.0) .* 35.0
     elseif y < 0
-        return cubic_profile(y, -20.0, 0.0, 2e-8, -4e-8, 0.0, 0.0) .* 35.0
+        return cubic_profile(y, -20.0, 0.0, Sₚ[2], Sₚ[3], 0.0, 0.0) .* 35.0
     elseif y < 20
-        return cubic_profile(y, 0.0, 20.0, -4e-8, 2e-8, 0.0, 0.0) .* 35.0
+        return cubic_profile(y, 0.0, 20.0, Sₚ[3], Sₚ[4], 0.0, 0.0) .* 35.0
     else
-        return cubic_profile(y, 20.0, 70.0, 2e-8, -2e-8, 0.0, 0.0) .* 35.0
+        return cubic_profile(y, 20.0, 70.0, Sₚ[4], Sₚ[5], 0.0, 0.0) .* 35.0
     end
 end
 
