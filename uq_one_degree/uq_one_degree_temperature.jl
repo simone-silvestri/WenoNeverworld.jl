@@ -17,7 +17,7 @@ grid = NeverworldGrid(arch, new_degree, latitude = (-70, 70))
 # Pickup data
 interp_init = true
 pickup_data = true
-init_file   = "./outputs_data/neverworld_high_resolution_checkpoint_iteration5256478.jld2"
+init_file   = "/nobackup/users/hannahlu/WenoNeverworld.jl_old/examples_full_latitude/outputs_data/neverworld_high_resolution_checkpoint_iteration5256478.jld2"
 
 # Simulation parameters
 Δt        = 20minutes
