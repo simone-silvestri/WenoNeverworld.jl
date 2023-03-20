@@ -1,4 +1,4 @@
-iusing Oceananigans
+using Oceananigans
 using Oceananigans.Units
 using WenoNeverworld
 using WenoNeverworld: bathymetry_with_ridge
