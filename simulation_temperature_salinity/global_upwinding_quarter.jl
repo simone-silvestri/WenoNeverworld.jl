@@ -8,10 +8,10 @@ output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_high_resolution"
 
 using CUDA
-CUDA.device!(3)
+# CUDA.device!(2)
 
 arch        = GPU()
-resolution = 1
+resolution = 1/4
 
 grid = NeverworldGrid(arch, resolution, latitude = (-70, 70))
 
@@ -19,7 +19,7 @@ interp_init = false
 init_file   = nothing
 
 # Simulation parameters
-Δt        = 20minutes
+Δt        = 10minutes
 stop_time = 200years
 
 using WenoNeverworld: geometric_νhb
@@ -34,7 +34,8 @@ simulation = neverworld_simulation_seawater(; grid, Δt, stop_time, momentum_adv
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
 # Add outputs
-checkpoint_outputs!(simulation, output_prefix)
+# checkpoint_outputs!(simulation, output_prefix)
 
 # initializing the time for wall_time calculation
-run_simulation!(simulation; interp_init, init_file)
+# run_simulation!(simulation; interp_init, init_file)
+

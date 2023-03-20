@@ -1,6 +1,24 @@
 using Oceananigans.AbstractOperations: GridMetricOperation
 using Oceananigans.Grids: architecture, znode
-using Oceananigans.Architectures: device, device_event, arch_array
+using Oceananigans.Architectures: device, arch_array
+
+MetricField(loc, grid, metric; indices = default_indices(3)) = compute!(Field(GridMetricOperation(loc, metric, grid); indices))
+
+VolumeField(grid, loc=(Center, Center, Center);  indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.volume; indices)
+  AreaField(grid, loc=(Center, Center, Nothing); indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.Az; indices)
+
+DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655) = compute!(Field(ρ₀ * (1 - g * b)))
+
+function HeightField(grid, loc = (Center, Center, Center))  
+
+    zf = Field(loc, grid)
+
+    for k in 1:size(zf, 3)
+        interior(zf, :, :, k) .= znode(loc[3](), k, grid)
+    end
+
+    return zf
+end
 
 function calculate_z★_diagnostics(b::FieldTimeSeries)
 
@@ -32,9 +50,8 @@ function calculate_z★!(z★::Field, b::Field, vol, total_area)
     sorted_v_field = v_arr[perm]
     integrated_v   = cumsum(sorted_v_field)    
 
-    z★_event = launch!(arch, grid, :xyz, _calculate_z★, z★, b, sorted_b_field, integrated_v; dependencies = device_event(arch))
-    wait(device(arch), z★_event)
-
+    launch!(arch, grid, :xyz, _calculate_z★, z★, b, sorted_b_field, integrated_v)
+    
     z★ ./= total_area
 
     return nothing
@@ -73,8 +90,7 @@ function calculate_Γ²!(Γ², z★, ρ)
     ρ_arr  = (Array(interior(ρ))[:])[perm]
     z★_arr = (Array(interior(z★))[:])[perm]
 
-    Γ²_event = launch!(arch, grid, :xyz, _calculate_Γ², Γ², z★, z★_arr, ρ_arr, grid; dependencies = device_event(arch))
-    wait(device(arch), Γ²_event)
+    launch!(arch, grid, :xyz, _calculate_Γ², Γ², z★, z★_arr, ρ_arr, grid)
 
     return nothing
 end
@@ -115,8 +131,7 @@ end
         @info "time $iter of $(length(b.times))"
 
         bz = compute!(Field(∂z(b[iter])))
-        psi_event = launch!(arch, grid, :xy, _cumulate_stratification!, stratint[iter], strat[iter], bz, b[iter], blevels, grid, Nz; dependencies = device_event(arch))
-        wait(device(arch), psi_event)
+        launch!(arch, grid, :xy, _cumulate_stratification!, stratint[iter], strat[iter], bz, b[iter], blevels, grid, Nz)
     end
 
     for iter in 1:Nt
@@ -174,8 +189,7 @@ end
 
     for iter in 1:Nt
         @info "time $iter of $(length(v.times))"
-        psi_event = launch!(arch, grid, :xy, _cumulate_v_velocities!, ψint[iter], ψ[iter], b[iter], v[iter], blevels, grid, Nz; dependencies = device_event(arch))
-        wait(device(arch), psi_event)
+        launch!(arch, grid, :xy, _cumulate_v_velocities!, ψint[iter], ψ[iter], b[iter], v[iter], blevels, grid, Nz)
     end
 
     for iter in 1:Nt
@@ -224,7 +238,7 @@ end
         return y₂
     elseif i₁ == i₂
         isnan(y₁) && @show i₁, i₂, x₁, x₂, y₁, y₂
-        return y₂
+        return 
     else
         if isnan(y₁) || isnan(y₂) || isnan(x₁) || isnan(x₂) 
             @show i₁, i₂, x₁, x₂, y₁, y₂
@@ -232,3 +246,4 @@ end
         return (y₂ - y₁) / (x₂ - x₁) * (x₀ - x₁) + y₁
     end
 end
+

@@ -5,24 +5,6 @@ using Oceananigans.TurbulenceClosures: ∂ⱼ_τ₁ⱼ, ∂ⱼ_τ₂ⱼ, ∂ⱼ_
 
 import Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
 
-MetricField(loc, grid, metric; indices = default_indices(3)) = compute!(Field(GridMetricOperation(loc, metric, grid); indices))
-
-VolumeField(grid, loc=(Center, Center, Center);  indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.volume; indices)
-  AreaField(grid, loc=(Center, Center, Nothing); indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.Az; indices)
-
-DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655) = compute!(Field(ρ₀ * (1 - g * b)))
-
-function HeightField(grid, loc = (Center, Center, Center))  
-
-    zf = Field(loc, grid)
-
-    for k in 1:size(zf, 3)
-        interior(zf, :, :, k) .= znode(loc[3](), k, grid)
-    end
-
-    return zf
-end
-
 VerticalVorticityField(fields::Dict, i) = VerticalVorticityField((; u = fields[:u][i], v = fields[:v][i]))
 KineticEnergyField(fields::Dict, i)     = KineticEnergyField((; u = fields[:u][i], v = fields[:v][i]))
 
@@ -95,3 +77,4 @@ function HorizontalFriction(fields::NamedTuple, closure)
 
     return (; τ₁, τ₂, τ₃)
 end
+
