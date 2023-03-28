@@ -302,8 +302,8 @@ function neverworld_simulation_seawater(; grid,
     @info "specifying boundary conditions..."
 
     τw = wind_stress_array(wind_stress, grid; τₚ)
-    Ss = salinity_flux_array(salinity_flux, grid; Sₚ)    
-    Fs = salinity_restoring_array(restoring_salinity, grid)
+    Fs = salinity_flux_array(salinity_flux, grid; Sₚ)    
+    Ss = salinity_restoring_array(restoring_salinity, grid)
 
     u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
 
