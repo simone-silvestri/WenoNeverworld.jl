@@ -8,10 +8,10 @@ using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization
 using JLD2
 
 output_dir    = joinpath(@__DIR__, "./")
-@show output_prefix = output_dir * "/weno_quarter"
+@show output_prefix = output_dir * "/weno_one"
 
 arch = GPU()
-new_degree = 1/4
+new_degree = 1
 
 grid = NeverworldGrid(arch, new_degree, latitude = (-70, 70))
 
@@ -52,6 +52,8 @@ set!(simulation.model.tracers.b, initial_buoyancy_one)
 increase_simulation_Δt!(simulation, cutoff_time =  30days, new_Δt =  5minutes)
 increase_simulation_Δt!(simulation, cutoff_time =  60days, new_Δt =  8minutes)
 increase_simulation_Δt!(simulation, cutoff_time =  120days, new_Δt = 10minutes)
+increase_simulation_Δt!(simulation, cutoff_time =  180days, new_Δt = 15minutes)
+increase_simulation_Δt!(simulation, cutoff_time =  240days, new_Δt = 20minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
@@ -64,4 +66,3 @@ checkpoint_outputs!(simulation, output_prefix; overwrite_existing, checkpoint_ti
 
 # initializing the time for wall_time calculation
 run_simulation!(simulation; interp_init, init_file)
-
