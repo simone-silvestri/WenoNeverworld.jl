@@ -144,7 +144,7 @@ end
         η_init = interpolate_per_level(η_init, orig_grid, grid, (Center, Center, Face))
     end
 
-    set!(model, b=b_init, u=u_init, v=v_init, w=w_init, η=η_init) 
+    set!(model, T=T_init, S=S_init, u=u_init, v=v_init, w=w_init, η=η_init) 
 end
 
 function weno_neverworld_simulation(; grid, 

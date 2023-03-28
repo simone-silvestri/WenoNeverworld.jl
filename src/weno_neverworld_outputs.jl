@@ -75,11 +75,11 @@ function standard_seawater_outputs!(simulation, output_prefix; overwrite_existin
     T2 = T^2
     S2 = S^2
     w2 = w^2
-    vT = v * T
     uT = u * T
+    vT = v * T
     wT = w * T
-    vS = v * S
     uS = u * S
+    vS = v * S
     wS = w * S
 
     ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = (u, v))
