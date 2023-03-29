@@ -1,27 +1,28 @@
 using Oceananigans
 using Oceananigans.Units
 using WenoNeverworld
-using WenoNeverworld: bathymetry_with_ridge
-using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization, HorizontalDivergenceScalarDiffusivity
-using Oceananigans.TurbulenceClosures: HorizontalDivergenceScalarBiharmonicDiffusivity, HorizontalDivergenceFormulation
-using WenoNeverworld: geometric_νhb
-using Oceananigans.Advection: VelocityStencil
-using UpwindVectorInvariantSchemes
+using Oceananigans.BuoyancyModels: g_Earth
+using Oceananigans.Grids: min_Δx, min_Δy
+using Oceananigans.TurbulenceClosures
+using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization
+using JLD2
 
 output_dir    = joinpath(@__DIR__, "./")
-@show output_prefix = output_dir * "/global_upwinding_sixteen_center"
+@show output_prefix = output_dir * "/weno_sixteenth"
 
 arch = GPU()
 new_degree = 1/16
+old_degree = 1/4
 
-grid = NeverworldGrid(arch, new_degree)
+grid = NeverworldGrid(arch, new_degree, latitude = (-70, 70))
+orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, 70))
 
 # Extend the vertical advection scheme
 interp_init = true
-init_file   = "/pool001/users/ssilvest/old_weno_sixteen/global_upwinding_sixteen_checkpoint_iteration1861600.jld2" 
+init_file   = "/home/sandre/Repositories/WenoNeverworld.jl/restart_files/weno_quarter_checkpoint.jld2" 
 
 # Simulation parameters
-Δt        = 2minutes
+Δt        = 1minutes
 stop_time = 100years
 
 tracer_advection      = WENO(grid.underlying_grid)
@@ -44,8 +45,8 @@ free_surface = SplitExplicitFreeSurface(; substeps = barotropic_substeps(Δt, gr
   
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, 
-                                          tracer_advection = flux_form_weno, momentum_advection, 
-                                          biharmonic_viscosity, free_surface)
+                                          tracer_advection, momentum_advection, 
+                                          biharmonic_viscosity, free_surface, orig_grid)
 
 increase_simulation_Δt!(simulation, cutoff_time = 30days, new_Δt = 2minutes)
 # Let's goo!
