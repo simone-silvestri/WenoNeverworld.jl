@@ -48,10 +48,10 @@ simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, ini
                                           tracer_advection, momentum_advection, 
                                           biharmonic_viscosity, free_surface, orig_grid)
 
-increase_simulation_Δt!(simulation, cutoff_time = 30days, new_Δt  = 2minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 60days, new_Δt  = 3minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 90days, new_Δt  = 4minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 120days, new_Δt = 5minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 60days + 30days, new_Δt  = 2minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 60days + 60days, new_Δt  = 3minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 60days + 90days, new_Δt  = 4minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 60days + 120days, new_Δt = 5minutes)
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
