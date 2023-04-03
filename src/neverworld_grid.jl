@@ -37,7 +37,7 @@ function NeverworldGrid(arch, degree, FT::DataType = Float64; H = 5, longitude =
 
     bathy = zeros(Nx, Ny)
     for (i, λ) in enumerate(λ_grid), (j, φ) in enumerate(φ_grid)
-        bathy[i, j] = bathymetry(λ, φ; longitudinal_extent)
+        bathy[i, j] = bathymetry(λ, φ; longitudinal_extent, latitude)
     end
 
     return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))
