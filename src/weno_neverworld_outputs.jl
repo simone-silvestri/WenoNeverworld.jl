@@ -1,6 +1,19 @@
 using Oceananigans.Operators: ζ₃ᶠᶠᶜ
 using Oceananigans.AbstractOperations: KernelFunctionOperation
 
+using Oceananigans.Models: AbstractModel
+using Oceananigans.Distributed
+
+const DistributedSimulation = Simulation{<:AbstractModel{<:DistributedArch}}
+
+function standard_outputs!(simulation, output_prefix; kw...) 
+    rank = simulation.model.architecture.local_rank
+    
+    standard_outputs!(simulation, output_prefix * "_$rank"; kw...) 
+
+    return nothing
+end
+
 function standard_outputs!(simulation, output_prefix; overwrite_existing = true, 
                                                       checkpoint_time    = 100days,
                                                       snapshot_time      = 30days,
