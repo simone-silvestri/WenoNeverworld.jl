@@ -15,6 +15,7 @@ module load openmpi/3.1.6-cuda-pmi-ucx-slurm-jhklron
 export OMPI_MCA_pml=^ucx
 export OMPI_MCA_osc=^ucx
 export OMPI_MCA_btl_openib_allow_ib=true
+export JULIA_CUDA_MEMORY_POOL=none
 
 export JULIA_NUM_THREADS=${SLURM_CPUS_PER_TASK:=1}
 
@@ -25,4 +26,4 @@ exec \$*
 EoF_s
 chmod +x launch.sh
 
-srun --mpi=pmi2 ./launch.sh julia --check-bounds=no --project global_upwinding_twentyfourth_weno.jl ${RESOLUTION:=3}
+srun --mpi=pmi2 ./launch.sh julia --check-bounds=no --project global_upwinding_twentyfourth_weno.jl

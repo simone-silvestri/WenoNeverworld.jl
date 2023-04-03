@@ -21,7 +21,7 @@ child_arch = GPU()
 
 arch = DistributedArch(child_arch, ranks = (Nranks, 1, 1), use_buffers = true)
 
-new_degree = 1/16
+new_degree = 1/24
 old_degree = 1/4
 
 grid      = NeverworldGrid(arch, new_degree, latitude = (-70, -20))

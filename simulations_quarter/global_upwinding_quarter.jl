@@ -21,10 +21,11 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, -20))
 # Extend the vertical advection scheme
 interp_init = true
 init_file   = "/home/sandre/Repositories/WenoNeverworld.jl/simulations_quarter/weno_quarter_checkpoint.jld2" 
-init_file = "/home/sandre/Repositories/WenoNeverworld.jl/simulations_quarter/weno_four_checkpoint_iteration46346.jld2"
+init_file = "/home/sandre/Repositories/WenoNeverworld.jl/simulations_quarter/weno_four_checkpoint_iteration34832.jld2"
 
 # Simulation parameters
-Δt        = 13minutes
+Δt        = 17.5minutes
+final_Δt = 20minutes 
 stop_time = 100years
 
 tracer_advection      = WENO(grid.underlying_grid)
@@ -43,7 +44,7 @@ function barotropic_substeps(Δt, grid, gravitational_acceleration; CFL = 0.7)
    return Int(ceil(2 * Δt / (CFL / wave_speed * local_Δ)))
 end
   
-free_surface = SplitExplicitFreeSurface(; substeps = barotropic_substeps(Δt, grid, g_Earth))
+free_surface = SplitExplicitFreeSurface(; substeps = barotropic_substeps(final_Δt, grid, g_Earth))
   
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, 
@@ -51,7 +52,6 @@ simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, ini
                                           biharmonic_viscosity, free_surface, orig_grid)
 
 # Increase the time step up to final_Δt by final_day with "divisions" steps
-final_Δt = 15minutes 
 starting_day = 0days
 final_day = 365days # 365days
 divisions = 5 # can only do it up to 5 times
