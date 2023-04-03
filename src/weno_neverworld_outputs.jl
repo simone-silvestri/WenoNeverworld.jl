@@ -6,7 +6,7 @@ using Oceananigans.Distributed
 
 const DistributedSimulation = Simulation{<:AbstractModel{<:DistributedArch}}
 
-function standard_outputs!(simulation, output_prefix; kw...) 
+function standard_outputs!(simulation::DistributedSimulation, output_prefix; kw...) 
     rank = simulation.model.architecture.local_rank
     
     standard_outputs!(simulation, output_prefix * "_$rank"; kw...) 
