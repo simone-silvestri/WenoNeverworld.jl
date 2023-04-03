@@ -24,8 +24,9 @@ init_file   = "/home/sandre/Repositories/WenoNeverworld.jl/simulations_quarter/w
 init_file = "/home/sandre/Repositories/WenoNeverworld.jl/simulations_eight/weno_two_checkpoint.jld2"
 
 # Simulation parameters
-Δt        = 30minutes
-stop_time = 100years
+Δt       =  30minutes
+final_Δt =  30minutes 
+stop_time = 200years
 
 tracer_advection      = WENO(grid.underlying_grid)
 momentum_advection    = VectorInvariant(vorticity_scheme = WENO(),
@@ -43,7 +44,7 @@ function barotropic_substeps(Δt, grid, gravitational_acceleration; CFL = 0.7)
    return Int(ceil(2 * Δt / (CFL / wave_speed * local_Δ)))
 end
   
-free_surface = SplitExplicitFreeSurface(; substeps = barotropic_substeps(Δt, grid, g_Earth))
+free_surface = SplitExplicitFreeSurface(; substeps = barotropic_substeps(final_Δt, grid, g_Earth))
   
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, 
@@ -51,10 +52,9 @@ simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, ini
                                           biharmonic_viscosity, free_surface, orig_grid)
 
 # Increase the time step up to final_Δt by final_day with "divisions" steps
-final_Δt = 30minutes 
 starting_day = 0days
 final_day = 365days # 365days
-divisions = 5 # can only do it up to 5 times
+divisions = 10 # can only do it up to 5 times
 Δts = range(Δt, final_Δt, length = divisions)
 cutoff_times = range(starting_day, final_day, length = divisions)                                       
 for (dt, cutoff_time) in zip(Δts, cutoff_times)
