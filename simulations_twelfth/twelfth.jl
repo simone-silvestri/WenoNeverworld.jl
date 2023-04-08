@@ -13,8 +13,8 @@ output_dir = "/storage2/"
 @show output_prefix = output_dir * "WenoNeverworldData/weno_eight"
 
 arch = GPU()
-new_degree = 1/8
-old_degree = 1/8
+new_degree = 1/12
+old_degree = 1/16
 
 grid = NeverworldGrid(arch, new_degree, latitude = (-70, -20))
 orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, -20))
@@ -23,11 +23,11 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, -20))
 # Extend the vertical advection scheme
 interp_init = false
 init_file = "/storage2/WenoNeverworldData/weno_eight_checkpoint_iteration648000.jld2"
-init_file = "/storage2/WenoNeverworldData/weno_eight_checkpoint_iteration670782.jld2"
+init_file = "/storage2/WenoNeverworldData/weno_eight_checkpoint_iteration142782.jld2"
 
 # Simulation parameters
-Δt       =  6minutes
-final_Δt =  6minutes 
+Δt       =  1minutes
+final_Δt =  3minutes 
 stop_time = 200years
 
 tracer_advection      = WENO(grid.underlying_grid)
