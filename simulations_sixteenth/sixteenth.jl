@@ -26,10 +26,10 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, -20))
 interp_init = false
 # init_file = "/storage2/WenoNeverworldData/weno_eight_checkpoint_iteration648000.jld2"
 # init_file = "/storage2/WenoNeverworldData/weno_eight_checkpoint_iteration142782.jld2"
-init_file = "/home/sandre/Repositories/WenoNeverworld.jl/weno_sixteenth_checkpoint_iteration0.jld2"
+init_file = "/pool001/users/sandre/WenoNeverworldData/weno_sixteenth_checkpoint_iteration470384.jld2"
 
 # Simulation parameters
-Δt       =  1minutes
+Δt       =  3minutes
 final_Δt =  3minutes 
 stop_time = 200years
 
