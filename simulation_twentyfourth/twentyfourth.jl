@@ -12,11 +12,11 @@ using JLD2
 # output_dir = "/storage2/"
 output_dir = "/home/sandre/Repositories/WenoNeverworld.jl/" # "/nobackup1/users/sandre/WenoNeverworldData/"
 output_dir = "/pool001/users/sandre/WenoNeverworldData/"
-@show output_prefix = output_dir * "weno_sixteenth"
+@show output_prefix = output_dir * "weno_twentyfourth"
 
 arch = GPU()
-new_degree = 1/16
-old_degree = 1/16
+new_degree = 1/24
+old_degree = 1/12
 
 grid = NeverworldGrid(arch, new_degree, latitude = (-70, -20))
 orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, -20))
@@ -26,11 +26,11 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, -20))
 interp_init = false
 # init_file = "/storage2/WenoNeverworldData/weno_eight_checkpoint_iteration648000.jld2"
 # init_file = "/storage2/WenoNeverworldData/weno_eight_checkpoint_iteration142782.jld2"
-init_file = "/pool001/users/sandre/WenoNeverworldData/weno_sixteenth_checkpoint_iteration470384.jld2"
+init_file = "/pool001/users/sandre/WenoNeverworldData/weno_twelfth_checkpoint.jld2"
 
 # Simulation parameters
-Δt       =  3minutes
-final_Δt =  3minutes 
+Δt       =  0.5minutes
+final_Δt =  2minutes 
 stop_time = 200years
 
 tracer_advection      = WENO(grid.underlying_grid)
@@ -82,3 +82,4 @@ standard_outputs!(simulation, output_prefix; overwrite_existing)
 
 # initializing the time for wall_time calculation
 run_simulation!(simulation; interp_init, init_file)
+
