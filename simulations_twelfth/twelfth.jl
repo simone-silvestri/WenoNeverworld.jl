@@ -22,11 +22,11 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, -20))
 
 # Extend the vertical advection scheme
 interp_init = true
-init_file = "/pool001/users/sandre/WenoNeverworldData/weno_sixteenth_checkpoint_iteration374384.jld2"
+init_file = "/pool001/users/sandre/WenoNeverworldData/weno_sixteenth_checkpoint_iteration3604682.jld2"
 
 # Simulation parameters
 Δt       =  2minutes
-final_Δt =  4minutes 
+final_Δt =  2minutes 
 stop_time = 200years
 
 tracer_advection      = WENO(grid.underlying_grid)
