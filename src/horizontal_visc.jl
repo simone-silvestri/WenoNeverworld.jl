@@ -1,6 +1,6 @@
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: HorizontalFormulation
-using Oceananigans.Grids: min_Δx, min_Δy
+using Oceananigans.Grids: minimum_xspacing, minimum_yspacing
 using Oceananigans.Operators
 using Oceananigans.Operators: Δxᶜᶜᶜ, Δyᶜᶜᶜ, ℑxyᶜᶜᵃ, ζ₃ᶠᶠᶜ, div_xyᶜᶜᶜ
 using Oceananigans.Operators: Δx, Δy
@@ -108,5 +108,5 @@ end
 @inline hack_sind(φ) = sin(π * φ / 180)
 
 @inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz)^2 / λ
-@inline    cosine_νhb(i, j, k, grid, lx, ly, lz, clock, fields, ν) = ν * hack_cosd(ynode(ly, j, grid))^3
+@inline    cosine_νhb(i, j, k, grid, lx, ly, lz, clock, fields, ν) = ν * hack_cosd(ynode(j, grid, ly))^3
 

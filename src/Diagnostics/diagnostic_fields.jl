@@ -22,7 +22,7 @@ function VerticalVorticityField(velocities::NamedTuple)
     grid = velocities.u.grid
     computed_dependencies = (velocities.u, velocities.v)
 
-    ζ_op = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies)
+    ζ_op = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid, computed_dependencies...)
 
     return compute!(Field(ζ_op))
 end
@@ -42,9 +42,9 @@ function HorizontalFriction(model; ClosureType = AbstractScalarBiharmonicDiffusi
     model_fields = merge(hydrostatic_fields(velocities, free_surface, tracers), auxiliary_fields)
     computed_dependencies = (closure, diffusivities, clock, model_fields, buoyancy)
 
-    ∂ⱼ_τ₁ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₁ⱼ, grid; computed_dependencies)
-    ∂ⱼ_τ₂ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₂ⱼ, grid; computed_dependencies)
-    ∂ⱼ_τ₃ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₃ⱼ, grid; computed_dependencies)
+    ∂ⱼ_τ₁ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₁ⱼ, grid, computed_dependencies...)
+    ∂ⱼ_τ₂ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₂ⱼ, grid, computed_dependencies...)
+    ∂ⱼ_τ₃ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₃ⱼ, grid, computed_dependencies...)
 
     τ₁ = compute!(Field(∂ⱼ_τ₁ⱼ_op))
     τ₂ = compute!(Field(∂ⱼ_τ₂ⱼ_op))
@@ -67,9 +67,9 @@ function HorizontalFriction(fields::NamedTuple, closure)
     model_fields = merge(hydrostatic_fields(velocities, free_surface, tracers), auxiliary_fields)
     computed_dependencies = (closure, diffusivities, clock, model_fields, buoyancy)
 
-    ∂ⱼ_τ₁ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₁ⱼ, grid; computed_dependencies)
-    ∂ⱼ_τ₂ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₂ⱼ, grid; computed_dependencies)
-    ∂ⱼ_τ₃ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₃ⱼ, grid; computed_dependencies)
+    ∂ⱼ_τ₁ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₁ⱼ, grid, computed_dependencies...)
+    ∂ⱼ_τ₂ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₂ⱼ, grid, computed_dependencies...)
+    ∂ⱼ_τ₃ⱼ_op = KernelFunctionOperation{Face, Center, Center}(∂ⱼ_τ₃ⱼ, grid, computed_dependencies...)
 
     τ₁ = compute!(Field(∂ⱼ_τ₁ⱼ_op))
     τ₂ = compute!(Field(∂ⱼ_τ₂ⱼ_op))

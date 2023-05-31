@@ -38,7 +38,7 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
     ub = u * b
     wb = w * b
 
-    ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = (u, v))
+    ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid, u, v)
     ζ2 = ζ^2
 
     averaged_fields = (; u, v, w, b, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)

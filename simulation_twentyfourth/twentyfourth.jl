@@ -2,7 +2,7 @@ using Oceananigans
 using Oceananigans.Units
 using WenoNeverworld
 using Oceananigans.BuoyancyModels: g_Earth
-using Oceananigans.Grids: min_Δx, min_Δy
+using Oceananigans.Grids: minimum_xspacing, minimum_yspacing
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization
 using JLD2
@@ -43,7 +43,7 @@ convective_adjustment  = RiBasedVerticalDiffusivity()
 # Calculate barotropic substeps based on barotropic CFL number and wave speed
 function barotropic_substeps(Δt, grid, gravitational_acceleration; CFL = 0.7)
     wave_speed = sqrt(gravitational_acceleration * grid.Lz)
-    local_Δ    = 1 / sqrt(1 / min_Δx(grid)^2 + 1 / min_Δy(grid)^2)
+    local_Δ    = 1 / sqrt(1 / minimum_xspacing(grid)^2 + 1 / minimum_yspacing(grid)^2)
   
    return Int(ceil(2 * Δt / (CFL / wave_speed * local_Δ)))
 end

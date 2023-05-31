@@ -31,7 +31,7 @@ biharmonic_viscosity  = leith_laplacian_viscosity(C_vort = 2.0, C_div = 2.0)
 # Calculate barotropic substeps based on barotropic CFL number and wave speed
 function barotropic_substeps(Δt, grid, gravitational_acceleration; CFL = 0.7)
     wave_speed = sqrt(gravitational_acceleration * grid.Lz)
-    local_Δ    = 1 / sqrt(1 / min_Δx(grid)^2 + 1 / min_Δy(grid)^2)
+    local_Δ    = 1 / sqrt(1 / minimum_xspacing(grid)^2 + 1 / minimum_yspacing(grid)^2)
   
    return Int(ceil(2 * Δt / (CFL / wave_speed * local_Δ)))
 end

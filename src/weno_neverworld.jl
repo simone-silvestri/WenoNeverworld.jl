@@ -44,7 +44,7 @@ end
 @inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
 
     b = fields.b[i, j, grid.Nz]
-    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
+    x, y, z = node(i, j, grid.Nz, grid, Center(), Center(), Center())
 
     return @inbounds p.λ * (b - p.initial_buoyancy(x, y, z))
 end
@@ -52,7 +52,7 @@ end
 @inline function temperature_top_relaxation(i, j, grid, clock, fields, p) 
 
     T  = fields.T[i, j, grid.Nz]
-    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
+    x, y, z = node(i, j, grid.Nz, grid, Center(), Center(), Center())
     Trestoring = p.initial_temperature(x, y, z)
 
     return @inbounds p.λ * (T - Trestoring)
