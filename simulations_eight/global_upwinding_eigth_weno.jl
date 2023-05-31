@@ -9,7 +9,7 @@ using JLD2
 
 # output_dir    = joinpath(@__DIR__, "./")
 # @show output_prefix = output_dir * "/weno_two"
-output_dir = "/storage2/"
+output_dir = "/storage4/"
 @show output_prefix = output_dir * "WenoNeverworldData/weno_eight"
 
 arch = GPU()
@@ -22,12 +22,11 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, -20))
 
 # Extend the vertical advection scheme
 interp_init = false
-init_file = "/storage2/WenoNeverworldData/weno_eight_checkpoint_iteration648000.jld2"
-init_file = "/storage2/WenoNeverworldData/weno_eight_checkpoint_iteration670782.jld2"
+init_file = "/storage4/WenoNeverworldData/eighth_SO_to_20/weno_eight_checkpoint.jld2"
 
 # Simulation parameters
-Δt       =  6minutes
-final_Δt =  6minutes 
+Δt       =  5minutes
+final_Δt =  5minutes 
 stop_time = 200years
 
 tracer_advection      = WENO(grid.underlying_grid)
