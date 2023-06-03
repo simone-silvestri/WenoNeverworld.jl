@@ -205,9 +205,9 @@ version = "0.1.5"
 
 [[deps.GPUCompiler]]
 deps = ["ExprTools", "InteractiveUtils", "LLVM", "Libdl", "Logging", "Scratch", "TimerOutputs", "UUIDs"]
-git-tree-sha1 = "11b2d77f29a85f3649c273a38f6618121c6b1c51"
+git-tree-sha1 = "cb090aea21c6ca78d59672a7e7d13bd56d09de64"
 uuid = "61eb1bfa-7361-4325-ad38-22787b887f55"
-version = "0.20.2"
+version = "0.20.3"
 
 [[deps.Glob]]
 git-tree-sha1 = "97285bbd5230dd766e9ef6749b80fc617126d496"
@@ -426,7 +426,7 @@ version = "1.2.0"
 
 [[deps.Oceananigans]]
 deps = ["Adapt", "CUDA", "Crayons", "CubedSphere", "Dates", "DocStringExtensions", "FFTW", "Glob", "IncompleteLU", "InteractiveUtils", "IterativeSolvers", "JLD2", "KernelAbstractions", "LinearAlgebra", "Logging", "MPI", "NCDatasets", "OffsetArrays", "OrderedCollections", "PencilArrays", "PencilFFTs", "Pkg", "Printf", "Random", "Rotations", "SeawaterPolynomials", "SparseArrays", "Statistics", "StructArrays"]
-git-tree-sha1 = "d96540d9df1fd7fb2fd2e17b446cdbba1763ae33"
+git-tree-sha1 = "4de6f4368b99f1eda6cfebae6b8efb1c1d5a80db"
 repo-rev = "ss/new_upwinding"
 repo-url = "https://github.com/CliMA/Oceananigans.jl.git"
 uuid = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
