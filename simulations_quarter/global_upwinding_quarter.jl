@@ -8,7 +8,7 @@ using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization
 using Oceananigans.Coriolis: ActiveCellEnstrophyConservingScheme
 using JLD2
 
-years = 86400 * 365
+years = 43200 * 365 # every half a year
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/pool001/users/sandre/WenoNeverworldData/"
 @show output_prefix = output_dir * "weno_fourth"
@@ -23,13 +23,13 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, 70), H = 7)
 
 # Extend the vertical advection scheme
 interp_init = false
-init_file = "/pool001/users/sandre/WenoNeverworldData/weno_fourth_checkpoint.jld2"
+init_file = "/pool001/users/sandre/WenoNeverworldData/weno_fourth_checkpoint_iteration4567685.jld2"
 # init_file = "/storage2/WenoNeverworldData/weno_four_checkpoint_iteration2630343.jld2"
 
 # Simulation parameters
 Δt       = 12.5minutes
 final_Δt = 12.5minutes 
-stop_time = 200years
+stop_time = 1000years
 
 tracer_advection      = WENO(grid.underlying_grid)
 momentum_advection    = VectorInvariant(vorticity_scheme = WENO(order = 9),
@@ -75,7 +75,8 @@ increase_simulation_Δt!(simulation, cutoff_time = 6 * 60days + 120days, new_Δt
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
 overwrite_existing = true
-standard_outputs!(simulation, output_prefix; overwrite_existing)
+# standard_outputs!(simulation, output_prefix; overwrite_existing)
+checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = years)
 
 # initializing the time for wall_time calculation
 run_simulation!(simulation; interp_init, init_file)
