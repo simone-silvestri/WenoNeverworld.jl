@@ -21,6 +21,7 @@ using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_glob
 @inline u_bottom_drag(i, j, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, 1] * speedᶠᶜᶜ(i, j, 1, grid, fields)
 @inline v_bottom_drag(i, j, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, 1] * speedᶜᶠᶜ(i, j, 1, grid, fields)
 
+# WARNING: CONFUSING
 @inline u_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, k] * speedᶠᶜᶜ(i, j, k, grid, fields) 
 @inline v_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, k] * speedᶜᶠᶜ(i, j, k, grid, fields) 
 
@@ -151,8 +152,8 @@ function weno_neverworld_simulation(; grid,
         drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
         drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
 
-        u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u) 
-        v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v) 
+        u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u, top = drag_u) 
+        v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v, top = drag_v) 
 
         u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ_drag)
         v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ_drag)
@@ -273,8 +274,8 @@ function neverworld_simulation_seawater(; grid,
     drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
     drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
 
-    u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u) 
-    v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v) 
+    u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u, top = drag_u) 
+    v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v, top = drag_v) 
 
     u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ_drag)
     v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ_drag)

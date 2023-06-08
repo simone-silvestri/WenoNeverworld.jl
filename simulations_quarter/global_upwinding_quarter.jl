@@ -23,7 +23,7 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, 70), H = 7)
 
 # Extend the vertical advection scheme
 interp_init = false
-init_file = "/pool001/users/sandre/WenoNeverworldData/weno_fourth_checkpoint_iteration4567685.jld2"
+init_file = "/pool001/users/sandre/WenoNeverworldData/tmp_fourth_checkpoint.jld2"
 # init_file = "/storage2/WenoNeverworldData/weno_four_checkpoint_iteration2630343.jld2"
 
 # Simulation parameters

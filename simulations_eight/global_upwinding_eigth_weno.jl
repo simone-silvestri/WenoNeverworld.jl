@@ -5,33 +5,34 @@ using Oceananigans.BuoyancyModels: g_Earth
 using Oceananigans.Grids: minimum_xspacing, minimum_yspacing
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization
+using Oceananigans.Coriolis: ActiveCellEnstrophyConservingScheme
 using JLD2
 
-# output_dir    = joinpath(@__DIR__, "./")
-# @show output_prefix = output_dir * "/weno_two"
-output_dir = "/storage4/"
-@show output_prefix = output_dir * "WenoNeverworldData/weno_eight"
+years = 43200 * 365 # every half a year
+output_dir    = joinpath(@__DIR__, "./")
+output_dir = "/pool001/users/sandre/WenoNeverworldData/"
+@show output_prefix = output_dir * "weno_eighth"
 
 arch = GPU()
 new_degree = 1/8
-old_degree = 1/8
+old_degree = 1/4
 
-grid = NeverworldGrid(arch, new_degree, latitude = (-70, -20))
-orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, -20))
+grid = NeverworldGrid(arch, new_degree, latitude = (-70, 70), H = 7)
+orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, 70), H = 7)
 # orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, 70)) for old_degree = 1/4
 
 # Extend the vertical advection scheme
-interp_init = false
-init_file = "/storage4/WenoNeverworldData/eighth_SO_to_20/weno_eight_checkpoint.jld2"
+interp_init = true
+init_file = "/pool001/users/sandre/WenoNeverworldData/tmp_fourth_checkpoint.jld2"
+# init_file = "/storage2/WenoNeverworldData/weno_four_checkpoint_iteration2630343.jld2"
 
 # Simulation parameters
-Δt       =  5minutes
-final_Δt =  5minutes 
-stop_time = 200years
+Δt       = 2.5minutes
+final_Δt = 10.0minutes 
+stop_time = 1000years
 
 tracer_advection      = WENO(grid.underlying_grid)
-momentum_advection    = VectorInvariant(vorticity_scheme = WENO(),
-                                       divergence_scheme = WENO(),
+momentum_advection    = VectorInvariant(vorticity_scheme = WENO(order = 9),
                                          vertical_scheme = WENO(grid.underlying_grid))
 
 biharmonic_viscosity  = nothing
@@ -46,16 +47,16 @@ function barotropic_substeps(Δt, grid, gravitational_acceleration; CFL = 0.7)
 end
   
 free_surface = SplitExplicitFreeSurface(; substeps = barotropic_substeps(final_Δt, grid, g_Earth))
-  
+coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme())
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(; grid, Δt, stop_time, interp_init, init_file, 
                                           tracer_advection, momentum_advection, 
-                                          biharmonic_viscosity, free_surface, orig_grid)
+                                          biharmonic_viscosity, free_surface, orig_grid, coriolis)
 
 # Increase the time step up to final_Δt by final_day with "divisions" steps
 starting_day = 0days
 final_day = 365days # 365days
-divisions = 10 # can only do it up to 5 times
+divisions = 5 # can only do it up to 5 times
 Δts = range(Δt, final_Δt, length = divisions)
 cutoff_times = range(starting_day, final_day, length = divisions)                                       
 for (dt, cutoff_time) in zip(Δts, cutoff_times)
@@ -74,7 +75,8 @@ increase_simulation_Δt!(simulation, cutoff_time = 6 * 60days + 120days, new_Δt
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 
 overwrite_existing = true
-standard_outputs!(simulation, output_prefix; overwrite_existing)
+# standard_outputs!(simulation, output_prefix; overwrite_existing)
+checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = years)
 
 # initializing the time for wall_time calculation
 run_simulation!(simulation; interp_init, init_file)
