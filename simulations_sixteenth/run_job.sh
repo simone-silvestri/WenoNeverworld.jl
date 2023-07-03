@@ -5,4 +5,4 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH -t 96:00:00
 ##SBATCH --mem=80G
-/home/sandre/Julia/julia-1.8.5/bin/julia --project --check-bounds=no sixteenth.jl 
+/home/sandre/Julia/julia-1.8.5/bin/julia --project --check-bounds=no global_upwinding.jl 

@@ -11,6 +11,7 @@ using JLD2
 years = 43200 * 365 # every half a year
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/pool001/users/sandre/WenoNeverworldData/"
+output_dir = "/orcd/nese/raffaele/001/sandre/WenoNeverworld/"
 @show output_prefix = output_dir * "weno_fourth"
 
 arch = GPU()
@@ -23,13 +24,14 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, 70), H = 7)
 
 # Extend the vertical advection scheme
 interp_init = false
-init_file = "/pool001/users/sandre/WenoNeverworldData/tmp_fourth_checkpoint.jld2"
+# init_file = "/pool001/users/sandre/WenoNeverworldData/weno_fourth_checkpoint_iteration19606397.jld2"
 # init_file = "/storage2/WenoNeverworldData/weno_four_checkpoint_iteration2630343.jld2"
+init_file = "/orcd/nese/raffaele/001/sandre/WenoNeverworld/weno_fourth.jld2"
 
-# Simulation parameters
-Δt       = 12.5minutes
-final_Δt = 12.5minutes 
-stop_time = 1000years
+# Simulation parameters, can probably do 16 minutes, previously was doing 12.5 minutes
+Δt       = 16minutes
+final_Δt = 16minutes 
+stop_time = 2000years
 
 tracer_advection      = WENO(grid.underlying_grid)
 momentum_advection    = VectorInvariant(vorticity_scheme = WENO(order = 9),
