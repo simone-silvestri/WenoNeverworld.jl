@@ -1,4 +1,4 @@
-iusing WenoNeverworld
+using WenoNeverworld
 using WenoNeverworld.Diagnostics
 using Oceananigans
 using Oceananigans.Operators
