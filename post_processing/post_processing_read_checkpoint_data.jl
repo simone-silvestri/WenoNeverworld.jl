@@ -7,6 +7,9 @@ using Printf
 using WenoNeverworld
 
 
+include("post_processing_make_plots.jl")
+
+
 function ExtractInterior1DArray(ArrayWithHalos, interior_size, halo_size, ArrayLocation, 
                                 ArrayWithHalosUsingNegativeIndex = true)
     
@@ -157,10 +160,16 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
     n_indices = Int((last_index - first_index)/interval_index) + 1
     ψ_Mean_Plot = zeros(grid.Ny+1, grid.Nz+1)
     
+    make_animation = false
+    if make_animation
+        ψ_Plot_TimeSeries = zeros(n_indices, grid.Ny+1, grid.Nz+1)
+        title_TimeSeries = fill("", n_indices)
+    end
+    
     int_T_xyz_TimeSeries = zeros(n_indices)
     iTimeSeries = 0
     
-    resolution = (850, 750)
+    resolution = (900, 750)
     
     for i in first_index:interval_index:last_index
     
@@ -183,10 +192,16 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
             end
         end
         
-        ψ_Plot[:,:] = ψ[1, 1:grid.Ny+1, 1:grid.Nz+1]
-        ψ_Mean_Plot[:,:] += ψ_Plot[:,:]    
+        ψ_Plot[:, :] = ψ[1, 1:grid.Ny+1, 1:grid.Nz+1]
+        ψ_Mean_Plot[:, :] += ψ_Plot[:, :]    
+        
+        if make_animation
+            ψ_Plot_TimeSeries[iTimeSeries, :, :] = ψ[1, 1:grid.Ny+1, 1:grid.Nz+1]
+            title_TimeSeries[iTimeSeries] = @sprintf("Streamfunction Along Zonal Section at Output Index %d", i)        
+        end
         
         if i == first_index || i == last_index
+        
             if i == first_index
                 title_Plot = "Initial Streamfunction Along Zonal Section"
                 filename_Plot = "InitialStreamfunctionAlongZonalSection.pdf"
@@ -194,31 +209,43 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
                 title_Plot = "Final Streamfunction Along Zonal Section"
                 filename_Plot = "FinalStreamfunctionAlongZonalSection.pdf"
             end
+            
             MakeHeatMapOrContourPlot(path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, 
-                                     ψ_Plot[:,:], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], 
-                                     [17.5, 17.5], [10, 10], 1, title_Plot, 27.5, 15, [0, 0], :balance, 100, 
-                                     filename_Plot)         
+                                     ψ_Plot[:, :], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], 
+                                     [17.5, 17.5], [10, 10], 1, title_Plot, 27.5, 15, :balance, 100, "Streamfunction", 
+                                     22.5, 10, 17.5, filename_Plot)
+        
         end
         
     end
     
-    ψ_Mean_Plot[:,:] /= n_indices
-    
+    ψ_Mean_Plot[:, :] /= n_indices
     MakeHeatMapOrContourPlot(path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, 
-                             ψ_Mean_Plot[:,:], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], 
-                             [10, 10], 1, "Time-Averaged Streamfunction Along Zonal Section", 27.5, 15, [0, 0], 
-                             :balance, 100, "TimeAveragedStreamfunctionAlongZonalSection.pdf")  
+                             ψ_Mean_Plot[:, :], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], 
+                             [10, 10], 1, "Time-Averaged Streamfunction Along Zonal Section", 27.5, 15, :balance, 100, 
+                             "Streamfunction", 22.5, 10, 17.5, "TimeAveragedStreamfunctionAlongZonalSection.pdf")  
     
-    MakeSingleLineOrScatterPlot(path, "scatter_line_plot", first_index:interval_index:last_index, int_T_xyz_TimeSeries, 
-                                resolution, 2, :black, :rect, 10, ["Output Time Index", "Itegrated Heat Content"], 
-                                [25, 25], [17.5, 17.5], [10, 10], 1, "Time Evolution of Itegrated Heat Content", 27.5, 
-                                15, "TimeEvolutionOfItegratedHeatContent.pdf")
+    if make_animation
+        filename_Plot_Animation = "TimeEvolutionOfStreamfunctionAlongZonalSection"
+        MakeHeatMapOrContourPlotAnimation(
+        path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, ψ_Plot_TimeSeries[:, :, :], 
+        resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], [10, 10], 1, title_TimeSeries, 27.5, 
+        15, :balance, 100, "Streamfunction", 22.5, 10, 17.5, filename_Plot_Animation)
+    end
+    
+    WriteOutputToFile1D(path, first_index:interval_index:last_index, int_T_xyz_TimeSeries, 
+                        "TimeEvolutionOfIntegratedHeatContent")
+    indices, int_T_xyz_TimeSeries = ReadOutputFromFile1D(path, "TimeEvolutionOfIntegratedHeatContent.curve")
+    MakeSingleLineOrScatterPlot(path, "scatter_line_plot", indices, int_T_xyz_TimeSeries, resolution, 2, :black, :rect,
+                                0, ["Output Time Index", "Integrated Heat Content"], [25, 25], [17.5, 17.5], [10, 10], 
+                                1, "Time Evolution of Integrated Heat Content", 27.5, 15, 
+                                "TimeEvolutionOfIntegratedHeatContent.pdf")
         
 end
 
 
-function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_2(path, first_time_index, last_time_index,
-                                                                        use_all_time_indices = true)
+function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_2(
+path, specified_first_time_index, specified_last_time_index, use_all_time_indices = true)
 
     arch = CPU()
     new_degree = 1
@@ -250,23 +277,32 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_2(path, fi
         # Start from the second index since a zero velocity initial condition will result in a zero streamfunction, 
         # which in turn will throw an error when plotting the heat map or contour plot of the streamfunction.
         last_time_index = size(T_Array)[4]
+    else
+        first_time_index = specified_first_time_index
+        last_time_index = specified_last_time_index
     end
     
     ψ_Plot = zeros(grid.Ny+1, grid.Nz+1)
     n_time_indices = last_time_index - first_time_index + 1
     ψ_Mean_Plot = zeros(grid.Ny+1, grid.Nz+1)
     
+    make_animation = false
+    if make_animation
+        ψ_Plot_TimeSeries = zeros(n_time_indices, grid.Ny+1, grid.Nz+1)
+        title_TimeSeries = fill("", n_time_indices)
+    end
+    
     int_T_xyz_TimeSeries = zeros(n_time_indices)
     iTimeSeries = 0
     
-    resolution = (850, 750)
+    resolution = (900, 750)
     
     for i in first_time_index:last_time_index
 
         @printf("Extracting data at time index %3d:\n", i)
         
-        T_Array_Interior = ExtractInterior3DArray(T_Array[:,:,:,i], interior_size, halo_size, "ccc")
-        v_Array_Interior = ExtractInterior3DArray(v_Array[:,:,:,i], interior_size, halo_size, "cfc")
+        T_Array_Interior = ExtractInterior3DArray(T_Array[:, :, :, i], interior_size, halo_size, "ccc")
+        v_Array_Interior = ExtractInterior3DArray(v_Array[:, :, :, i], interior_size, halo_size, "cfc")
         
         set!(T_Field, T_Array_Interior)
         set!(v_Field, v_Array_Interior)
@@ -289,10 +325,16 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_2(path, fi
             end
         end
 
-        ψ_Plot[:,:] = ψ[1, 1:grid.Ny+1, 1:grid.Nz+1]
-        ψ_Mean_Plot[:,:] += ψ_Plot[:,:]    
+        ψ_Plot[:, :] = ψ[1, 1:grid.Ny+1, 1:grid.Nz+1]
+        ψ_Mean_Plot[:, :] += ψ_Plot[:, :]   
+        
+        if make_animation
+            ψ_Plot_TimeSeries[iTimeSeries, :, :] = ψ[1, 1:grid.Ny+1, 1:grid.Nz+1]
+            title_TimeSeries[iTimeSeries] = @sprintf("Streamfunction Along Zonal Section at Time Index %d", i)
+        end 
         
         if i == first_time_index || i == last_time_index
+        
             if i == first_time_index
                 title_Plot = "Initial Streamfunction Along Zonal Section"
                 filename_Plot = "InitialStreamfunctionAlongZonalSection.pdf"
@@ -300,30 +342,42 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_2(path, fi
                 title_Plot = "Final Streamfunction Along Zonal Section"
                 filename_Plot = "FinalStreamfunctionAlongZonalSection.pdf"
             end
+            
             MakeHeatMapOrContourPlot(path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, 
-                                     ψ_Plot[:,:], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], 
-                                     [17.5, 17.5], [10, 10], 1, title_Plot, 27.5, 15, [0, 0], :balance, 100, 
-                                     filename_Plot)         
+                                     ψ_Plot[:, :], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], 
+                                     [17.5, 17.5], [10, 10], 1, title_Plot, 27.5, 15, :balance, 100, "Streamfunction", 
+                                     22.5, 10, 17.5, filename_Plot)
+            
         end
         
     end
     
-    ψ_Mean_Plot[:,:] /= n_time_indices
-    
+    ψ_Mean_Plot[:, :] /= n_time_indices
     MakeHeatMapOrContourPlot(path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, 
-                             ψ_Mean_Plot[:,:], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], 
-                             [10, 10], 1, "Time-Averaged Streamfunction Along Zonal Section", 27.5, 15, [0, 0], 
-                             :balance, 100, "TimeAveragedStreamfunctionAlongZonalSection.pdf")  
+                             ψ_Mean_Plot[:, :], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], 
+                             [10, 10], 1, "Time-Averaged Streamfunction Along Zonal Section", 27.5, 15, :balance, 100, 
+                             "Streamfunction", 22.5, 10, 17.5, "TimeAveragedStreamfunctionAlongZonalSection.pdf") 
     
-    MakeSingleLineOrScatterPlot(path, "scatter_line_plot", first_time_index:last_time_index, int_T_xyz_TimeSeries, 
-                                resolution, 2, :black, :rect, 10, ["Output Time Index", "Itegrated Heat Content"], 
-                                [25, 25], [17.5, 17.5], [10, 10], 1, "Time Evolution of Itegrated Heat Content", 27.5, 
-                                15, "TimeEvolutionOfItegratedHeatContent.pdf")
+    if make_animation
+        filename_Plot_Animation = "TimeEvolutionOfStreamfunctionAlongZonalSection"
+        MakeHeatMapOrContourPlotAnimation(
+        path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, ψ_Plot_TimeSeries[:, :, :], 
+        resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], [10, 10], 1, title_TimeSeries, 27.5, 
+        15, :balance, 100, "Streamfunction", 22.5, 10, 17.5, filename_Plot_Animation)
+    end
+
+    WriteOutputToFile1D(path, first_time_index:last_time_index, int_T_xyz_TimeSeries, 
+                        "TimeEvolutionOfIntegratedHeatContent")
+    time_indices, int_T_xyz_TimeSeries = ReadOutputFromFile1D(path, "TimeEvolutionOfIntegratedHeatContent.curve")
+    MakeSingleLineOrScatterPlot(path, "scatter_line_plot", time_indices, int_T_xyz_TimeSeries, resolution, 2, :black, 
+                                :rect, 0, ["Output Time Index", "Integrated Heat Content"], [25, 25], [17.5, 17.5], 
+                                [10, 10], 1, "Time Evolution of Integrated Heat Content", 27.5, 15, 
+                                "TimeEvolutionOfIntegratedHeatContent.pdf")
     
 end
 
 
-path = "../output"
+path = "../output" # On Satori, change the path to "/nobackup/users/sbishnu/WenoNeverworld_uq_of_bc_Output_Data".
 Option = 2 # Choose Option to be 1 or 2. Default is 2.
 
 if Option == 1
@@ -331,7 +385,7 @@ if Option == 1
     first_index = 7200
     # Start from the second index since a zero velocity initial condition will result in a zero streamfunction, which in 
     # turn will throw an error when plotting the heat map or contour plot of the streamfunction.
-    last_index = 28800
+    last_index = 28800 # On Satori, change the last index to 5256000.
     interval_index = 7200
     ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, first_index, last_index, interval_index)
     
