@@ -9,7 +9,7 @@ using Oceananigans.Coriolis: ActiveCellEnstrophyConservingScheme
 using JLD2
 
 years = 43200 * 365 # every half a year
-output_dir    = joinpath(@__DIR__, "./")
+output_dir = joinpath(@__DIR__, "./")
 output_dir = "/pool001/users/sandre/WenoNeverworldData/"
 output_dir = "/orcd/nese/raffaele/001/sandre/WenoNeverworld/"
 @show output_prefix = output_dir * "weno_eighth"
@@ -24,7 +24,7 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, 70), H = 7)
 
 # Extend the vertical advection scheme
 interp_init = false
-init_file = "/orcd/nese/raffaele/001/sandre/WenoNeverworld/weno_eighth.jld2"
+init_file = "/orcd/nese/raffaele/001/sandre/WenoNeverworld/weno_eighth_checkpoint_iteration7938374.jld2"
 # init_file = "/storage2/WenoNeverworldData/weno_four_checkpoint_iteration2630343.jld2"
 
 # Simulation parameters
