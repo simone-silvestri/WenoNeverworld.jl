@@ -1,6 +1,11 @@
-*.jld2
-*.png
+*.curve
+*.mat
 *.mp4
 *.eps
+*.jld2
 *.mat
+*.mp4
+*.png
+*.pdf
 *.svg
+*.txt
