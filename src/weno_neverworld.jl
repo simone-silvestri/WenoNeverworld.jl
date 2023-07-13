@@ -68,12 +68,23 @@ end
     return @inbounds p.λ * (S - Srestoring) - Sflux
 end
 
+#####
+##### Default parameterizations for the Neverworld simulation
+#####
+
 default_convective_adjustment  = RiBasedVerticalDiffusivity()
 seawater_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.2)
 default_biharmonic_viscosity   = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 default_vertical_diffusivity   = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter          = FluxTapering(1e-2)
 
+"""
+    function initialize_model!(model, Val(interpolate), initial_buoyancy, grid, orig_grid, init_file, buoyancymodel)
+
+initializes the model according to
+1. interpolate or not on a finer/coarser grid `Val(interpolate)`
+2. either `b` or `T` and `S`
+"""
 @inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer) = set!(model, b = initial_buoyancy)
 
 @inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer)

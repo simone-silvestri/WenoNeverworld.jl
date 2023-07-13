@@ -1,6 +1,11 @@
 # The bathymetry is defined for a latitude range of -70 ≤ φ ≤ 0
 # and a longitude range of 0 ≤ λ ≤ 60
 
+""" 
+    function cubic_profile(x, x1, x2, y1, y2, d1, d2)
+
+returns a cubic function between points `(x1, y1)` and `(x2, y2)` with derivative `d1` and `d2`
+"""
 @inline function cubic_profile(x, x1, x2, y1, y2, d1, d2)
     A = [ x1^3 x1^2 x1 1.0
           x2^3 x2^2 x2 1.0
@@ -60,6 +65,7 @@ function bottom_ridge_x(x)
     end
 end
 
+""" smoothed coasts for the inlet and outlet of the channel """
 function bottom_ridge_xy(x, y)
     if y > - 30
         return bottom_ridge_x(x)

@@ -4,6 +4,12 @@ const ΔB   = 6.0e-2
 const ΔT   = 30.0
 const fact = 5.0
 
+"""
+    function zonal_wind_stress(y, mid_wind)
+
+returns the zonal wind as per https://egusphere.copernicus.org/preprints/2022/egusphere-2022-186/egusphere-2022-186.pdf
+as a function of latitude `y`
+"""
 @inline function zonal_wind_stress(y)
     if y < -45
         return cubic_profile(y, -70.0, -45.0, 0.0, 0.2, 0.0, 0.0)
@@ -42,6 +48,13 @@ end
     end
 end
 
+
+"""
+    function salinity_flux(y)
+
+returns the salinity flux as a function of latitude `y` 
+(similar to https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2020gl089135)
+"""
 @inline function salinity_flux(y, mid_flux)
     if y < -20
         return cubic_profile(y, -70.0, -20.0, -2e-8, 2e-8, 0.0, 0.0) .* 35.0

@@ -238,7 +238,7 @@ end
         return y₂
     elseif i₁ == i₂
         isnan(y₁) && @show i₁, i₂, x₁, x₂, y₁, y₂
-        return 
+        return y₂
     else
         if isnan(y₁) || isnan(y₂) || isnan(x₁) || isnan(x₂) 
             @show i₁, i₂, x₁, x₂, y₁, y₂
