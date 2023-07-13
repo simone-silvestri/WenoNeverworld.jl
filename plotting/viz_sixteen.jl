@@ -28,7 +28,7 @@ contours = blims[2] * exp.(Λ .*  range(0, 1, 11) )
 longitudes = 4*[40, 129, 170, 210]
 for (i,lon_index) in enumerate(longitudes) 
     fig = Figure(resolution = (2000, 1000))
-    ax = Axis(fig[1, 1], xlabel="latitude [∘]", xlabelsize = 30, ylabel="depth [m]", ylabelsize = 30,title="Buoyancy at Longitude = " * string(lon[lon_index]) * "∘", titlesize=50)
+    ax = Axis(fig[1, 1], xlabel="latitude [∘]", xlabelsize = 30, xticks = -60:10:60, xticklabelsize = 30, ylabel="depth [m]", ylabelsize = 30, yticks = -4000:1000:0, yticklabelsize = 30, title="Buoyancy at Longitude = " * string(lon[lon_index]) * "∘", titlesize=50)
     heatmap!(ax, lat, z, b[lon_index, :, :], colormap= :plasma,  colorrange = blims)
     contour!(ax, lat, z, b[lon_index, :, :], color=:black, linewidth=3, levels=contours, labels = true,
     labelsize = 30, labelfont = :bold, labelcolor = :black)
