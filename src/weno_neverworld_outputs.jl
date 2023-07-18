@@ -1,6 +1,19 @@
 using Oceananigans.Operators: ζ₃ᶠᶠᶜ
 using Oceananigans.AbstractOperations: KernelFunctionOperation
 
+using Oceananigans.Models: AbstractModel
+using Oceananigans.Distributed
+
+const DistributedSimulation = Simulation{<:AbstractModel{<:DistributedArch}}
+
+function standard_outputs!(simulation::DistributedSimulation, output_prefix; kw...) 
+    rank = simulation.model.architecture.local_rank
+    
+    standard_outputs!(simulation, output_prefix * "_$rank"; kw...) 
+
+    return nothing
+end
+
 function standard_outputs!(simulation, output_prefix; overwrite_existing = true, 
                                                       checkpoint_time    = 100days,
                                                       snapshot_time      = 30days,
@@ -25,7 +38,7 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
     ub = u * b
     wb = w * b
 
-    ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = (u, v))
+    ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid, u, v)
     ζ2 = ζ^2
 
     averaged_fields = (; u, v, w, b, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)
@@ -161,27 +174,3 @@ function reduced_outputs!(simulation, output_prefix; overwrite_existing = true,
                                                             overwrite_existing)
 
 end                                                 
-
-import Oceananigans.OutputWriters: set_time_stepper_tendencies!
-
-function set_time_stepper_tendencies!(timestepper, file, model_fields)
-    for name in propertynames(model_fields)
-        # Tendency "n"
-        try
-            parent_data = file["timestepper/Gⁿ/$name/data"]
-
-            tendencyⁿ_field = timestepper.Gⁿ[name]
-            copyto!(tendencyⁿ_field.data.parent, parent_data)
-
-            # Tendency "n-1"
-            parent_data = file["timestepper/G⁻/$name/data"]
-
-            tendency⁻_field = timestepper.G⁻[name]
-            copyto!(tendency⁻_field.data.parent, parent_data)
-        catch
-            @warn "Could not restore $name tendency from checkpoint."
-        end
-    end
-
-    return nothing
-end

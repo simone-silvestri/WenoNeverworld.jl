@@ -2,6 +2,7 @@ module WenoNeverworld
 
 export NeverworldGrid, weno_neverworld_simulation, neverworld_simulation_seawater, standard_outputs!, standard_seawater_outputs!, checkpoint_outputs!
 export increase_simulation_Δt!, update_simulation_clock!, run_simulation!
+export years
 
 using CUDA
 using KernelAbstractions: @kernel, @index
@@ -15,6 +16,9 @@ using Oceananigans.Grids
 using Oceananigans.Architectures: arch_array, architecture
 using Oceananigans.Grids: on_architecture
 using Oceananigans.ImmersedBoundaries
+
+
+const years = 365days
 
 include("neverworld_bathymetry.jl")
 include("neverworld_grid.jl")

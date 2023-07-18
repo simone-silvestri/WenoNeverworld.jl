@@ -1,6 +1,11 @@
 # The bathymetry is defined for a latitude range of -70 ≤ φ ≤ 0
 # and a longitude range of 0 ≤ λ ≤ 60
 
+""" 
+    function cubic_profile(x, x1, x2, y1, y2, d1, d2)
+
+returns a cubic function between points `(x1, y1)` and `(x2, y2)` with derivative `d1` and `d2`
+"""
 @inline function cubic_profile(x, x1, x2, y1, y2, d1, d2)
     A = [ x1^3 x1^2 x1 1.0
           x2^3 x2^2 x2 1.0
@@ -60,6 +65,7 @@ function bottom_ridge_x(x)
     end
 end
 
+""" smoothed coasts for the inlet and outlet of the channel """
 function bottom_ridge_xy(x, y)
     if y > - 30
         return bottom_ridge_x(x)
@@ -87,7 +93,7 @@ function scotia_arc(x, y)
 end
 
 # No ridge bathymetry!
-function bathymetry_without_ridge(x, y; longitudinal_extent = 60) 
+function bathymetry_without_ridge(x, y; longitudinal_extent = 60, latitude = (-70, 70)) 
     if x < 5 || x > 55
         if x < 0 
            x = 0.0
@@ -103,22 +109,22 @@ function bathymetry_without_ridge(x, y; longitudinal_extent = 60)
                        coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y + 41)^2)))
         else
             return max(coastal_shelf_x(x), 
-                       coastal_shelf_y(70 + y),
-                       coastal_shelf_y(70 - y),
+                       coastal_shelf_y(-latitude[1] + y),
+                       coastal_shelf_y(latitude[2]  - y),
                        coastal_shelf_x(longitudinal_extent - x), 
                        scotia_arc(x, y))
         end
     else
         return max(coastal_shelf_x(x),  
-                   coastal_shelf_y(70 + y),
-                   coastal_shelf_y(70 - y),
+                   coastal_shelf_y(-latitude[1] + y),
+                   coastal_shelf_y(latitude[2]  - y),
                    coastal_shelf_x(longitudinal_extent - x), 
                    scotia_arc(x, y))
     end
 end
 
 # Full bathymetry!
-function bathymetry_with_ridge(x, y; longitudinal_extent = 60) 
+function bathymetry_with_ridge(x, y; longitudinal_extent = 60, latitude = (-70, 70)) 
     if x < 5 || x > 55
         if x < 0 
            x = 0.0
@@ -135,8 +141,8 @@ function bathymetry_with_ridge(x, y; longitudinal_extent = 60)
         else
             return max(coastal_shelf_x(x), 
                        coastal_shelf_x(longitudinal_extent - x), 
-                       coastal_shelf_y(70 + y),
-                       coastal_shelf_y(70 - y),
+                       coastal_shelf_y(-latitude[1] + y),
+                       coastal_shelf_y(latitude[2]  - y),
                        bottom_ridge_xy(x, y), 
                        bottom_ridge_xy(longitudinal_extent - x, y), 
                        scotia_arc(x, y))
@@ -144,8 +150,8 @@ function bathymetry_with_ridge(x, y; longitudinal_extent = 60)
     else
         return max(coastal_shelf_x(x), 
                    coastal_shelf_x(longitudinal_extent - x), 
-                   coastal_shelf_y(70 + y),
-                   coastal_shelf_y(70 - y),
+                   coastal_shelf_y(-latitude[1] + y),
+                   coastal_shelf_y(latitude[2]  - y),
                    bottom_ridge_xy(x, y), 
                    bottom_ridge_xy(longitudinal_extent - x, y), 
                    scotia_arc(x, y))

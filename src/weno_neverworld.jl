@@ -74,7 +74,7 @@ end
 @inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
 
     b = fields.b[i, j, grid.Nz]
-    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
+    x, y, z = node(i, j, grid.Nz, grid, Center(), Center(), Center())
 
     return @inbounds p.λ * (b - p.initial_buoyancy(x, y, z))
 end
@@ -82,7 +82,7 @@ end
 @inline function temperature_top_relaxation(i, j, grid, clock, fields, p) 
 
     T  = fields.T[i, j, grid.Nz]
-    x, y, z = node(Center(), Center(), Center(), i, j, grid.Nz, grid)
+    x, y, z = node(i, j, grid.Nz, grid, Center(), Center(), Center())
     Trestoring = p.restoring_temperature(y) * p.ΔT
 
     return @inbounds p.λ * (T - Trestoring)
@@ -97,12 +97,23 @@ end
     return @inbounds p.λ * (S - Srestoring) - Sflux
 end
 
+#####
+##### Default parameterizations for the Neverworld simulation
+#####
+
 default_convective_adjustment  = RiBasedVerticalDiffusivity()
 seawater_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.2)
 default_biharmonic_viscosity   = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 default_vertical_diffusivity   = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter          = FluxTapering(1e-2)
 
+"""
+    function initialize_model!(model, Val(interpolate), initial_buoyancy, grid, orig_grid, init_file, buoyancymodel)
+
+initializes the model according to
+1. interpolate or not on a finer/coarser grid `Val(interpolate)`
+2. either `b` or `T` and `S`
+"""
 @inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer; kw...) = set!(model, b = initial_buoyancy)
 
 @inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file, ::BuoyancyTracer; kw...)
@@ -185,8 +196,8 @@ function weno_neverworld_simulation(; grid,
         drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
         drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
 
-        u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u) 
-        v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v) 
+        u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u)
+        v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v)
 
         u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ_drag)
         v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ_drag)
@@ -312,8 +323,8 @@ function neverworld_simulation_seawater(; grid,
     drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
     drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
 
-    u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u) 
-    v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v) 
+    u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u, top = drag_u) 
+    v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v, top = drag_v) 
 
     u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ_drag)
     v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ_drag)
