@@ -2,6 +2,7 @@ module WenoNeverworld
 
 export NeverworldGrid, weno_neverworld_simulation, neverworld_simulation_seawater, standard_outputs!, checkpoint_outputs!
 export increase_simulation_Δt!, update_simulation_clock!, run_simulation!
+export years
 
 using CUDA
 using KernelAbstractions: @kernel, @index
@@ -20,6 +21,9 @@ using Oceananigans.ImmersedBoundaries
 using Oceananigans.Operators
 using Oceananigans.BuoyancyModels: ∂z_b
 import Oceananigans.TurbulenceClosures: Riᶜᶜᶠ 
+
+const years = 365days
+
 @inline Riᶜᶜᶠ(i, j, k, grid, velocities, tracers, buoyancy) = ℑxyᶜᶜᵃ(i, j, k, grid, ℑxyᶠᶠᵃ, local_Riᶜᶜᶠ, velocities, tracers, buoyancy)
 @inline function local_Riᶜᶜᶠ(i, j, k, grid, velocities, tracers, buoyancy)
     ∂z_u² = ℑxᶜᵃᵃ(i, j, k, grid, ∂zᶠᶜᶠ, velocities.u)^2
