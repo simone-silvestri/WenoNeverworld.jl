@@ -283,9 +283,9 @@ function neverworld_simulation_seawater(; grid,
                                           λ_T =  7days,
                                           λ_S = 60days,
                                           convective_adjustment = default_convective_adjustment,
-                                          biharmonic_viscosity  = default_biharmonic_viscosity,
+                                          biharmonic_viscosity  = nothing,
                                           vertical_diffusivity  = default_vertical_diffusivity,
-                                          gm_redi_diffusivities = (1000.0, 1000.0),
+                                          gm_redi_diffusivities = nothing,
                                           tapering = default_slope_limiter,
                                           coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme()),
                                           free_surface = ImplicitFreeSurface(),
@@ -297,13 +297,13 @@ function neverworld_simulation_seawater(; grid,
                                           Δt = 5minutes,
                                           stop_time = 10years,
                                           initial_temperature = initial_temperature_parabola,
-                                          restoring_salinity = restoring_salinity_piecewise_cubic,
+                                          restoring_salinity  = restoring_salinity_piecewise_cubic,
                                           restoring_temperature = restoring_temperature_parabola, 
                                           salinity_flux = salinity_flux,
                                           equation_of_state = LinearEquationOfState(),
                                           wind_stress  = zonal_wind_stress,
-                                          τₚ = [0.2, -0.1, -0.02, -0.1, 0.1],
-                                          Sₚ = [-2e-8, 2e-8, -4e-8, 2e-8, -2e-8],
+                                          wind_stress_parameters   = [0.2, -0.1, -0.02, -0.1, 0.1],
+                                          salinity_flux_parameters = [-2e-8, 2e-8, -4e-8, 2e-8, -2e-8],
                                           ΔT = 30.0,
                                           tracers = (:T, :S)
                                           )
@@ -312,8 +312,8 @@ function neverworld_simulation_seawater(; grid,
 
     @info "specifying boundary conditions..."
 
-    τw = wind_stress_array(wind_stress, grid; τₚ)
-    Fs = salinity_flux_array(salinity_flux, grid; Sₚ)    
+    τw = wind_stress_array(wind_stress, grid; τₚ = wind_stress_parameters)
+    Fs = salinity_flux_array(salinity_flux, grid; Sₚ = salinity_flux_parameters)    
     Ss = salinity_restoring_array(restoring_salinity, grid)
 
     u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
