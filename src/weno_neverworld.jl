@@ -186,7 +186,7 @@ function weno_neverworld_simulation(; grid,
 
     @info "specifying boundary conditions..."
 
-    @apply_regionally τw = grid_specific_array(wind_stress, grid)
+    @apply_regionally τw = wind_stress_array(wind_stress, grid)
 
     u_wind_stress_bc = FluxBoundaryCondition(surface_wind_stress, discrete_form = true, parameters = τw)
 
