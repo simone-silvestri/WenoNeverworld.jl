@@ -135,7 +135,7 @@ end
 
 @inline initialize_model!(model, ::Val{false}, initial_temperature, grid, orig_grid, init_file, ::SeawaterBuoyancy; kw...) = set!(model, T = initial_temperature,  S = 35.0)
 
-@inline function initialize_model!(model, ::Val{true}, initial_temperature, grid, orig_grid, init_file, ::SeawaterBuoyancy; pickup_data = false)
+@inline function initialize_model!(model, ::Val{true}, initial_temperature, grid, orig_grid, init_file, ::SeawaterBuoyancy)
     Hx, Hy, Hz = halo_size(orig_grid)
 
     T_init = jldopen(init_file)["T/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
@@ -145,16 +145,14 @@ end
     w_init = jldopen(init_file)["w/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     η_init = jldopen(init_file)["η/data"][Hx+1:end-Hx, Hy+1:end-Hy, :]
     
-    if !pickup_data
-        @info "interpolating fields"
-        T_init = interpolate_per_level(T_init, orig_grid, grid, (Center, Center, Center))
-        S_init = interpolate_per_level(S_init, orig_grid, grid, (Center, Center, Center))
-        u_init = interpolate_per_level(u_init, orig_grid, grid, (Face, Center, Center))
-        v_init = interpolate_per_level(v_init, orig_grid, grid, (Center, Face, Center))
-        w_init = interpolate_per_level(w_init, orig_grid, grid, (Center, Center, Face))
-        η_init = interpolate_per_level(η_init, orig_grid, grid, (Center, Center, Face))
-    end
-
+    @info "interpolating fields"
+    T_init = interpolate_per_level(T_init, orig_grid, grid, (Center, Center, Center))
+    S_init = interpolate_per_level(S_init, orig_grid, grid, (Center, Center, Center))
+    u_init = interpolate_per_level(u_init, orig_grid, grid, (Face, Center, Center))
+    v_init = interpolate_per_level(v_init, orig_grid, grid, (Center, Face, Center))
+    w_init = interpolate_per_level(w_init, orig_grid, grid, (Center, Center, Face))
+    η_init = interpolate_per_level(η_init, orig_grid, grid, (Center, Center, Face))
+    
     set!(model, T=T_init, S=S_init, u=u_init, v=v_init, w=w_init, η=η_init) 
 end
 
@@ -292,7 +290,6 @@ function neverworld_simulation_seawater(; grid,
                                           momentum_advection = VectorInvariant(),
                                           tracer_advection   = WENO(grid.underlying_grid), 
                                           interp_init = false,
-                                          pickup_data = false,
                                           init_file = nothing,
                                           Δt = 5minutes,
                                           stop_time = 10years,
