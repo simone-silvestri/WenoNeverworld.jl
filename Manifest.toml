@@ -2,7 +2,7 @@
 
 julia_version = "1.9.2"
 manifest_format = "2.0"
-project_hash = "5411c641a7bad65eba10b4657191742605d0069c"
+project_hash = "40438216712c24c736983444eec874fffd79e7f3"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -295,7 +295,9 @@ version = "1.13.1"
 
 [[deps.KernelAbstractions]]
 deps = ["Adapt", "Atomix", "InteractiveUtils", "LinearAlgebra", "MacroTools", "PrecompileTools", "Requires", "SparseArrays", "StaticArrays", "UUIDs", "UnsafeAtomics", "UnsafeAtomicsLLVM"]
-git-tree-sha1 = "6d08ca80b621635fed9cdfeb9a4280a574020bf3"
+git-tree-sha1 = "a8ed43278a827de44cef19b3f295d9db9c278f4d"
+repo-rev = "main"
+repo-url = "https://github.com/simone-silvestri/KernelAbstractions.jl"
 uuid = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 version = "0.9.7"
 
@@ -462,9 +464,11 @@ version = "1.2.0"
 
 [[deps.Oceananigans]]
 deps = ["Adapt", "CUDA", "Crayons", "CubedSphere", "Dates", "DocStringExtensions", "FFTW", "Glob", "IncompleteLU", "InteractiveUtils", "IterativeSolvers", "JLD2", "KernelAbstractions", "LinearAlgebra", "Logging", "MPI", "NCDatasets", "OffsetArrays", "OrderedCollections", "PencilArrays", "PencilFFTs", "Pkg", "Printf", "Random", "Rotations", "SeawaterPolynomials", "SparseArrays", "Statistics", "StructArrays"]
-git-tree-sha1 = "4776d2514d39fef01942b7add669d69ffcbe81e1"
+git-tree-sha1 = "0cbd8f251530630509958cfb7a155d19ddce0039"
+repo-rev = "ss/load-balance-and-corners"
+repo-url = "https://github.com/CliMA/Oceananigans.jl.git"
 uuid = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
-version = "0.84.1"
+version = "0.85.0"
 
 [[deps.OffsetArrays]]
 deps = ["Adapt"]
