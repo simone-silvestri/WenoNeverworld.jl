@@ -17,9 +17,6 @@ using Oceananigans.Architectures: arch_array, architecture
 using Oceananigans.Grids: on_architecture
 using Oceananigans.ImmersedBoundaries
 
-# Change Richardson number calculation for smoothness reasons
-using Oceananigans.Operators
-using Oceananigans.BuoyancyModels: ∂z_b
 
 const years = 365days
 
