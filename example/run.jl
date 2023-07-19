@@ -22,7 +22,7 @@ stop_time = 200years
 # Construct the neverworld simulation
 simulation = neverworld_simulation_seawater(; grid, Δt, stop_time) 
 
-
+increase_simulation_Δt!(simulation, cutoff_time = 60days, new_Δt = 20minutes)
 
 # Add outputs
 checkpoint_outputs!(simulation, output_prefix)
