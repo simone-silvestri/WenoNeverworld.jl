@@ -1,40 +1,39 @@
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: HorizontalFormulation
-using Oceananigans.Grids: min_Δx, min_Δy
 using Oceananigans.Operators
 using Oceananigans.Operators: Δxᶜᶜᶜ, Δyᶜᶜᶜ, ℑxyᶜᶜᵃ, ζ₃ᶠᶠᶜ, div_xyᶜᶜᶜ
 using Oceananigans.Operators: Δx, Δy
 using Oceananigans.Operators: ℑxyz
-using CUDA: @allowscalar
 
 @inline Dₛ(i, j, k, grid, u, v) = ∂xᶜᶜᶜ(i, j, k, grid, u) - ∂yᶜᶜᶜ(i, j, k, grid, v)
 @inline Dₜ(i, j, k, grid, u, v) = ∂xᶠᶠᶜ(i, j, k, grid, v) + ∂yᶠᶠᶜ(i, j, k, grid, u)
-@inline Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz) =  (1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2))
+@inline Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz) =  2 * (1 / (1 / Δx(i, j, k, grid, lx, ly, lz)^2 + 1 / Δy(i, j, k, grid, lx, ly, lz)^2))
 
-@inline function νhb_smagorinski_final(i, j, k, grid, lx, ly, lz, clock, fields, p)
+@inline function νhb_smagorinsky(i, j, k, grid, lx, ly, lz, clock, fields, p)
 
    location = (lx, ly, lz)
    from_Dₛ = (Center(), Center(), Center()) 
    from_Dₜ = (Face(),   Face(),   Center()) 
 	
-   δ₁ = ℑxz(i, j, k, grid, from_Dₛ, location, Dₛ, fields.u, fields.v)    
-   δ₂ = ℑxz(i, j, k, grid, from_Dₜ, location, Dₛ, fields.u, fields.v)    
+   δ₁ = ℑxyz(i, j, k, grid, from_Dₛ, location, Dₛ, fields.u, fields.v)    
+   δ₂ = ℑxyz(i, j, k, grid, from_Dₜ, location, Dₛ, fields.u, fields.v)    
 
-   dynamic_visc = max(p.C * sqrt(δ₁^2 + δ₂^2), 1/p.λ)
+   dynamic_visc = p.C * sqrt(δ₁^2 + δ₂^2)
 
-   return p.Area(i, j, k, grid, lx, ly, lz)^2 * dynamic_visc
+   A = p.Area(i, j, k, grid, lx, ly, lz)
+
+   return A^2 * dynamic_visc
 end
 
-function smagorinski_viscosity(formulation; Cₛₘ = 2.0, λ = 5days, Area = Δ²ᵃᵃᵃ)
+function SmagorinskyBiharmonicViscosity(FT::DataType = Float64; Λ = FT(0.45), Area = Δ²ᵃᵃᵃ)
 
-    @show C = (Cₛₘ / π)^2 / 8
+    C = (Λ / π)^2 / 8
 
-    return ScalarBiharmonicDiffusivity(formulation; 
-                                       ν=νhb_smagorinski_final, discrete_form=true,  
-				                       parameters = (; C, λ, Area))
+    return HorizontalScalarBiharmonicDiffusivity(FT; ν=νhb_smagorinsky, discrete_form=true,  
+				                                     parameters = (; C, Area))
 end
 
-@inline function νhb_leith_final(i, j, k, grid, lx, ly, lz, clock, fields, p)
+@inline function νhb_leith(i, j, k, grid, lx, ly, lz, clock, fields, p)
     
     location = (lx, ly, lz)
     from_∂xζ = (Center(), Face(), Center()) 
@@ -47,30 +46,23 @@ end
     ∂xδ = ℑxyz(i, j, k, grid, from_∂xδ, location, ∂xᶠᶜᶜ, div_xyᶜᶜᶜ, fields.u, fields.v)
     ∂yδ = ℑxyz(i, j, k, grid, from_∂yδ, location, ∂yᶜᶠᶜ, div_xyᶜᶜᶜ, fields.u, fields.v)
    
-    dynamic_visc = sqrt( p.C₁ * (∂xζ^2 + ∂yζ^2) + p.C₂ * (∂xδ^2 + ∂yδ^2) ) / 8
+    dynamic_visc = sqrt((∂xζ^2 + ∂yζ^2) + (∂xδ^2 + ∂yδ^2) ) * p.C
  
     A = p.Area(i, j, k, grid, lx, ly, lz)
-    visc₁ = dynamic_visc * A^2.5
-    visc₂ = A^2 / p.λ
-
-    return max(visc₁, visc₂) 
+    
+    return dynamic_visc * A^(5/2)
 end
 
-function leith_viscosity(formulation; C_vort = 2.0, C_div = 2.0, λ = 10days, Area = Δ²ᵃᵃᵃ)
+function LeithBiharmonicViscosity(FT::DataType = Float64; Λ = FT(1.0), Area = Δ²ᵃᵃᵃ)
 
-    @show C₁ = (C_vort / π)^6 
-    @show C₂ = (C_div  / π)^6 
+    C = (Λ / π)^3 / 8
 
-    visc = ScalarBiharmonicDiffusivity(formulation; 
-                                       ν=νhb_leith_final, discrete_form=true,  
-                                       parameters = (; C₁, C₂, λ, Area))
-
-    @show typeof(visc.ν)
-
-    return visc
+    return HorizontalScalarBiharmonicDiffusivity(FT; 
+                                                 ν=νhb_leith, discrete_form=true,  
+                                                 parameters = (; C, Area))
 end
 
-@inline function νhb_leith_laplacian_final(i, j, k, grid, lx, ly, lz, clock, fields, p)
+@inline function νhb_leith_laplacian(i, j, k, grid, lx, ly, lz, clock, fields, p)
     
     location = (lx, ly, lz)
     from_∂xζ = (Center(), Face(), Center()) 
@@ -83,29 +75,21 @@ end
     ∂xδ = ℑxyz(i, j, k, grid, from_∂xδ, location, ∂xᶠᶜᶜ, div_xyᶜᶜᶜ, fields.u, fields.v)
     ∂yδ = ℑxyz(i, j, k, grid, from_∂yδ, location, ∂yᶜᶠᶜ, div_xyᶜᶜᶜ, fields.u, fields.v)
    
-    dynamic_visc = sqrt( p.C₁ * (∂xζ^2 + ∂yζ^2) + p.C₂ * (∂xδ^2 + ∂yδ^2) ) 
+    dynamic_visc = sqrt((∂xζ^2 + ∂yζ^2) + (∂xδ^2 + ∂yδ^2)) * p.C
  
     A = p.Area(i, j, k, grid, lx, ly, lz)
 
     return dynamic_visc * A^(3/2)
 end
 
-function leith_laplacian_viscosity(formulation = HorizontalFormulation(); C_vort = 1.0, C_div = 1.0, Area = Δ²ᵃᵃᵃ)
+function LeithLaplacianViscosity(FT::DataType = Float64; Λ = FT(1.0), Area = Δ²ᵃᵃᵃ)
 
-    @show C₁ = (C_vort / π)^6 
-    @show C₂ = (C_div  / π)^6 
+    C = (Λ / π)^3 
 
-    visc = ScalarDiffusivity(formulation; 
-                             ν=νhb_leith_laplacian_final, discrete_form=true,  
-                             parameters = (; C₁, C₂, Area))
-
-    @show typeof(visc.ν)
-
-    return visc
+    return HorizontalScalarDiffusivity(FT; ν=νhb_leith_laplacian, discrete_form=true,  
+                                           parameters = (; C, Area))
 end
 
-@inline hack_cosd(φ) = cos(π * φ / 180)
-@inline hack_sind(φ) = sin(π * φ / 180)
-
 @inline geometric_νhb(i, j, k, grid, lx, ly, lz, clock, fields, λ) = Δ²ᵃᵃᵃ(i, j, k, grid, lx, ly, lz)^2 / λ
-@inline    cosine_νhb(i, j, k, grid, lx, ly, lz, clock, fields, ν) = ν * hack_cosd(ynode(ly, j, grid))^3
+
+GeometricBiharmonicViscosity(FT::DataType=Float64; timescale=5days) = HorizontalScalarBiharmonicDiffusivity(FT; ν = geometric_νhb, discrete_form = true, parameters = timescale)

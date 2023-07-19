@@ -6,6 +6,12 @@ export VolumeField, AreaField, MetricField, KineticEnergyField, time_average
 using Oceananigans
 using KernelAbstractions: @kernel, @index 
 using KernelAbstractions.Extras.LoopInfo: @unroll
+using Oceananigans.Utils
+using Oceananigans.Fields: mean
+using Oceananigans.Grids: halo_size
+using Oceananigans.OutputReaders: OnDisk
+using JLD2
+using Oceananigans.Fields: default_indices
 
 function propagate_on_fieldtimeseries(args...; func, nargs = 1)
 
@@ -27,6 +33,7 @@ function propagate_on_fieldtimeseries(args...; func, nargs = 1)
     return output
 end
 
+include("load_data.jl")
 include("spurious_mixing.jl")
 include("diagnostic_fields.jl")
 include("integrated_diagnostics.jl")

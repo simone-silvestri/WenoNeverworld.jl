@@ -1,12 +1,12 @@
 using Oceananigans.Fields: interpolate
-using Oceananigans.Grids: xnode, ynode, halo_size
+using Oceananigans.Grids: λnode, φnode, halo_size
 using Oceananigans.Utils: instantiate
 using Oceananigans.BoundaryConditions
 
-"""
-    function update_simulation_clock!(simulation, init_file)
+"""	
+    function update_simulation_clock!(simulation, init_file)	
 
-updates the `clock` of `simulation` with the time in `init_file`
+updates the `clock` of `simulation` with the time in `init_file`	
 """
 function update_simulation_clock!(simulation, init_file)
     clock = jldopen(init_file)["clock"]
@@ -16,13 +16,13 @@ function update_simulation_clock!(simulation, init_file)
     return nothing
 end
 
-"""
+"""	
     function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2minutes)
 
-utility to update the `Δt` of a `simulation` after a certain `cutoff_time` with `new_Δt`.
-Note: this function adds a `callback` to simulation, so the order of `increase_simulation_Δt!` 
-matters (i.e. the `Δt` will be updated based on the order of `increase_simulation_Δt!` specified)
-"""
+utility to update the `Δt` of a `simulation` after a certain `cutoff_time` with `new_Δt`.	
+Note: this function adds a `callback` to simulation, so the order of `increase_simulation_Δt!` 	
+matters (i.e. the `Δt` will be updated based on the order of `increase_simulation_Δt!` specified)	
+"""	
 function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2minutes)
     
     counter = 0
@@ -35,13 +35,8 @@ function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2m
     increase_Δt! = Symbol(:increase_Δt!, counter)
 
     @eval begin
-        function $increase_Δt!(simulation)
-            if simulation.model.clock.time > $cutoff_time
-                    simulation.Δt = $new_Δt
-            end
-        end
-
-        callback = Callback($increase_Δt!, IterationInterval(1000))
+        $increase_Δt!(simulation) = simulation.Δt = $new_Δt
+        callback = Callback($increase_Δt!, SpecifiedTimes(cutoff_time))
     end
 
     simulation.callbacks[increase_Δt!] = callback
@@ -49,11 +44,11 @@ function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2m
     return nothing
 end
 
-"""
-    function interpolate_per_level(old_vector, old_grid, new_grid, loc)
+"""	
+    function interpolate_per_level(old_vector, old_grid, new_grid, loc)	
 
-interpolate `old_vector` (living on `loc`) from `old_grid` to `new_grid` 
-Note: The z-levels of `old_grid` and `new_grid` should be the same!!
+interpolate `old_vector` (living on `loc`) from `old_grid` to `new_grid` 	
+Note: The z-levels of `old_grid` and `new_grid` should be the same!!	
 """
 function interpolate_per_level(old_vector, old_grid, new_grid, loc)
 
@@ -94,9 +89,10 @@ function interpolate_per_level(old_vector, old_grid, new_grid, loc)
         set!(old_field, old_vector[:, :, k])
         fill_halo_regions!(old_field)
         for i in 1:Nx_new, j in 1:j_final
-            new_vector[i, j, k] = interpolate(old_field, xnode(loc[1](), i, new_grid), ynode(loc[2](), j, new_grid), new_grid.zᵃᵃᶜ[1])
+            new_vector[i, j, k] = interpolate(old_field,  λnode(i, new_grid, loc[1]()), φnode(j, new_grid, loc[2]()), new_grid.zᵃᵃᶜ[1])
         end
     end
 
     return new_vector
 end
+

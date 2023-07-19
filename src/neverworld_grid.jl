@@ -51,7 +51,7 @@ Keyword Arguments
 function NeverworldGrid(arch, resolution, FT::DataType = Float64; 
                         H = 5, longitudinal_extent = 60, 
                         longitude = (-2, 62), 
-                        latitude = (-70, 0), 
+                        latitude = (-70, 70), 
                         bathymetry = bathymetry_without_ridge,
                         z_faces = z_faces_exp()) 
 
@@ -71,7 +71,7 @@ function NeverworldGrid(arch, resolution, FT::DataType = Float64;
 
     bathy = zeros(Nx, Ny)
     for (i, λ) in enumerate(λ_grid), (j, φ) in enumerate(φ_grid)
-        bathy[i, j] = bathymetry(λ, φ; longitudinal_extent)
+        bathy[i, j] = bathymetry(λ, φ; longitudinal_extent, latitude)
     end
 
     return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))

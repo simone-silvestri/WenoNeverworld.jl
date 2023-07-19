@@ -4,8 +4,7 @@
 """ 
     function cubic_profile(x, x1, x2, y1, y2, d1, d2)
 
-returns a cubic function between points `(x1, y1)` and `(x2, y2)`
-with derivative `d1` and `d2`
+returns a cubic function between points `(x1, y1)` and `(x2, y2)` with derivative `d1` and `d2`
 """
 @inline function cubic_profile(x, x1, x2, y1, y2, d1, d2)
     A = [ x1^3 x1^2 x1 1.0
@@ -20,8 +19,8 @@ with derivative `d1` and `d2`
     return coeff[1] * x^3 + coeff[2] * x^2 + coeff[3] * x + coeff[4]
 end
 
-""" coastal rigde in longitude """
-function coastal_ridge_x(x) 
+## define the coasts
+function coastal_shelf_x(x) 
     if x < 0.5
         return 0.0
     elseif x < 2.5 
@@ -33,7 +32,6 @@ function coastal_ridge_x(x)
     end
 end
 
-""" a sharp coast without a ridge """
 function sharp_coast_x(x) 
     if x < 0.5
         return 0.0
@@ -42,8 +40,7 @@ function sharp_coast_x(x)
     end
 end
 
-""" coastal rigde in latitude """
-function coastal_ridge_y(x) 
+function coastal_shelf_y(x) 
     if x < 0.5
         return cubic_profile(x, 0.0, 0.5, 0.0, -200, 0.0, 0.0)
     elseif x < 2.5 
@@ -55,7 +52,7 @@ function coastal_ridge_y(x)
     end
 end
 
-""" bottom atlantic rigde """
+# Bottom ridge
 function bottom_ridge_x(x)
     if x < 20
         return -4000
@@ -79,7 +76,7 @@ function bottom_ridge_xy(x, y)
     end
 end
         
-""" scotia arc ridge """
+# Scotia arc
 function scotia_arc(x, y)
     radius = sqrt(x^2 + (y + 50)^2)
     if radius < 8
@@ -95,8 +92,8 @@ function scotia_arc(x, y)
     end
 end
 
-""" bathymetry without the atlantic ridge """
-function bathymetry_without_ridge(x, y; longitudinal_extent = 60) 
+# No ridge bathymetry!
+function bathymetry_without_ridge(x, y; longitudinal_extent = 60, latitude = (-70, 70)) 
     if x < 5 || x > 55
         if x < 0 
            x = 0.0
@@ -106,27 +103,28 @@ function bathymetry_without_ridge(x, y; longitudinal_extent = 60)
         end
         if y > -59 && y < -41 
             return  max(scotia_arc(x, y), 
-                       coastal_ridge_x(sqrt(x^2 + (y + 59)^2)),
-                       coastal_ridge_x(sqrt(x^2 + (y + 41)^2)), 
-                       coastal_ridge_x(sqrt((longitudinal_extent - x)^2 + (y + 59)^2)),
-                       coastal_ridge_x(sqrt((longitudinal_extent - x)^2 + (y + 41)^2)))
+                       coastal_shelf_x(sqrt(x^2 + (y + 59)^2)),
+                       coastal_shelf_x(sqrt(x^2 + (y + 41)^2)), 
+                       coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y + 59)^2)),
+                       coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y + 41)^2)))
         else
-            return max(coastal_ridge_x(x), 
-                       coastal_ridge_y(70 + y),
-                       coastal_ridge_y(70 + y),
-                       coastal_ridge_x(longitudinal_extent - x), 
+            return max(coastal_shelf_x(x), 
+                       coastal_shelf_y(-latitude[1] + y),
+                       coastal_shelf_y(latitude[2]  - y),
+                       coastal_shelf_x(longitudinal_extent - x), 
                        scotia_arc(x, y))
         end
     else
-        return max(coastal_ridge_x(x),  
-                   coastal_ridge_y(70 + y),
-                   coastal_ridge_x(longitudinal_extent - x), 
+        return max(coastal_shelf_x(x),  
+                   coastal_shelf_y(-latitude[1] + y),
+                   coastal_shelf_y(latitude[2]  - y),
+                   coastal_shelf_x(longitudinal_extent - x), 
                    scotia_arc(x, y))
     end
 end
 
-""" bathymetry with the atlantic ridge """
-function bathymetry_with_ridge(x, y; longitudinal_extent = 60) 
+# Full bathymetry!
+function bathymetry_with_ridge(x, y; longitudinal_extent = 60, latitude = (-70, 70)) 
     if x < 5 || x > 55
         if x < 0 
            x = 0.0
@@ -136,24 +134,24 @@ function bathymetry_with_ridge(x, y; longitudinal_extent = 60)
         end
         if y > -59 && y < -41 
             return  max(scotia_arc(x, y), 
-                       coastal_ridge_x(sqrt(x^2 + (y + 59)^2)),
-                       coastal_ridge_x(sqrt(x^2 + (y + 41)^2)), 
-                       coastal_ridge_x(sqrt((longitudinal_extent - x)^2 + (y + 59)^2)),
-                       coastal_ridge_x(sqrt((longitudinal_extent - x)^2 + (y + 41)^2)))
+                       coastal_shelf_x(sqrt(x^2 + (y + 59)^2)),
+                       coastal_shelf_x(sqrt(x^2 + (y + 41)^2)), 
+                       coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y + 59)^2)),
+                       coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y + 41)^2)))
         else
-            return max(coastal_ridge_x(x), 
-                       coastal_ridge_x(longitudinal_extent - x), 
-                       coastal_ridge_y(70 + y),
-                       coastal_ridge_y(70 - y),
+            return max(coastal_shelf_x(x), 
+                       coastal_shelf_x(longitudinal_extent - x), 
+                       coastal_shelf_y(-latitude[1] + y),
+                       coastal_shelf_y(latitude[2]  - y),
                        bottom_ridge_xy(x, y), 
                        bottom_ridge_xy(longitudinal_extent - x, y), 
                        scotia_arc(x, y))
         end
     else
-        return max(coastal_ridge_x(x), 
-                   coastal_ridge_x(longitudinal_extent - x), 
-                   coastal_ridge_y(70 + y),
-                   coastal_ridge_y(70 - y),
+        return max(coastal_shelf_x(x), 
+                   coastal_shelf_x(longitudinal_extent - x), 
+                   coastal_shelf_y(-latitude[1] + y),
+                   coastal_shelf_y(latitude[2]  - y),
                    bottom_ridge_xy(x, y), 
                    bottom_ridge_xy(longitudinal_extent - x, y), 
                    scotia_arc(x, y))

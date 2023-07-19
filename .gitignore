@@ -4,3 +4,5 @@
 *.eps
 *.mat
 *.svg
+*.out
+*core*

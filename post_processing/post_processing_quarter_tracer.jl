@@ -1,4 +1,4 @@
-using WenoNeverworld
+iusing WenoNeverworld
 using WenoNeverworld.Diagnostics
 using Oceananigans
 using Oceananigans.Units
@@ -214,3 +214,4 @@ Time-averaged variables
 # lines!(ax, times4, (KEl .- KEl[1]), color = color1, linewidth = 2)
 # lines!(ax, times4, (KEc .- KEc[1]), color = color2, linewidth = 2)
 # lines!(ax, times4, (KEw .- KEw[1]), color = color3, linewidth = 2)
+

@@ -1,25 +1,39 @@
 using Oceananigans.Operators: ζ₃ᶠᶠᶜ
 using Oceananigans.AbstractOperations: KernelFunctionOperation
 
-"""
-    function standard_outputs!(simulation, output_prefix; overwrite_existing = true, 
-                                                          checkpoint_time    = 100days,
-                                                          snapshot_time      = 30days,
-                                                          surface_time       = 5days,
-                                                          average_time       = 30days,
-                                                          average_window     = average_time,
-                                                          average_stride     = 10)
+using Oceananigans.Models: AbstractModel
+using Oceananigans.Distributed
 
-attaches four `JLD2OutputWriter`s to `simulation` with prefix `output_prefix`
+const DistributedSimulation = Simulation{<:AbstractModel{<:DistributedArch}}
 
-Outputs attached
-================
 
-- `snapshots` : snapshots of `u`, `v`, `w` and `b` saved every `snapshot_time`
-- `surface_fields` : snapshots of `u`, `v`, `w` and `b` at the surface saved every `surface_time`
-- `averaged_fields` : averages of `u`, `v`, `w`, `b`, `ζ`, `ζ2`, `u2`, `v2`, `w2`, `b2`, `ub`, `vb`, and `wb` 
-                      saved every `average_time` with a window of `average_window` and stride of `average_stride`
-- `checkpointer` : checkpointer saved every `checkpoint_time`
+function standard_outputs!(simulation::DistributedSimulation, output_prefix; kw...) 
+    rank = simulation.model.architecture.local_rank
+    
+    standard_outputs!(simulation, output_prefix * "_$rank"; kw...) 
+
+    return nothing
+end
+
+"""	
+    function standard_outputs!(simulation, output_prefix; overwrite_existing = true, 	
+                                                          checkpoint_time    = 100days,	
+                                                          snapshot_time      = 30days,	
+                                                          surface_time       = 5days,	
+                                                          average_time       = 30days,	
+                                                          average_window     = average_time,	    
+                                                          average_stride     = 10)	
+
+attaches four `JLD2OutputWriter`s to `simulation` with prefix `output_prefix`	
+
+Outputs attached	
+================	
+
+- `snapshots` : snapshots of `u`, `v`, `w` and `b` saved every `snapshot_time`	
+- `surface_fields` : snapshots of `u`, `v`, `w` and `b` at the surface saved every `surface_time`	
+- `averaged_fields` : averages of `u`, `v`, `w`, `b`, `ζ`, `ζ2`, `u2`, `v2`, `w2`, `b2`, `ub`, `vb`, and `wb` 	
+                      saved every `average_time` with a window of `average_window` and stride of `average_stride`	
+- `checkpointer` : checkpointer saved every `checkpoint_time`	
 
 """
 function standard_outputs!(simulation, output_prefix; overwrite_existing = true, 
@@ -46,7 +60,7 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
     ub = u * b
     wb = w * b
 
-    ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid; computed_dependencies = (u, v))
+    ζ  = KernelFunctionOperation{Face, Face, Center}(ζ₃ᶠᶠᶜ, grid, u, v)
     ζ2 = ζ^2
 
     averaged_fields = (; u, v, w, b, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)
@@ -75,10 +89,11 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
     return nothing
 end
 
-"""
-    function checkpoint_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)
 
-attaches a `Checkpointer` to the simulation with prefix `output_prefix` that is saved every `checkpoint_time`
+"""	
+    function checkpoint_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)	
+        
+attaches a `Checkpointer` to the simulation with prefix `output_prefix` that is saved every `checkpoint_time`	
 """
 function checkpoint_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)
 
@@ -92,24 +107,23 @@ function checkpoint_outputs!(simulation, output_prefix; overwrite_existing = tru
     return nothing
 end
 
+"""	
+    function reduced_outputs!(simulation, output_prefix; overwrite_existing = true, 	
+                                                         checkpoint_time    = 100days,	
+                                                         snapshot_time      = 30days,	
+                                                         surface_time       = 1days,	
+                                                         bottom_time        = 1days)	
 
-"""
-    function reduced_outputs!(simulation, output_prefix; overwrite_existing = true, 
-                                                         checkpoint_time    = 100days,
-                                                         snapshot_time      = 30days,
-                                                         surface_time       = 1days,
-                                                         bottom_time        = 1days)
+attaches four `JLD2OutputWriter`s to `simulation` with prefix `output_prefix`	
 
-attaches four `JLD2OutputWriter`s to `simulation` with prefix `output_prefix`
+Outputs attached	
+================	
 
-Outputs attached
-================
+- `snapshots` : snapshots of `u`, `v`, `w` and `b` saved every `snapshot_time`	
+- `surface_fields` : snapshots of `u`, `v`, `w` and `b` at the surface saved every `surface_time`	
+- `bottom_fields` : snapshots of `u`, `v`, `w` and `b` at the bottom (`k = 2`) saved every `bottom_time`	
+- `checkpointer` : checkpointer saved every `checkpoint_time`	
 
-- `snapshots` : snapshots of `u`, `v`, `w` and `b` saved every `snapshot_time`
-- `surface_fields` : snapshots of `u`, `v`, `w` and `b` at the surface saved every `surface_time`
-- `bottom_fields` : snapshots of `u`, `v`, `w` and `b` at the bottom (`k = 2`) saved every `bottom_time`
-- `checkpointer` : checkpointer saved every `checkpoint_time`
-                                                         
 """
 function reduced_outputs!(simulation, output_prefix; overwrite_existing = true, 
                                                      checkpoint_time    = 100days,
