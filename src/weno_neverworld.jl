@@ -72,7 +72,6 @@ end
 #####
 
 default_convective_adjustment  = RiBasedVerticalDiffusivity()
-default_biharmonic_viscosity   = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 default_vertical_diffusivity   = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter          = FluxTapering(1e-2)
 
