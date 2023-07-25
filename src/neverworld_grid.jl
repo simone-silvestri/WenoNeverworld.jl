@@ -51,7 +51,7 @@ Keyword Arguments
 function NeverworldGrid(arch, resolution, FT::DataType = Float64; 
                         H = 5, longitudinal_extent = 60, 
                         longitude = (-2, 62), 
-                        latitude = (-70, 0), 
+                        latitude = (-70, 70), 
                         bathymetry = bathymetry_without_ridge,
                         z_faces = z_faces_exp()) 
 

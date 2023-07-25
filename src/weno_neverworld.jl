@@ -102,10 +102,11 @@ end
 #####
 
 default_convective_adjustment  = RiBasedVerticalDiffusivity()
-seawater_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 0.2)
-default_biharmonic_viscosity   = HorizontalScalarBiharmonicDiffusivity(ν = geometric_νhb, discrete_form = true, parameters = 5days)
 default_vertical_diffusivity   = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
 default_slope_limiter          = FluxTapering(1e-2)
+
+default_momentum_advection(grid) = VectorInvariant(vorticity_scheme = WENO(order = 9), 
+                                                    vertical_scheme = WENO(grid))
 
 """
     function initialize_model!(model, Val(interpolate), initial_buoyancy, grid, orig_grid, init_file, buoyancymodel)
@@ -166,8 +167,8 @@ function weno_neverworld_simulation(; grid,
                                       gm_redi_diffusivities = nothing,
                                       tapering = default_slope_limiter,
                                       coriolis = HydrostaticSphericalCoriolis(),
-                                      free_surface = ImplicitFreeSurface(),
-                                      momentum_advection = VectorInvariant(),
+                                      free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.5),
+                                      momentum_advection = default_momentum_advection(grid.underlying_grid),
 				                      tracer_advection   = WENO(grid.underlying_grid), 
                                       interp_init = false,
                                       init_file = nothing,
@@ -286,8 +287,8 @@ function neverworld_simulation_seawater(; grid,
                                           gm_redi_diffusivities = nothing,
                                           tapering = default_slope_limiter,
                                           coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme()),
-                                          free_surface = ImplicitFreeSurface(),
-                                          momentum_advection = VectorInvariant(),
+                                          free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.5),
+                                          momentum_advection = default_momentum_advection(grid.underlying_grid),
                                           tracer_advection   = WENO(grid.underlying_grid), 
                                           interp_init = false,
                                           init_file = nothing,
