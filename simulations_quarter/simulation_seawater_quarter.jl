@@ -18,30 +18,22 @@ interp_init = false
 init_file   = nothing 
 
 # Simulation parameters
-Δt = 3minutes
+max_Δt = 20minutes
+min_Δt = 1minute
 stop_time = 400years
 
 tracer_advection      = WENO(grid.underlying_grid)
 momentum_advection    = VectorInvariant(vorticity_scheme = WENO(order = 9),
                                          vertical_scheme = WENO(grid.underlying_grid))
 
-# Calculate barotropic substeps based on barotropic CFL number and wave speed
-function barotropic_substeps(Δt, grid, gravitational_acceleration; CFL = 0.7)
-    wave_speed = sqrt(gravitational_acceleration * grid.Lz)
-    local_Δ    = 1 / sqrt(1 / minimum_xspacing(grid)^2 + 1 / minimum_yspacing(grid)^2)
-
-    return Int(ceil(2 * Δt / (CFL / wave_speed * local_Δ)))
-end
-
-free_surface = SplitExplicitFreeSurface(; substeps = barotropic_substeps(15minutes, grid, g_Earth))
+free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75)
 # Construct the neverworld simulation
-simulation = neverworld_simulation_seawater(; grid, Δt, stop_time, interp_init, init_file,
+simulation = neverworld_simulation_seawater(; grid, Δt = min_Δt, stop_time, interp_init, init_file,
                                               tracer_advection, momentum_advection,
                                               free_surface)
 
-increase_simulation_Δt!(simulation, cutoff_time = 90days,  new_Δt = 6minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 180days,  new_Δt = 9minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 360days,  new_Δt = 12minutes)
+wizard = TimeStepWizard(; cfl = 0.3, max_Δt, min_Δt, max_change = 1.1)
+simlation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
