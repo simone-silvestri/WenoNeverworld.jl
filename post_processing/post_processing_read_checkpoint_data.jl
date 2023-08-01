@@ -383,8 +383,13 @@ path, specified_first_time_index, specified_last_time_index, use_all_time_indice
     
 end
 
+post_process_on_Satori = false
+if post_process_on_Satori
+    path = "/nobackup/users/sbishnu/WenoNeverworld_uq_of_bc_Output_Data"
+else
+    path = "../output"
+end
 
-path = "../output" # On Satori, change the path to "/nobackup/users/sbishnu/WenoNeverworld_uq_of_bc_Output_Data".
 Option = 2 # Choose Option to be 1 or 2. Default is 2.
 
 if Option == 1
