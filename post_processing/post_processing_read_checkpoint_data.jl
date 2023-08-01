@@ -173,7 +173,7 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
     
     for i in range_of_indices
     
-        filename = path * @sprintf("/neverworld_high_resolution_checkpoint_iteration%d.jld2", i)
+        filename = path * @sprintf("/neverworld_seawater_quarter_checkpoint_iteration%d.jld2", i)
         @printf("Extracting data from checkpoint file %s:\n", filename)
         T_Field, v_Field = CreateFieldsFromCheckPointOutput(grid, interior_size, halo_size, filename)
         
@@ -388,9 +388,14 @@ if Option == 1
 
     specify_range_of_indices_manually = false
     if specify_range_of_indices_manually
-        range_of_indices = [0] 
+        range_of_indices = [95050, 138850, 182650, 226450, 270250, 314050]
         # Manually specify the indices of the checkpoint files to be read in and processed 
-        # e.g. range_of_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] for 10 checkpoint files.
+        # e.g. range_of_indices = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] for 10 checkpoint files. 
+        #
+        # Also, don't start from 0 since a zero velocity initial condition will result in a zero streamfunction, which 
+        # in turn will throw an error when plotting the heat map or contour plot of the streamfunction.
+        first_index = range_of_indices[1]
+        last_index = range_of_indices[end]
     else
         first_index = 7200
         # Start from the second index since a zero velocity initial condition will result in a zero streamfunction, 
