@@ -97,7 +97,7 @@ end
 
 function MakeHeatMapOrContourPlot(output_directory, plot_type, x, y, φ, resolution, labels, labelsizes, ticklabelsizes, 
                                   labelpaddings, aspect, title, titlesize, titlegap, colormap, contour_levels, cb_label, 
-                                  cb_labelsize, cb_labelpadding, cb_ticksize, file_name, specify_axis_limits = true, 
+                                  cb_labelsize, cb_labelpadding, cb_ticksize, file_name; specify_axis_limits = true, 
                                   use_specified_φ_limits = false, specified_φ_limits = [0, 0], 
                                   make_colorbar_symmetric_about_zero = false, extrema_reduction_factor = 1)
     
@@ -147,7 +147,7 @@ end
 function MakeHeatMapOrContourPlotAnimation(
 output_directory, plot_type, x, y, φ_time_series, resolution, labels, labelsizes, ticklabelsizes, labelpaddings, aspect, 
 title_time_series, titlesize, titlegap, colormap, contour_levels, cb_label, cb_labelsize, cb_labelpadding, 
-cb_ticksize, file_name, specify_axis_limits = true, use_specified_φ_limits = false, specified_φ_limits = [0, 0], 
+cb_ticksize, file_name; specify_axis_limits = true, use_specified_φ_limits = false, specified_φ_limits = [0, 0], 
 make_colorbar_symmetric_about_zero = false, extrema_reduction_factor = 1, frame_rate = 10)
 
     cwd = pwd()

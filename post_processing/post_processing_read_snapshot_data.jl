@@ -35,8 +35,8 @@ function ReadSnapshotDataAndPlotIntegratedHeatContent()
     # Plot the depth integrated heat content.
     MakeHeatMapOrContourPlot("../output", "filled_contour_plot", xT, yT, int_T_z_interior, (850, 750), 
                              ["Latitude (degree)", "Longitude (degree)"], [25, 25], [17.5, 17.5], [10, 10], 1, 
-                             "Depth Integrated Heat Content", 27.5, 15, [0, 0], :balance, 100, 
-                             "DepthIntegratedHeatContent.pdf")
+                             "Depth Integrated Heat Content", 27.5, 15, :balance, 100, "Heat content", 22.5, 10, 17.5,
+                             "DepthIntegratedHeatContent.pdf"; make_colorbar_symmetric_about_zero = true)
     
     nothing # hide
     

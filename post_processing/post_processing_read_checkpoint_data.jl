@@ -213,7 +213,7 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
             MakeHeatMapOrContourPlot(path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, 
                                      ψ_Plot[:, :], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], 
                                      [17.5, 17.5], [10, 10], 1, title_Plot, 27.5, 15, :balance, 100, "Streamfunction", 
-                                     22.5, 10, 17.5, filename_Plot)
+                                     22.5, 10, 17.5, filename_Plot; make_colorbar_symmetric_about_zero = true)
         
         end
         
@@ -223,14 +223,16 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
     MakeHeatMapOrContourPlot(path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, 
                              ψ_Mean_Plot[:, :], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], 
                              [10, 10], 1, "Time-Averaged Streamfunction Along Zonal Section", 27.5, 15, :balance, 100, 
-                             "Streamfunction", 22.5, 10, 17.5, "TimeAveragedStreamfunctionAlongZonalSection.pdf")  
+                             "Streamfunction", 22.5, 10, 17.5, "TimeAveragedStreamfunctionAlongZonalSection.pdf"; 
+                             make_colorbar_symmetric_about_zero = true)  
     
     if make_animation
         filename_Plot_Animation = "TimeEvolutionOfStreamfunctionAlongZonalSection"
         MakeHeatMapOrContourPlotAnimation(
         path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, ψ_Plot_TimeSeries[:, :, :], 
         resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], [10, 10], 1, title_TimeSeries, 27.5, 
-        15, :balance, 100, "Streamfunction", 22.5, 10, 17.5, filename_Plot_Animation)
+        15, :balance, 100, "Streamfunction", 22.5, 10, 17.5, filename_Plot_Animation; 
+        make_colorbar_symmetric_about_zero = true)
     end
     
     WriteOutputToFile1D(path, range_of_indices, int_T_xyz_TimeSeries, "TimeEvolutionOfIntegratedHeatContent")
@@ -345,7 +347,7 @@ path, specified_first_time_index, specified_last_time_index, use_all_time_indice
             MakeHeatMapOrContourPlot(path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, 
                                      ψ_Plot[:, :], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], 
                                      [17.5, 17.5], [10, 10], 1, title_Plot, 27.5, 15, :balance, 100, "Streamfunction", 
-                                     22.5, 10, 17.5, filename_Plot)
+                                     22.5, 10, 17.5, filename_Plot; make_colorbar_symmetric_about_zero = true)
             
         end
         
@@ -355,14 +357,16 @@ path, specified_first_time_index, specified_last_time_index, use_all_time_indice
     MakeHeatMapOrContourPlot(path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, 
                              ψ_Mean_Plot[:, :], resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], 
                              [10, 10], 1, "Time-Averaged Streamfunction Along Zonal Section", 27.5, 15, :balance, 100, 
-                             "Streamfunction", 22.5, 10, 17.5, "TimeAveragedStreamfunctionAlongZonalSection.pdf") 
+                             "Streamfunction", 22.5, 10, 17.5, "TimeAveragedStreamfunctionAlongZonalSection.pdf"; 
+                             make_colorbar_symmetric_about_zero = true) 
     
     if make_animation
         filename_Plot_Animation = "TimeEvolutionOfStreamfunctionAlongZonalSection"
         MakeHeatMapOrContourPlotAnimation(
         path, "filled_contour_plot", φᵃᶠᵃ_Array_Interior_Plot, zᵃᵃᶠ_Array_Interior_Plot, ψ_Plot_TimeSeries[:, :, :], 
         resolution, ["Latitude (degree)", "Depth (km)"], [25, 25], [17.5, 17.5], [10, 10], 1, title_TimeSeries, 27.5, 
-        15, :balance, 100, "Streamfunction", 22.5, 10, 17.5, filename_Plot_Animation)
+        15, :balance, 100, "Streamfunction", 22.5, 10, 17.5, filename_Plot_Animation; 
+        make_colorbar_symmetric_about_zero = true)
     end
 
     WriteOutputToFile1D(path, first_time_index:last_time_index, int_T_xyz_TimeSeries, 
