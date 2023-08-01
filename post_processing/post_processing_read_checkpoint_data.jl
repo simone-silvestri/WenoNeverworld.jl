@@ -171,7 +171,15 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
     
     resolution = (900, 750)
     
-    for i in first_index:interval_index:last_index
+    specify_i_range_manually = false
+    if specify_i_range_manually
+        i_range = [0] 
+        # Manually specify the indices of the checkpoint files to be read in and processed e.g. i_range = [0, 1, 2, 3].
+    else
+        i_range = first_index:interval_index:last_index
+    end
+
+    for i in i_range
     
         filename = path * @sprintf("/neverworld_high_resolution_checkpoint_iteration%d.jld2", i)
         @printf("Extracting data from checkpoint file %s:\n", filename)
@@ -233,8 +241,7 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
         15, :balance, 100, "Streamfunction", 22.5, 10, 17.5, filename_Plot_Animation)
     end
     
-    WriteOutputToFile1D(path, first_index:interval_index:last_index, int_T_xyz_TimeSeries, 
-                        "TimeEvolutionOfIntegratedHeatContent")
+    WriteOutputToFile1D(path, i_range, int_T_xyz_TimeSeries, "TimeEvolutionOfIntegratedHeatContent")
     indices, int_T_xyz_TimeSeries = ReadOutputFromFile1D(path, "TimeEvolutionOfIntegratedHeatContent.curve")
     MakeSingleLineOrScatterPlot(path, "scatter_line_plot", indices, int_T_xyz_TimeSeries, resolution, 2, :black, :rect,
                                 0, ["Output Time Index", "Integrated Heat Content"], [25, 25], [17.5, 17.5], [10, 10], 
