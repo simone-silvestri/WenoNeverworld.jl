@@ -77,16 +77,18 @@ function all_fieldtimeseries_surface(filename, dir = nothing; variables = ("u", 
     Nz   = size(grid, 3)
     perm = sortperm(numbers)
     myfiles = myfiles[perm]
-    for (idx, file) in enumerate(myfiles)
-        for var in variables
-            @info "index $idx" file var
-            try
-                concrete_var = jldopen(dir * file)[var * "/data"][:, :, Hz + Nz]
-                push!(fields[Symbol(var)], concrete_var)
+    for var in variables
+        field = Field[]
+        for (idx, file) in enumerate(myfiles)
+            @info "index $idx" file
+            concrete_var = try
+                jldopen(dir * file)[var * "/data"][:, :, Hz + Nz]
             catch err
-                @warn err
+                nothing
             end
+            !isnothing(concrete_var) ? push!(field, concrete_var) : nothing
         end
+        fields[Symbol(var)] = field
     end
 
     return fields
