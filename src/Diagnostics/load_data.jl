@@ -78,7 +78,7 @@ function all_fieldtimeseries_surface(filename, dir = nothing; variables = ("u", 
     perm = sortperm(numbers)
     myfiles = myfiles[perm]
     for var in variables
-        field = Field[]
+        field = []
         for (idx, file) in enumerate(myfiles)
             @info "index $idx" file
             concrete_var = try
