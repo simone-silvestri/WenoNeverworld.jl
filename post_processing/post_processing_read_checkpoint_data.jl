@@ -139,7 +139,8 @@ function CreateFieldsFromCheckPointOutput(grid, interior_size, halo_size, filena
 end
 
 
-function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, first_index, last_index, interval_index)
+function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, first_index, last_index, range_of_indices, 
+                                                                        n_indices)
 
     arch = CPU()
     new_degree = 1
@@ -157,7 +158,6 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
     zᵃᵃᶠ_Array_Interior_Plot[:] = zᵃᵃᶠ_Array_Interior[:]/1000
     
     ψ_Plot = zeros(grid.Ny+1, grid.Nz+1)
-    n_indices = Int((last_index - first_index)/interval_index) + 1
     ψ_Mean_Plot = zeros(grid.Ny+1, grid.Nz+1)
     
     make_animation = false
@@ -171,15 +171,7 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
     
     resolution = (900, 750)
     
-    specify_i_range_manually = false
-    if specify_i_range_manually
-        i_range = [0] 
-        # Manually specify the indices of the checkpoint files to be read in and processed e.g. i_range = [0, 1, 2, 3].
-    else
-        i_range = first_index:interval_index:last_index
-    end
-
-    for i in i_range
+    for i in range_of_indices
     
         filename = path * @sprintf("/neverworld_high_resolution_checkpoint_iteration%d.jld2", i)
         @printf("Extracting data from checkpoint file %s:\n", filename)
@@ -241,7 +233,7 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
         15, :balance, 100, "Streamfunction", 22.5, 10, 17.5, filename_Plot_Animation)
     end
     
-    WriteOutputToFile1D(path, i_range, int_T_xyz_TimeSeries, "TimeEvolutionOfIntegratedHeatContent")
+    WriteOutputToFile1D(path, range_of_indices, int_T_xyz_TimeSeries, "TimeEvolutionOfIntegratedHeatContent")
     indices, int_T_xyz_TimeSeries = ReadOutputFromFile1D(path, "TimeEvolutionOfIntegratedHeatContent.curve")
     MakeSingleLineOrScatterPlot(path, "scatter_line_plot", indices, int_T_xyz_TimeSeries, resolution, 2, :black, :rect,
                                 0, ["Output Time Index", "Integrated Heat Content"], [25, 25], [17.5, 17.5], [10, 10], 
@@ -394,12 +386,22 @@ Option = 2 # Choose Option to be 1 or 2. Default is 2.
 
 if Option == 1
 
-    first_index = 7200
-    # Start from the second index since a zero velocity initial condition will result in a zero streamfunction, which in 
-    # turn will throw an error when plotting the heat map or contour plot of the streamfunction.
-    last_index = 28800 # On Satori, change the last index to 5256000.
-    interval_index = 7200
-    ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, first_index, last_index, interval_index)
+    specify_range_of_indices_manually = false
+    if specify_range_of_indices_manually
+        range_of_indices = [0] 
+        # Manually specify the indices of the checkpoint files to be read in and processed 
+        # e.g. range_of_indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] for 10 checkpoint files.
+    else
+        first_index = 7200
+        # Start from the second index since a zero velocity initial condition will result in a zero streamfunction, 
+        # which in turn will throw an error when plotting the heat map or contour plot of the streamfunction.
+        last_index = 28800 # On Satori, change the last index to 5256000.
+        interval_index = 7200
+        range_of_indices = first_index:interval_index:last_index
+    end
+    n_indices = length(range_of_indices)
+    ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, first_index, last_index, range_of_indices, 
+                                                                   n_indices)
     
 elseif Option == 2
 
