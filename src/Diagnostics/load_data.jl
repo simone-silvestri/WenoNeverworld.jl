@@ -70,7 +70,6 @@ function all_fieldtimeseries_surface(filename, dir = nothing; variables = ("u", 
     files = filter((x) -> length(x) >= length(filename), files)
     myfiles = filter((x) -> x[1:length(filename)] == filename, files)
     numbers = parse.(Int, filter.(isdigit, myfiles))
-    times   = numbers
     
     @info "loading times" times
     grid = jldopen(dir * myfiles[1])["grid"] 
@@ -79,14 +78,15 @@ function all_fieldtimeseries_surface(filename, dir = nothing; variables = ("u", 
     perm = sortperm(numbers)
     myfiles = myfiles[perm]
     for var in variables
-        loc = assumed_location(var)
-        field = FieldTimeSeries{loc[1], loc[2], Nothing}(grid, times)
+        field = Field[]
         for (idx, file) in enumerate(myfiles)
             @info "index $idx" file
-            concrete_var = jldopen(dir * file)[var * "/data"][:, :, Hz + Nz]
-            set!(field[idx], concrete_var)
+            try
+                concrete_var = jldopen(dir * file)[var * "/data"][:, :, Hz + Nz]
+                push!(field, concrete_var)
+            catch err
+                @warn err
         end
-
         fields[Symbol(var)] = field
     end
 
