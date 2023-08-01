@@ -86,6 +86,7 @@ function all_fieldtimeseries_surface(filename, dir = nothing; variables = ("u", 
                 push!(field, concrete_var)
             catch err
                 @warn err
+            end
         end
         fields[Symbol(var)] = field
     end
