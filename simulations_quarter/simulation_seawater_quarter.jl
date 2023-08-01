@@ -7,8 +7,7 @@ using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: ExplicitTimeDiscretization
 using JLD2
 
-output_dir    = joinpath(@__DIR__, "./")
-@show output_prefix = output_dir * "/neverworld_seawater_quarter"
+output_prefix = "/nobackup/users/sbishnu/neverworld_seawater_quarter"
 
 arch = GPU()
 degree = 1/4
@@ -19,7 +18,7 @@ interp_init = false
 init_file   = nothing 
 
 # Simulation parameters
-Δt        = 5minutes
+Δt = 3minutes
 stop_time = 400years
 
 tracer_advection      = WENO(grid.underlying_grid)
@@ -40,9 +39,9 @@ simulation = neverworld_simulation_seawater(; grid, Δt, stop_time, interp_init,
                                               tracer_advection, momentum_advection,
                                               free_surface)
 
-increase_simulation_Δt!(simulation, cutoff_time = 60days,  new_Δt = 7.5minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 150days, new_Δt = 10minutes)
-increase_simulation_Δt!(simulation, cutoff_time = 1years,  new_Δt = 15minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 90days,  new_Δt = 6minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 180days,  new_Δt = 9minutes)
+increase_simulation_Δt!(simulation, cutoff_time = 360days,  new_Δt = 12minutes)
 
 # Let's goo!
 @info "Running with Δt = $(prettytime(simulation.Δt))"
@@ -55,4 +54,3 @@ checkpoint_outputs!(simulation, output_prefix; overwrite_existing, checkpoint_ti
 
 # initializing the time for wall_time calculation
 run_simulation!(simulation; interp_init, init_file)
-                                                                                                                                    63,1          Bot

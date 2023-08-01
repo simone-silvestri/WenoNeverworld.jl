@@ -368,7 +368,7 @@ function neverworld_simulation_seawater(; grid,
     #####
 
     @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
-    initialize_model!(model, Val(interp_init), initial_temperature, grid, orig_grid, init_file, SeawaterBuoyancy(); pickup_data)
+    initialize_model!(model, Val(interp_init), initial_temperature, grid, orig_grid, init_file, SeawaterBuoyancy())
 
     simulation = Simulation(model; Δt, stop_time)
 
