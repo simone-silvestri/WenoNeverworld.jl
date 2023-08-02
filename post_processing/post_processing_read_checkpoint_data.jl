@@ -182,7 +182,7 @@ function ComputeStreamFunctionAndPlotMeridionalOverturningCirculation_1(path, fi
         iTimeSeries += 1
         int_T_xyz_TimeSeries[iTimeSeries] = int_T_xyz[1,1,1]
         
-        v̄ = compute!(Field(Integral(v_Field, dims = 1)))
+        v̄ = compute!(Field(Average(v_Field, dims = 1)))
         ψ = Field{Nothing, Face, Face}(grid)
         
         for k in 2:grid.Nz+1
