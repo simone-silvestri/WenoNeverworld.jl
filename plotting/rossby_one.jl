@@ -43,17 +43,16 @@ ross_2d = integral # reshape(integral, (n, m))
 
 ##
 fig = Figure(resolution = (1000, 4000))
-ax = Axis(fig[1, 1], xlabel="longitude [∘]", xlabelsize = 30, xticklabelsize = 30, ylabel="latitude [∘]", ylabelsize = 30,title="Deformation radius, 1∘" ,  yticklabelsize = 30, titlesize=50)
+ax = Axis(fig[1, 1], xlabel="longitude [∘]", xlabelsize = 30, xticklabelsize = 30, ylabel="latitude [∘]", ylabelsize = 30,title="Deformation radius, 1∘" ,  yticklabelsize = 30, titlesize=30)
 hm = heatmap!(ax, collect(lon), collect(lat), log10.(ross_2d .+ eps(1000.0)), colorrange = (3, 5), aspect_ratio = 0.8,colormap = :plasma)
 #contour lines
-contour_levels = 3
-contour_labels = range(3.6, stop=4.8, length=contour_levels)
-contour_lines = contour!(ax, collect(lon), collect(lat), log10.(ross_2d .+ eps(1000.0)),   levels=contour_labels, linewidth=3, linecolor=:black, labels=true, labelsize = 30, labelfont = :bold, labelcolor = :black)
-
+ccontour_levels = 3
+ontour_labels = range(4.2, stop=4.8, length=contour_levels)
+contour_lines = contour!(ax, collect(lon), collect(lat), log10.(ross_2d .+ eps(1000.0)), levels=contour_labels, linewidth=3, linecolor=:black, color=:black, labels=true, labelsize=20, labelfont=:bold, labelcolor=:black, labelformatter=(x -> "$(round(10^x/1e3, digits=0))"), constrain_labels=false)
 
 cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30)
 display(fig)
-save("plotting/weno_one_ross.png", fig)
+save("plotting/weno_ross_one.png", fig)
 ##
 
 lat_index = argmin(abs.(-50 .-lat))

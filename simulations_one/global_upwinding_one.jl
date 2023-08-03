@@ -14,12 +14,11 @@ using JLD2
 output_dir = joinpath(@__DIR__, "./")
 output_dir = "/pool001/users/sandre/WenoNeverworldData/"
 output_dir = "/storage2/WenoNeverworldData/"
-@show output_prefix = output_dir * "weno_eighth" #this is supposed to be "half" 
-#all the "eighth" checkpoints in /strorage2/Weno are actually the half degree files
+@show output_prefix = output_dir * "weno_one" 
 
 arch = GPU()
-new_degree = 1/2
-old_degree = 1/4
+new_degree = 1
+old_degree = 1/2
 
 grid = NeverworldGrid(arch, new_degree, latitude = (-70, 70), H = 7)
 orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, 70), H = 7)
@@ -28,15 +27,15 @@ orig_grid = NeverworldGrid(arch, old_degree, latitude = (-70, 70), H = 7)
 # Extend the vertical advection scheme
 interp_init = true
 #init_file = false # "/orcd/nese/raffaele/001/sandre/WenoNeverworld/weno_eighth_checkpoint_iteration7938374.jld2"
-init_file = "/storage2/WenoNeverworldData/weno_fourth.jld2"
-
+init_file = "/storage2/WenoNeverworldData/weno_eighth_checkpoint_iteration985500.jld2"
+#this checkpoint file is actually a half data file, mislabled 
 # Simulation parameters
 Δt       = 20minutes
 final_Δt = 40minutes 
 stop_time = 2000years
 
 tracer_advection      = WENO(grid.underlying_grid)
-momentum_advection    = VectorInvariant(vorticity_scheme = WENO(order = 9),
+momentum_advection    = VectorInvariant(vorticity_scheme = WENO(order = 9), 
                                          vertical_scheme = WENO(grid.underlying_grid))
 
 biharmonic_viscosity  = nothing
