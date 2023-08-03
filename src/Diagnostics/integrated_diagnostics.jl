@@ -1,10 +1,10 @@
-function integral_kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries)
+function integral_kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
 
     energy = Float64[]
     vol = VolumeField(u.grid)
 
-    for (i, time) in enumerate(u.times)
-        @info "integrating time $(prettytime(time)) of $(prettytime(u.times[end]))"
+    for i in start_time:stride:end_time
+        @info "integrating index $i of $end_time"
         ke = Field(u[i]^2 + v[i]^2)
         push!(energy, sum(compute!(Field(ke * vol))))
     end
@@ -18,7 +18,7 @@ function ACC_transport(u::FieldTimeSeries; stride = 1, start_time = 1, end_time 
     vol = VolumeField(u.grid)
 
     for i in start_time:stride:end_time
-        @info "integrating time $(prettytime(u.times[i])) of $(prettytime(u.times[end]))"
+        @info "integrating index $i of $end_time"
         push!(transport, sum(compute!(Field(u[i] * vol)), dims = (2, 3))[1, 1, 1])
     end
 
@@ -31,7 +31,7 @@ function heat_content(b::FieldTimeSeries; stride = 1, start_time = 1, end_time =
     vol = VolumeField(b.grid)
 
     for i in start_time:stride:end_time
-        @info "integrating time $(prettytime(b.times[i])) of $(prettytime(b.times[end]))"
+        @info "integrating index $i of $end_time"
         push!(heat, sum(compute!(Field(b[i] * vol))))
     end
 
