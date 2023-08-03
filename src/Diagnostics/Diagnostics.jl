@@ -8,7 +8,7 @@ using KernelAbstractions: @kernel, @index
 using KernelAbstractions.Extras.LoopInfo: @unroll
 using Oceananigans.Utils
 using Oceananigans.Fields: mean
-using Oceananigans.Grids: halo_size
+using Oceananigans.Grids: halo_size, on_architecture
 using Oceananigans.OutputReaders: OnDisk
 using JLD2
 using Oceananigans.Fields: default_indices

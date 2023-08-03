@@ -28,13 +28,13 @@ assumed_location(var) = var == "u" ? (Face, Center, Center) :
 returns a dictionary containing a `FieldTimeSeries` for each variable in `variables`.
 If `checkpointer == true` it loads the data from all the checkpoint files contained in the directory `dir`
 """
-function all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w", "b"), checkpointer = false)
+function all_fieldtimeseries(filename, dir = nothing; arch = CPU(), variables = ("u", "v", "w", "b"), checkpointer = false)
 
     fields = Dict()
 
     if !(checkpointer)
         for var in variables
-            fields[Symbol(var)] = FieldTimeSeries(filename, var; backend=OnDisk(), architecture=CPU())
+            fields[Symbol(var)] = FieldTimeSeries(filename, var; backend=OnDisk(), architecture = arch)
         end
     else
         files = readdir(dir)
@@ -45,6 +45,7 @@ function all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w"
         
         @info "loading times" times
         grid = jldopen(dir * myfiles[1])["grid"] 
+        grid = on_architecture(arch, grid)
         perm = sortperm(numbers)
         myfiles = myfiles[perm]
         for var in variables
