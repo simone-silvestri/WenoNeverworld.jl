@@ -37,23 +37,57 @@ function all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w"
             fields[Symbol(var)] = FieldTimeSeries(filename, var; backend=OnDisk(), architecture=CPU())
         end
     else
-        files   = readdir(dir)
+        files = readdir(dir)
+        files = filter((x) -> length(x) >= length(filename), files)
         myfiles = filter((x) -> x[1:length(filename)] == filename, files)
         numbers = parse.(Int, filter.(isdigit, myfiles))
         times   = numbers
         
+        @info "loading times" times
         grid = jldopen(dir * myfiles[1])["grid"] 
         perm = sortperm(numbers)
         myfiles = myfiles[perm]
         for var in variables
             field = FieldTimeSeries{assumed_location(var)...}(grid, times)
             for (idx, file) in enumerate(myfiles)
+                @info "index $idx" file
                 concrete_var = jldopen(dir * file)[var * "/data"]
                 set!(field[idx], concrete_var)
             end
 
             fields[Symbol(var)] = field
         end
+    end
+
+    return fields
+end
+
+"""like the function above but extract the surface"""
+function all_fieldtimeseries_surface(filename, dir = nothing; variables = ("u", "v", "w", "b"))
+
+    fields = Dict()
+    files = readdir(dir)
+    files = filter((x) -> length(x) >= length(filename), files)
+    myfiles = filter((x) -> x[1:length(filename)] == filename, files)
+    numbers = parse.(Int, filter.(isdigit, myfiles))
+    times   = numbers
+    
+    @info "loading times" times
+    grid = jldopen(dir * myfiles[1])["grid"] 
+    Hz   = halo_size(grid)[3]
+    Nz   = size(grid, 3)
+    perm = sortperm(numbers)
+    myfiles = myfiles[perm]
+    for var in variables
+        loc = assumed_location(var)
+        field = FieldTimeSeries{loc[1], loc[2], Nothing}(grid, times)
+        for (idx, file) in enumerate(myfiles)
+            @info "index $idx" file
+            concrete_var = jldopen(dir * file)[var * "/data"][:, :, Hz + Nz]
+            set!(field[idx], concrete_var)
+        end
+
+        fields[Symbol(var)] = field
     end
 
     return fields
