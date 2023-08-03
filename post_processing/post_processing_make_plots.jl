@@ -99,7 +99,8 @@ function MakeHeatMapOrContourPlot(output_directory, plot_type, x, y, φ, resolut
                                   labelpaddings, aspect, title, titlesize, titlegap, colormap, contour_levels, cb_label, 
                                   cb_labelsize, cb_labelpadding, cb_ticksize, file_name; specify_axis_limits = true, 
                                   use_specified_φ_limits = false, specified_φ_limits = [0, 0], 
-                                  make_colorbar_symmetric_about_zero = false, extrema_reduction_factor = 1)
+                                  make_colorbar_symmetric_about_zero = false, extrema_reduction_factor = 1, 
+                                  plot_contour_lines = false, levels = 0:1:5, color = :black, linewidth = 2.5)
     
     cwd = pwd()
     path = joinpath(cwd, output_directory)
@@ -135,6 +136,10 @@ function MakeHeatMapOrContourPlot(output_directory, plot_type, x, y, φ, resolut
         hm = contourf!(ax, x, y, φ; levels = range(φ_limits..., length=contour_levels), colormap = colormap)  
     end
     
+    if plot_contour_lines
+        contour!(ax, x, y, φ; levels = levels, color = color, linewidth = linewidth)
+    end
+    
     Colorbar(fig[1,2], hm; label = cb_label, labelsize = cb_labelsize, labelpadding = cb_labelpadding, 
              ticksize = cb_ticksize)
     
@@ -148,7 +153,8 @@ function MakeHeatMapOrContourPlotAnimation(
 output_directory, plot_type, x, y, φ_time_series, resolution, labels, labelsizes, ticklabelsizes, labelpaddings, aspect, 
 title_time_series, titlesize, titlegap, colormap, contour_levels, cb_label, cb_labelsize, cb_labelpadding, 
 cb_ticksize, file_name; specify_axis_limits = true, use_specified_φ_limits = false, specified_φ_limits = [0, 0], 
-make_colorbar_symmetric_about_zero = false, extrema_reduction_factor = 1, frame_rate = 10)
+make_colorbar_symmetric_about_zero = false, extrema_reduction_factor = 1, frame_rate = 10, plot_contour_lines = false, 
+levels = 0:1:5, color = :black, linewidth = 2.5)
 
     cwd = pwd()
     path = joinpath(cwd, output_directory)
@@ -187,6 +193,10 @@ make_colorbar_symmetric_about_zero = false, extrema_reduction_factor = 1, frame_
         hm = heatmap!(ax, x, y, φ; colorrange = φ_limits, colormap = colormap)
     elseif plot_type == "filled_contour_plot"
         hm = contourf!(ax, x, y, φ; levels = range(φ_limits..., length=contour_levels), colormap = colormap)  
+    end
+    
+    if plot_contour_lines
+        contour!(ax, x, y, φ; levels = levels, color = color, linewidth = linewidth)
     end
     
     Colorbar(fig[1,2], hm; label = cb_label, labelsize = cb_labelsize, labelpadding = cb_labelpadding, 
@@ -279,15 +289,20 @@ if TestMakePlots
     
     resolution = (850, 750)
     
+    n_levels = 5
+    d_level = (maximum(φ[:, :]) - minimum(φ[:, :]))/n_levels
+    levels = minimum(φ[:, :]) : d_level : maximum(φ[:, :])
+    
     file_name = "HeatMapExample.pdf"
     MakeHeatMapOrContourPlot("../output", "heat_map", x, y, φ, resolution, ["x", "y"], [25, 25], [17.5, 17.5], 
                              [10, 10], 1, "sin(x) * sin(y)", 27.5, 15, :balance, 100, "Heat map colorbar", 22.5, 
-                             10, 17.5, file_name)
+                             10, 17.5, file_name, plot_contour_lines = true, levels = levels)
     
     file_name = "FilledContourPlotExample.pdf"
     MakeHeatMapOrContourPlot("../output", "filled_contour_plot", x, y, φ, resolution, ["x", "y"], [25, 25], 
                              [17.5, 17.5], [10, 10], 1, "sin(x) * sin(y)", 27.5, 15, :balance, 100, 
-                             "Filled contour plot colorbar", 22.5, 10, 17.5, file_name)
+                             "Filled contour plot colorbar", 22.5, 10, 17.5, file_name, plot_contour_lines = true, 
+                             levels = levels)
     
     file_name = "HeatMapExampleAnimation"
     MakeHeatMapOrContourPlotAnimation(
