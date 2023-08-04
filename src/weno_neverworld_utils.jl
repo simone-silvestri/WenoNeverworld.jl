@@ -4,11 +4,23 @@ using Oceananigans.Utils: instantiate
 using Oceananigans.BoundaryConditions
 
 """ 
-    function cubic_profile(x, x1, x2, y1, y2, d1, d2)
+    function cubic_profile(x, y)
+
+returns a piecewise cubic function between points `[x...]` and `[y...]` with zero derivatives
+"""
+# function cubic_profile(x, y)
+#     perm = sortperm(x)
+#     x = x[perm]
+#     y = y[perm]
+
+# end
+
+""" 
+    function cubic_interpolate(x, x1, x2, y1, y2, d1, d2)
 
 returns a cubic function between points `(x1, y1)` and `(x2, y2)` with derivative `d1` and `d2`
 """
-@inline function cubic_profile(x; x₁, x₂, y₁, y₂, d₁ = 0, d₂ = 0)
+@inline function cubic_interpolate(x; x₁, x₂, y₁, y₂, d₁ = 0, d₂ = 0)
     A = [ x₁^3 x₁^2 x₁ 1.0
           x₂^3 x₂^2 x₂ 1.0
           3*x₁^2 2*x₁ 1.0 0.0

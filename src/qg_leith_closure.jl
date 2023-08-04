@@ -31,7 +31,7 @@ using Oceananigans.BuoyancyModels: ∂x_b, ∂y_b, ∂z_b
 
 using Oceananigans.Operators: ℑxyzᶜᶜᶠ, ℑyzᵃᶜᶠ, ℑxzᶜᵃᶠ, Δxᶜᶜᶜ, Δyᶜᶜᶜ
 
-struct QGLeith{FT, M, S} <: AbstractScalarDiffusivity{ExplicitTimeDiscretization, HorizontalFormulation}
+struct QGLeith{FT, M, S} <: AbstractScalarDiffusivity{ExplicitTimeDiscretization, HorizontalFormulation, 2}
     C :: FT
     min_N² :: FT
     isopycnal_tensor :: M

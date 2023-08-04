@@ -1,6 +1,7 @@
 # The bathymetry is defined for a latitude range of -70 ≤ φ ≤ 70
 # and a longitude range of 0 ≤ λ ≤ 60
 
+# All quantities in the horizontal direction are specified in degrees and in the vertical in meters
 Base.@kwdef struct ShelfParameters
     coast_length::Float64 = 0.5
     side_length::Float64  = 2.5
@@ -20,7 +21,7 @@ Base.@kwdef struct ScotiaArcParameters
     left_inner_radius::Float64  = 9
     right_inner_radius::Float64 = 11
     right_outer_radius::Float64 = 12
-    mid_point::Float64          = 50
+    center_latitude::Float64    = 50
     depth::Float64              = 2000
 end
 
@@ -46,7 +47,7 @@ function coastal_shelf_x(x, params, bottom)
     elseif x < length
         return depth
     elseif x < side_length
-        return cubic_profile(x, x₁ = length, x₂ = side_length, y₁ = depth, y₂ = bottom)
+        return cubic_interpolate(x, x₁ = length, x₂ = side_length, y₁ = depth, y₂ = bottom)
     else        
         return bottom
     end
@@ -72,11 +73,11 @@ function coastal_shelf_y(x, params, bottom)
     depth       = - params.shelf_depth
 
     if x < coast
-        return cubic_profile(x, x₁ = 0.0, x₂ = coast, y₁ = 0.0, y₂ = depth)
+        return cubic_interpolate(x, x₁ = 0.0, x₂ = coast, y₁ = 0.0, y₂ = depth)
     elseif x < length
         return depth
     elseif x < side_length
-        return cubic_profile(x, x₁ = length, x₂ = side_length, y₁ = depth, y₂ = bottom)
+        return cubic_interpolate(x, x₁ = length, x₂ = side_length, y₁ = depth, y₂ = bottom)
     else        
         return bottom
     end
@@ -100,11 +101,11 @@ function bottom_ridge_x(x, params, bottom)
     if x < bot_left
         return bottom
     elseif x < top_left
-        return cubic_profile(x, x₁ = bot_left, x₂ = top_left, y₁ = bottom, y₂ = depth)
+        return cubic_interpolate(x, x₁ = bot_left, x₂ = top_left, y₁ = bottom, y₂ = depth)
     elseif x < top_right
         return depth
     elseif x < bot_right
-        return cubic_profile(x, x₁ = top_right, x₂ = bot_right, y₁ = depth, y₂ = ridge)
+        return cubic_interpolate(x, x₁ = top_right, x₂ = bot_right, y₁ = depth, y₂ = ridge)
     else 
         return bottom
     end
@@ -117,20 +118,20 @@ function scotia_arc(x, y, params, bottom)
     left_outer_radius = params.left_outer_radius
     right_inner_radius = params.right_inner_radius
     right_outer_radius = params.right_outer_radius
-    mid_point = params.mid_point
+    mid_point = params.center_latitude
     depth = - params.depth
 
     radius = sqrt(x^2 + (y + mid_point)^2)
     if radius < left_inner_radius
         return bottom
     elseif radius < left_outer_radius
-        return cubic_profile(radius, x₁ = left_outer_radius, x₂ = left_inner_radius, 
-                                     y₁ = bottom, y₂ = depth)
+        return cubic_interpolate(radius, x₁ = left_outer_radius, x₂ = left_inner_radius, 
+                                         y₁ = bottom, y₂ = depth)
     elseif radius < 11
         return depth
     elseif radius < 12
-        return cubic_profile(radius, x₁ = right_inner_radius, x₂ = right_outer_radius, 
-                                     y₁ = depth, y₂ = bottom)
+        return cubic_interpolate(radius, x₁ = right_inner_radius, x₂ = right_outer_radius, 
+                                         y₁ = depth, y₂ = bottom)
     else
         return bottom
     end
