@@ -22,7 +22,7 @@ BuoyancyRelaxationBoundaryCondition() = BuoyancyRelaxationBoundaryCondition(7 * 
     params :: P
 end
     
-WindStressBoundaryCondition() = WindStressBoundaryCondition(zonal_wind_stress, nothing)
+WindStressBoundaryCondition() = WindStressBoundaryCondition(zonal_wind_stress, default_wind_stress_parameters)
 
 (ws::WindStressBoundaryCondition)(i, j, grid, clock, fields) = ws.stress[j]
 
@@ -164,6 +164,10 @@ function materialize_tracer_boundary_conditions(tracers, grid, tracer_bcs)
 
     return bcs
 end
+
+
+
+
     
 
 

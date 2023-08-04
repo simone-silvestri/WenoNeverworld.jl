@@ -138,7 +138,7 @@ function scotia_arc(x, y, params, bottom)
 end
 
 # Full bathymetry!
-function bathymetry_with_ridge(x, y; params::NeverWorldBathymetryParameters; 
+function bathymetry_with_ridge(x, y, params::NeverWorldBathymetryParameters; 
                                longitudinal_extent = 60, latitude = (-70, 70)) 
     if x < 5 || x > 55
         if x < 0 
