@@ -1,159 +1,178 @@
-# The bathymetry is defined for a latitude range of -70 ≤ φ ≤ 0
+# The bathymetry is defined for a latitude range of -70 ≤ φ ≤ 70
 # and a longitude range of 0 ≤ λ ≤ 60
 
-""" 
-    function cubic_profile(x, x1, x2, y1, y2, d1, d2)
-
-returns a cubic function between points `(x1, y1)` and `(x2, y2)` with derivative `d1` and `d2`
-"""
-@inline function cubic_profile(x, x1, x2, y1, y2, d1, d2)
-    A = [ x1^3 x1^2 x1 1.0
-          x2^3 x2^2 x2 1.0
-          3*x1^2 2*x1 1.0 0.0
-          3*x2^2 2*x2 1.0 0.0]
-          
-    b = [y1, y2, d1, d2]
-
-    coeff = A \ b
-
-    return coeff[1] * x^3 + coeff[2] * x^2 + coeff[3] * x + coeff[4]
+Base.@kwdef struct ShelfParameters
+    coast_length::Float64 = 0.5
+    side_length::Float64  = 2.5
+    size::Float64         = 2.5
+    depth::Float64        = 200
 end
 
+Base.@kwdef struct RidgeParameters
+    side_length::Float64 = 9
+    top_length::Float64  = 2
+    mid_point::Float64   = 30
+    depth::Float64       = 2000
+end
+
+Base.@kwdef struct ScotiaArcParameters
+    left_outer_radius::Float64  = 8
+    left_inner_radius::Float64  = 9
+    right_inner_radius::Float64 = 11
+    right_outer_radius::Float64 = 12
+    mid_point::Float64          = 50
+    depth::Float64              = 2000
+end
+
+Base.@kwdef struct NeverWorldBathymetryParameters
+    shelves::ShelfParameters        = ShelfParameters()
+    scotia_arc::ScotiaArcParameters = ScotiaArcParameters()
+    channel_south_edge::Float64     = - 59
+    channel_north_edge::Float64     = - 41
+    bottom::Float64                 = - 4000
+    ridge::Nothing                  = nothing
+end
+    
 ## define the coasts
-function coastal_shelf_x(x) 
-    if x < 0.5
+function coastal_shelf_x(x, params, bottom) 
+
+    coast       = params.coast_length
+    length      = params.length
+    side_length = params.side_length + length
+    depth       = - params.shelf_depth
+
+    if x < coast
         return 0.0
-    elseif x < 2.5 
-        return -200.0
-    elseif x < 5.0
-        return cubic_profile(x, 2.5, 5.0, -200.0, -4000, 0.0, 0.0)
+    elseif x < length
+        return depth
+    elseif x < side_length
+        return cubic_profile(x, x₁ = length, x₂ = side_length, y₁ = depth, y₂ = bottom)
     else        
-        return -4000.0 
+        return bottom
     end
 end
 
-function sharp_coast_x(x) 
-    if x < 0.5
+function sharp_coast_x(x, params, bottom) 
+
+    coast  = params.coast_length
+    bottom = - params.bottom_depth
+
+    if x < coast
         return 0.0
     else        
-        return -4000.0 
+        return bottom
     end
 end
 
-function coastal_shelf_y(x) 
-    if x < 0.5
-        return cubic_profile(x, 0.0, 0.5, 0.0, -200, 0.0, 0.0)
-    elseif x < 2.5 
-        return -200.0
-    elseif x < 5.0
-        return cubic_profile(x, 2.5, 5.0, -200.0, -4000, 0.0, 0.0)
+function coastal_shelf_y(x, params, bottom) 
+
+    coast       = params.coast_length
+    length      = params.length
+    side_length = params.side_length + length
+    depth       = - params.shelf_depth
+
+    if x < coast
+        return cubic_profile(x, x₁ = 0.0, x₂ = coast, y₁ = 0.0, y₂ = depth)
+    elseif x < length
+        return depth
+    elseif x < side_length
+        return cubic_profile(x, x₁ = length, x₂ = side_length, y₁ = depth, y₂ = bottom)
     else        
-        return -4000.0 
+        return bottom
     end
 end
+
+bottom_ridge_x(x, ::Nothing, bottom) = bottom
 
 # Bottom ridge
-function bottom_ridge_x(x)
-    if x < 20
-        return -4000
-    elseif x < 29
-        return cubic_profile(x, 20.0, 29.0, -4000, -2000, 0.0, 0.0)
-    elseif x < 31
-        return -2000.0
-    else 
-        return -4000.0
-    end
-end
+function bottom_ridge_x(x, params, bottom)
 
-""" smoothed coasts for the inlet and outlet of the channel """
-function bottom_ridge_xy(x, y)
-    if y > - 30
-        return bottom_ridge_x(x)
-    elseif y > -50
-        return cubic_profile(y, -30, -50, bottom_ridge_x(x), -4000, 0.0, 0.0)
-    else
-        return -4000.0
+    center     = params.mid_point_longitude
+    
+    top_left   = center - params.top_length/2
+    top_right  = center + params.top_length/2
+
+    bot_left  = center - params.top_length/2 - params.ridge_side_length
+    bot_right = center + params.top_length/2 + params.ridge_side_length
+
+    depth = - params.ridge_depth
+
+    if x < bot_left
+        return bottom
+    elseif x < top_left
+        return cubic_profile(x, x₁ = bot_left, x₂ = top_left, y₁ = bottom, y₂ = depth)
+    elseif x < top_right
+        return depth
+    elseif x < bot_right
+        return cubic_profile(x, x₁ = top_right, x₂ = bot_right, y₁ = depth, y₂ = ridge)
+    else 
+        return bottom
     end
 end
         
 # Scotia arc
-function scotia_arc(x, y)
-    radius = sqrt(x^2 + (y + 50)^2)
-    if radius < 8
-        return -4000.0
-    elseif radius < 9
-        return cubic_profile(radius, 8.0, 9.0, -4000.0, -2000.0, 0.0, 0.0)
-    elseif radius < 11
-        return -2000.0
-    elseif radius < 12
-        return cubic_profile(radius, 11.0, 12.0, -2000.0, -4000.0, 0.0, 0.0)
-    else
-        return -4000.0
-    end
-end
+function scotia_arc(x, y, params, bottom)
+    
+    left_inner_radius = params.left_inner_radius
+    left_outer_radius = params.left_outer_radius
+    right_inner_radius = params.right_inner_radius
+    right_outer_radius = params.right_outer_radius
+    mid_point = params.mid_point
+    depth = - params.depth
 
-# No ridge bathymetry!
-function bathymetry_without_ridge(x, y; longitudinal_extent = 60, latitude = (-70, 70)) 
-    if x < 5 || x > 55
-        if x < 0 
-           x = 0.0
-        end
-        if x > 60
-           x = 60.0
-        end
-        if y > -59 && y < -41 
-            return  max(scotia_arc(x, y), 
-                       coastal_shelf_x(sqrt(x^2 + (y + 59)^2)),
-                       coastal_shelf_x(sqrt(x^2 + (y + 41)^2)), 
-                       coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y + 59)^2)),
-                       coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y + 41)^2)))
-        else
-            return max(coastal_shelf_x(x), 
-                       coastal_shelf_y(-latitude[1] + y),
-                       coastal_shelf_y(latitude[2]  - y),
-                       coastal_shelf_x(longitudinal_extent - x), 
-                       scotia_arc(x, y))
-        end
+    radius = sqrt(x^2 + (y + mid_point)^2)
+    if radius < left_inner_radius
+        return bottom
+    elseif radius < left_outer_radius
+        return cubic_profile(radius, x₁ = left_outer_radius, x₂ = left_inner_radius, 
+                                     y₁ = bottom, y₂ = depth)
+    elseif radius < 11
+        return depth
+    elseif radius < 12
+        return cubic_profile(radius, x₁ = right_inner_radius, x₂ = right_outer_radius, 
+                                     y₁ = depth, y₂ = bottom)
     else
-        return max(coastal_shelf_x(x),  
-                   coastal_shelf_y(-latitude[1] + y),
-                   coastal_shelf_y(latitude[2]  - y),
-                   coastal_shelf_x(longitudinal_extent - x), 
-                   scotia_arc(x, y))
+        return bottom
     end
 end
 
 # Full bathymetry!
-function bathymetry_with_ridge(x, y; longitudinal_extent = 60, latitude = (-70, 70)) 
+function bathymetry_with_ridge(x, y; params::NeverWorldBathymetryParameters; 
+                               longitudinal_extent = 60, latitude = (-70, 70)) 
     if x < 5 || x > 55
         if x < 0 
            x = 0.0
         end
-        if x > 60
-           x = 60.0
+        if x > longitudinal_extent
+           x = longitudinal_extent
         end
-        if y > -59 && y < -41 
-            return  max(scotia_arc(x, y), 
-                       coastal_shelf_x(sqrt(x^2 + (y + 59)^2)),
-                       coastal_shelf_x(sqrt(x^2 + (y + 41)^2)), 
-                       coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y + 59)^2)),
-                       coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y + 41)^2)))
+
+        channel_south = params.channel_south_edge
+        channel_north = params.channel_north_edge
+        bottom = params.bottom
+
+        if y > channel_south && y < channel_north
+            return  max(scotia_arc(x, y, params.scotia_arc, bottom), 
+                        coastal_shelf_x(sqrt(x^2 + (y - channel_south)^2), params.shelves, bottom),
+                        coastal_shelf_x(sqrt(x^2 + (y - channel_north)^2), params.shelves, bottom), 
+                        coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y - channel_south)^2), params.shelves, bottom),
+                        coastal_shelf_x(sqrt((longitudinal_extent - x)^2 + (y - channel_north)^2), params.shelves, bottom))
         else
-            return max(coastal_shelf_x(x), 
-                       coastal_shelf_x(longitudinal_extent - x), 
-                       coastal_shelf_y(-latitude[1] + y),
-                       coastal_shelf_y(latitude[2]  - y),
-                       bottom_ridge_xy(x, y), 
-                       bottom_ridge_xy(longitudinal_extent - x, y), 
-                       scotia_arc(x, y))
+            return max(coastal_shelf_x(x, params.shelves, bottom), 
+                       coastal_shelf_x(longitudinal_extent - x, params.shelves, bottom), 
+                       coastal_shelf_y(-latitude[1] + y, params.shelves, bottom),
+                       coastal_shelf_y(latitude[2]  - y, params.shelves, bottom),
+                       bottom_ridge_xy(x, y, params.ridge, bottom), 
+                       bottom_ridge_xy(longitudinal_extent - x, y, params.ridge, bottom), 
+                       scotia_arc(x, y, params.scotia_arc, bottom))
         end
     else
-        return max(coastal_shelf_x(x), 
-                   coastal_shelf_x(longitudinal_extent - x), 
-                   coastal_shelf_y(-latitude[1] + y),
-                   coastal_shelf_y(latitude[2]  - y),
-                   bottom_ridge_xy(x, y), 
-                   bottom_ridge_xy(longitudinal_extent - x, y), 
-                   scotia_arc(x, y))
+        return max(coastal_shelf_x(x, params.shelves, bottom), 
+                   coastal_shelf_x(longitudinal_extent - x, params.shelves, bottom),  
+                   coastal_shelf_y(-latitude[1] + y, params.shelves, bottom), 
+                   coastal_shelf_y(latitude[2]  - y, params.shelves, bottom), 
+                   bottom_ridge_xy(x, y, params.ridge, bottom), 
+                   bottom_ridge_xy(longitudinal_extent - x, y, params.ridge, bottom),  
+                   scotia_arc(x, y, params.scotia_arc, bottom))
     end
 end

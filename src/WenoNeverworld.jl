@@ -20,11 +20,10 @@ using Oceananigans.ImmersedBoundaries
 
 const years = 365days
 
+include("weno_neverworld_utils.jl")
 include("neverworld_bathymetry.jl")
 include("neverworld_grid.jl")
 include("neverworld_initial_and_boundary_conditions.jl")
-include("weno_neverworld_utils.jl")
-include("horizontal_visc.jl")
 include("weno_neverworld.jl")
 include("weno_neverworld_outputs.jl")
 

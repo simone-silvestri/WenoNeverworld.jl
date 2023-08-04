@@ -24,7 +24,7 @@ function z_faces_exp(; Nz = 69, Lz = 4000.0, e_folding = 0.06704463421863584)
 end
 
 """
-    function NeverworldGrid(arch, degree, FT::DataType = Float64; H = 5, longitude = (-2, 62), latitude = (-70, 0), bathymetry = bathymetry_without_ridge, longitudinal_extent = 60) 
+    function NeverworldGrid(arch, degree, FT::DataType = Float64; H = 7, longitude = (-2, 62), latitude = (-70, 0), bathymetry_params = NeverWorldBathymetryParameters(), longitudinal_extent = 60) 
 
 builds a `LatitudeLongitudeGrid` with a specified `bathymetry`
 
@@ -43,16 +43,15 @@ Keyword Arguments
 - `longitude` : longitudinal extremes of the domain, `Tuple`. Note: this keyword must be at least `longitude_extent + resolution * 2H`
                 to allow for correct advection stencils 
 - `latitude` : latitudinal extremes of the domain
-- `bathymetry` : function of `(λ, φ)` specifying the bottom height. Two bathymetry functions are implemented already:
-                 `bathymetry_without_ridge` and `bathymetry_with_ridge`
+- `bathymetry_params` : parameters for the neverworld bathymetry, see `neverworld_bathymetry.jl`
 - `z_faces` : array containing the z faces
 
 """
 function NeverworldGrid(arch, resolution, FT::DataType = Float64; 
-                        H = 5, longitudinal_extent = 60, 
+                        H = 7, longitudinal_extent = 60, 
                         longitude = (-2, 62), 
                         latitude = (-70, 70), 
-                        bathymetry = bathymetry_without_ridge,
+                        bathymetry_params = NeverWorldBathymetryParameters(),
                         z_faces = z_faces_exp()) 
 
     Nx = Int((longitude[2] - longitude[1]) / resolution)
@@ -71,7 +70,7 @@ function NeverworldGrid(arch, resolution, FT::DataType = Float64;
 
     bathy = zeros(Nx, Ny)
     for (i, λ) in enumerate(λ_grid), (j, φ) in enumerate(φ_grid)
-        bathy[i, j] = bathymetry(λ, φ; longitudinal_extent, latitude)
+        bathy[i, j] = neverworld_bathymetry(λ, φ, bathymetry_params; longitudinal_extent, latitude)
     end
 
     return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))
