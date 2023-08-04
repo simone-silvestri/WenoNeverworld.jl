@@ -9,12 +9,21 @@ const fact = 5.0
 @inline parabolic_scaling(y) = - 1 / 70^2 * y^2 + 1
 @inline atan_scaling(y)      = (atan(fact*((Ly + y)/Ly - 0.5)) / atan(fact * 0.5) + 1) /2
 
-@Base.kwdef struct BuoyancyRelaxationBoundaryCondition{S, T}
-    λ::S
+@inline initial_buoyancy_tangent(x, y, z)  = exponential_profile(z) * atan_scaling(y)
+@inline initial_buoyancy_parabola(x, y, z) = exponential_profile(z) * parabolic_scaling(y) 
+
+@Base.kwdef struct BuoyancyRelaxationBoundaryCondition{T, S}
     ΔB::T
+    λ::S
 end
 
 BuoyancyRelaxationBoundaryCondition() = BuoyancyRelaxationBoundaryCondition(7 * 86400, 6.0e-2)
+
+function (b::BuoyancyRelaxationBoundaryCondition)(i, j, grid, clock, fields)
+    φ = φnode(i, j, grid.Nz, Center(), Center(), Center())
+    b_surf = fields.b[i, j, grid.Nz]
+    return 1 / b.λ * (b_surf - b.ΔB * parabolic_scaling(φ))
+end
 
 @Base.kwdef struct WindStressBoundaryCondition{F, S, T}
     func :: F
@@ -67,9 +76,6 @@ end
     return cubic_profile(φ; ntlist[varphi_index]...) / 1000
 end
 
-@inline initial_buoyancy_tangent(x, y, z)  = exponential_profile(z) * atan_scaling(y)
-@inline initial_buoyancy_parabola(x, y, z) = exponential_profile(z) * parabolic_scaling(y) 
-
 @inline function regularize_top_boundary_condition(bc::WindStressBoundaryCondition, grid)
 
     Ny   = size(grid, 2)
@@ -85,19 +91,8 @@ end
     return WindStressBoundaryCondition(bc.func, arch_array(arch, - bc_array), bc.params)
 end
 
-@inline regularize_top_boundary_condition(bc_array::BuoyancyRelaxationBoundaryCondition, grid) = nothing
-
-@inline surface_wind_stress(i, j, grid, clock, fields, τ) = τ[j]
-
-@inline function buoyancy_top_relaxation(i, j, grid, clock, fields, p) 
-
-    b = fields.b[i, j, grid.Nz]
-    x, y, z = node(i, j, grid.Nz, grid, Center(), Center(), Center())
-
-    return @inbounds p.λ * (b - p.initial_buoyancy(x, y, z))
-end
-
-@apply_regionally τw = grid_specific_array(wind_stress, grid)
+# Fallback!
+@inline regularize_top_boundary_condition(bc_array, grid) = nothing
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
