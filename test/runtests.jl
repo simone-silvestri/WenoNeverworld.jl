@@ -1,6 +1,6 @@
-using BaroclinicAdjustment
+using WenoNeverworld
 using Test
 
-@testset "BaroclinicAdjustment.jl" begin
+@testset "WenoNeverworld.jl" begin
     # Write your tests here.
 end
