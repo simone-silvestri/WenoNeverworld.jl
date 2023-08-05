@@ -8,6 +8,7 @@ using CUDA
 using KernelAbstractions: @kernel, @index
 using Printf
 using JLD2
+using Adapt
 using Oceananigans
 using Oceananigans.Operators
 using Oceananigans.BoundaryConditions
