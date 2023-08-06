@@ -1,8 +1,6 @@
 using WenoNeverworld
-using WenoNeverworld: initial_buoyancy_parabola
 using Oceananigans
 using Oceananigans.Units
-using Oceananigans.TurbulenceClosures: HorizontalScalarBiharmonicDiffusivity
 
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
@@ -10,8 +8,9 @@ output_dir    = joinpath(@__DIR__, "./")
 arch = GPU()
 degree_resolution = 1/4
 
-grid = NeverworldGrid(arch, degree_resolution)
+grid = NeverworldGrid(degree_resolution; arch)
 
+# Do we need to interpolate? (interp_init) If `true` from which file?
 interp_init = false
 init_file   = nothing
 
@@ -20,8 +19,9 @@ init_file   = nothing
 stop_time = 200years
 
 # Construct the neverworld simulation
-simulation = neverworld_simulation_seawater(; grid, Δt, stop_time) 
+simulation = neverworld_simulation_seawater(grid; Δt, stop_time) 
 
+# Maybe increase the time step to a new time-step
 increase_simulation_Δt!(simulation, cutoff_time = 60days, new_Δt = 20minutes)
 
 # Add outputs
