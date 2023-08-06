@@ -2,17 +2,13 @@ const Lz   = 4000
 const Ly   = 70
 const h    = 1000.0
 const ΔB   = 6.0e-2 
-const fact = 5.0
 
 """ utility profiles (atan, exponential, and parabolic) """
 @inline exponential_profile(z; Δ = ΔB, Lz = Lz, h = h) = ( Δ * (exp(z / h) - exp( - Lz / h)) / (1 - exp( - Lz / h)) )
 @inline parabolic_scaling(y) = - 1 / 70^2 * y^2 + 1
-@inline atan_scaling(y)      = (atan(fact*((Ly + y)/Ly - 0.5)) / atan(fact * 0.5) + 1) /2
-
-@inline initial_buoyancy_tangent(x, y, z)  = exponential_profile(z) * atan_scaling(y)
 @inline initial_buoyancy_parabola(x, y, z) = exponential_profile(z) * parabolic_scaling(y) 
 
-@Base.kwdef struct BuoyancyRelaxationBoundaryCondition{T, S, F}
+@Base.kwdef struct BuoyancyRelaxationBoundaryCondition{T, S, F} <: Function
     ΔB::T
     λ::S
     func::F
@@ -21,14 +17,14 @@ end
 BuoyancyRelaxationBoundaryCondition() = BuoyancyRelaxationBoundaryCondition(ΔB, 7days, (y, t) -> parabolic_scaling(y))
 
 function (b::BuoyancyRelaxationBoundaryCondition)(i, j, grid, clock, fields)
-    φ = φnode(i, j, grid.Nz, Center(), Center(), Center())
+    φ = φnode(i, j, grid.Nz, grid, Center(), Center(), Center())
     b_surf = fields.b[i, j, grid.Nz]
     return 1 / b.λ * (b_surf - b.ΔB * b.func(φ, clock.time))
 end
 
 Adapt.adapt_structure(to, b::BuoyancyRelaxationBoundaryCondition) = BuoyancyRelaxationBoundaryCondition(b.ΔB, b.λ)
 
-@Base.kwdef struct WindStressBoundaryCondition{F, T, S}
+@Base.kwdef struct WindStressBoundaryCondition{F, T, S} <: Function
     φs :: F
     τs :: T
     stress :: S
@@ -36,7 +32,7 @@ end
     
 function WindStressBoundaryCondition() 
     φs = (-70, -45, -15, 0, 15, 45, 70)
-    τs = (0.0, 0.2, -0.1, -0.02, -0.1, 0.0)
+    τs = (0.0, 0.2, -0.1, -0.02, -0.1, 0.1, 0.0)
     return WindStressBoundaryCondition(φs, τs, nothing)
 end 
 
@@ -50,6 +46,9 @@ Adapt.adapt_structure(to, ws::WindStressBoundaryCondition) = WindStressBoundaryC
 returns the zonal wind as per https://egusphere.copernicus.org/preprints/2022/egusphere-2022-186/egusphere-2022-186.pdf
 as a function of latitude `y`
 """
+# Fallback!
+@inline regularize_boundary_condition(bc, grid) = bc
+
 @inline function regularize_boundary_condition(bc::WindStressBoundaryCondition, grid)
 
     Ny   = size(grid, 2)
@@ -69,9 +68,6 @@ as a function of latitude `y`
 
     return WindStressBoundaryCondition(bc.φs, bc.τs, arch_array(arch, - bc_array))
 end
-
-# Fallback!
-@inline regularize_boundary_condition(bc_array, grid) = nothing
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
@@ -109,6 +105,7 @@ function neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_bou
     b_bcs                       = FieldBoundaryConditions(top = b_relaxation_bc)
 
     # Additional tracers (outside b)
+    tracers = tuple(tracers)
     tracers = filter(tracer -> tracer != :b, tracers)
     tracer_boundary_conditions = validate_tracer_boundary_conditions(tracers, tracer_boundary_conditions)
     tracer_boundary_conditions = materialize_tracer_boundary_conditions(tracers, grid, tracer_boundary_conditions)

@@ -47,8 +47,9 @@ Keyword Arguments
 - `z_faces` : array containing the z faces
 
 """
-function NeverworldGrid(arch, resolution, FT::DataType = Float64; 
-                        H = 7, longitudinal_extent = 60, 
+function NeverworldGrid(resolution, FT::DataType = Float64; 
+                        arch = CPU(), H = 7, 
+                        longitudinal_extent = 60, 
                         longitude = (-2, 62), 
                         latitude = (-70, 70), 
                         bathymetry_params = NeverWorldBathymetryParameters(),

@@ -47,25 +47,27 @@ initializes the model according to interpolate or not on a finer/coarser grid `V
     set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
 end
 
-function weno_neverworld_simulation(; grid, 
-                                      orig_grid = grid,
-                                      μ_drag = 0.001,  
-                                      convective_adjustment = default_convective_adjustment,
-                                      vertical_diffusivity  = default_vertical_diffusivity,
-                                      coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme()),
-                                      free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
-                                      momentum_advection = default_momentum_advection(grid.underlying_grid),
-				                      tracer_advection   = WENO(grid), 
-                                      interp_init = false,
-                                      init_file = nothing,
-                                      Δt = 5minutes,
-                                      stop_time = 10years,
-                                      initial_buoyancy = initial_buoyancy_parabola,
-				                      wind_stress               = nothing,
-                                      buoyancy_relaxation       = nothing,
-                                      tracer_boundary_condition = nothing,
-                                      tracers = :b
-                                      )
+function weno_neverworld_simulation(grid; 
+                                    orig_grid = grid,
+                                    μ_drag = 0.001,  
+                                    convective_adjustment = default_convective_adjustment,
+                                    vertical_diffusivity  = default_vertical_diffusivity,
+                                    horizontal_closure    = nothing,
+                                    coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme()),
+                                    free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
+                                    momentum_advection = default_momentum_advection(grid.underlying_grid),
+				                    tracer_advection   = WENO(grid.underlying_grid), 
+                                    interp_init = false,
+                                    init_file = nothing,
+                                    Δt = 5minutes,
+                                    stop_time = 10years,
+                                    stop_iteration = Inf,
+                                    initial_buoyancy = initial_buoyancy_parabola,
+				                    wind_stress               = WindStressBoundaryCondition(),
+                                    buoyancy_relaxation       = BuoyancyRelaxationBoundaryCondition(),
+                                    tracer_boundary_condition = nothing,
+                                    tracers = :b
+                                    )
 
     # Initializing boundary conditions
 
@@ -77,7 +79,7 @@ function weno_neverworld_simulation(; grid,
     #####
 
     @info "specifying closures..."
-    closure = (vertical_diffusivity, biharmonic_viscosity, convective_adjustment)
+    closure = (vertical_diffusivity, horizontal_closure, convective_adjustment)
 
     #####
     ##### Model setup
@@ -100,7 +102,7 @@ function weno_neverworld_simulation(; grid,
     @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
     initialize_model!(model, Val(interp_init), initial_buoyancy, grid, orig_grid, init_file)
 
-    simulation = Simulation(model; Δt, stop_time)
+    simulation = Simulation(model; Δt, stop_time, stop_iteration)
 
     @show start_time = [time_ns()]
 
