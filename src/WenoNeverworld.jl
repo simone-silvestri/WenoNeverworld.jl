@@ -1,6 +1,7 @@
 module WenoNeverworld
 
 export NeverworldGrid, weno_neverworld_simulation, neverworld_simulation_seawater, standard_outputs!, checkpoint_outputs!
+export WindStressBoundaryCondition, BuoyancyRelaxationBoundaryCondition
 export increase_simulation_Δt!, update_simulation_clock!, run_simulation!
 export years
 

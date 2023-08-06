@@ -14,7 +14,7 @@ struct BuoyancyRelaxationBoundaryCondition{T, S, F} <: Function
     func::F
 end
 
-BuoyancyRelaxationBoundaryCondition() = BuoyancyRelaxationBoundaryCondition(ΔB, 7days, (y, t) -> parabolic_scaling(y))
+BuoyancyRelaxationBoundaryCondition(; ΔB = ΔB, λ = 7days, func = (y, t) -> parabolic_scaling(y)) = BuoyancyRelaxationBoundaryCondition(ΔB, λ, func)
 
 function (b::BuoyancyRelaxationBoundaryCondition)(i, j, grid, clock, fields)
     φ = φnode(i, j, grid.Nz, grid, Center(), Center(), Center())
@@ -46,7 +46,8 @@ returns the zonal wind as per https://egusphere.copernicus.org/preprints/2022/eg
 as a function of latitude `y`
 """
 # Fallback!
-@inline regularize_boundary_condition(bc, grid) = bc
+@inline regularize_boundary_condition(bc,        grid) = bc
+@inline regularize_boundary_condition(::Nothing, grid) = zerofunc
 
 @inline function regularize_boundary_condition(bc::WindStressBoundaryCondition, grid)
 

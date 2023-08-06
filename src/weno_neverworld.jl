@@ -24,14 +24,14 @@ default_momentum_advection(grid) = VectorInvariant(vorticity_scheme = WENO(order
                                                     vertical_scheme = WENO(grid))
 
 """
-    function initialize_model!(model, Val(interpolate), initial_buoyancy, grid, orig_grid, init_file, buoyancymodel)
+    function initialize_model!(model, Val(interpolate), initial_buoyancy, grid, previous_grid, init_file, buoyancymodel)
 
 initializes the model according to interpolate or not on a finer/coarser grid `Val(interpolate)`
 """
-@inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, orig_grid, init_file) = set!(model, b = initial_buoyancy)
+@inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, previous_grid, init_file) = set!(model, b = initial_buoyancy)
 
-@inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, orig_grid, init_file)
-    Hx, Hy, Hz = halo_size(orig_grid)
+@inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, previous_grid, init_file)
+    Hx, Hy, Hz = halo_size(previous_grid)
 
     b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     u_init = jldopen(init_file)["u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
@@ -39,16 +39,16 @@ initializes the model according to interpolate or not on a finer/coarser grid `V
     w_init = jldopen(init_file)["w/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     
     @info "interpolating fields"
-    b_init = interpolate_per_level(b_init, orig_grid, grid, (Center, Center, Center))
-    u_init = interpolate_per_level(u_init, orig_grid, grid, (Face, Center, Center))
-    v_init = interpolate_per_level(v_init, orig_grid, grid, (Center, Face, Center))
-    w_init = interpolate_per_level(w_init, orig_grid, grid, (Center, Center, Face))
+    b_init = interpolate_per_level(b_init, previous_grid, grid, (Center, Center, Center))
+    u_init = interpolate_per_level(u_init, previous_grid, grid, (Face, Center, Center))
+    v_init = interpolate_per_level(v_init, previous_grid, grid, (Center, Face, Center))
+    w_init = interpolate_per_level(w_init, previous_grid, grid, (Center, Center, Face))
 
     set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
 end
 
 function weno_neverworld_simulation(grid; 
-                                    orig_grid = grid,
+                                    previous_grid = grid,
                                     μ_drag = 0.001,  
                                     convective_adjustment = default_convective_adjustment,
                                     vertical_diffusivity  = default_vertical_diffusivity,
@@ -100,7 +100,7 @@ function weno_neverworld_simulation(grid;
     #####
 
     @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
-    initialize_model!(model, Val(interp_init), initial_buoyancy, grid, orig_grid, init_file)
+    initialize_model!(model, Val(interp_init), initial_buoyancy, grid, previous_grid, init_file)
 
     simulation = Simulation(model; Δt, stop_time, stop_iteration)
 
