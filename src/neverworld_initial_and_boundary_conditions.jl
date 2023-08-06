@@ -8,7 +8,7 @@ const ΔB   = 6.0e-2
 @inline parabolic_scaling(y) = - 1 / 70^2 * y^2 + 1
 @inline initial_buoyancy_parabola(x, y, z) = exponential_profile(z) * parabolic_scaling(y) 
 
-@Base.kwdef struct BuoyancyRelaxationBoundaryCondition{T, S, F} <: Function
+struct BuoyancyRelaxationBoundaryCondition{T, S, F} <: Function
     ΔB::T
     λ::S
     func::F
@@ -22,19 +22,18 @@ function (b::BuoyancyRelaxationBoundaryCondition)(i, j, grid, clock, fields)
     return 1 / b.λ * (b_surf - b.ΔB * b.func(φ, clock.time))
 end
 
-Adapt.adapt_structure(to, b::BuoyancyRelaxationBoundaryCondition) = BuoyancyRelaxationBoundaryCondition(b.ΔB, b.λ)
+Adapt.adapt_structure(to, b::BuoyancyRelaxationBoundaryCondition) = BuoyancyRelaxationBoundaryCondition(b.ΔB, b.λ, b.func)
 
-@Base.kwdef struct WindStressBoundaryCondition{F, T, S} <: Function
+struct WindStressBoundaryCondition{F, T, S} <: Function
     φs :: F
     τs :: T
     stress :: S
 end
+
+default_φs = (-70, -45, -15, 0, 15, 45, 70)
+default_τs = (0.0, 0.2, -0.1, -0.02, -0.1, 0.1, 0.0)
     
-function WindStressBoundaryCondition() 
-    φs = (-70, -45, -15, 0, 15, 45, 70)
-    τs = (0.0, 0.2, -0.1, -0.02, -0.1, 0.1, 0.0)
-    return WindStressBoundaryCondition(φs, τs, nothing)
-end 
+WindStressBoundaryCondition(; φs = default_φs, τs = default_τs) =  WindStressBoundaryCondition(φs, τs, nothing)
 
 (ws::WindStressBoundaryCondition)(i, j, grid, clock, fields) = ws.stress[j]
 
@@ -56,17 +55,17 @@ as a function of latitude `y`
     
     φ_grid = grid.φᵃᶜᵃ[1:Ny]
 
-    bc_array = zeros(Ny)
+    stress = zeros(Ny)
     for (j, φ) in enumerate(φ_grid)    
         φ_index = sum(φ .> bc.φs) + 1
         φ₁ = bc.φs[φ_index-1]
         φ₂ = bc.φs[φ_index]
         τ₁ = bc.τs[φ_index-1]
         τ₂ = bc.τs[φ_index]
-        bc_array[j] = cubic_interpolate(φ, x₁ = φ₁, x₂ = φ₂, y₁ = τ₁, y₂ = τ₂) / 1000.0
+        stress[j] = cubic_interpolate(φ, x₁ = φ₁, x₂ = φ₂, y₁ = τ₁, y₂ = τ₂) / 1000.0
     end
 
-    return WindStressBoundaryCondition(bc.φs, bc.τs, arch_array(arch, - bc_array))
+    return WindStressBoundaryCondition(bc.φs, bc.τs, arch_array(arch, - stress))
 end
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
