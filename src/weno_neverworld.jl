@@ -18,7 +18,7 @@ using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_glob
 #####
 
 default_convective_adjustment = RiBasedVerticalDiffusivity()
-default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-5)
+default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=3e-5)
 
 default_momentum_advection(grid) = VectorInvariant(vorticity_scheme = WENO(order = 9), 
                                                     vertical_scheme = WENO(grid))
@@ -47,6 +47,59 @@ initializes the model according to interpolate or not on a finer/coarser grid `V
     set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
 end
 
+"""
+    function weno_neverworld_simulation(grid; 
+                                        previous_grid = grid,
+                                        μ_drag = 0.001,  
+                                        convective_adjustment = default_convective_adjustment,
+                                        vertical_diffusivity  = default_vertical_diffusivity,
+                                        horizontal_closure    = nothing,
+                                        coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme()),
+                                        free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
+                                        momentum_advection = default_momentum_advection(grid.underlying_grid),
+                                        tracer_advection   = WENO(grid.underlying_grid), 
+                                        interp_init = false,
+                                        init_file = nothing,
+                                        Δt = 5minutes,
+                                        stop_time = 10years,
+                                        stop_iteration = Inf,
+                                        initial_buoyancy = initial_buoyancy_parabola,
+                                        wind_stress               = WindStressBoundaryCondition(),
+                                        buoyancy_relaxation       = BuoyancyRelaxationBoundaryCondition(),
+                                        tracer_boundary_condition = NamedTuple(),
+                                        tracers = :b
+                                        )
+
+returns a simulation object for the Neverworld simulation.
+
+Arguments:
+==========
+
+- `grid`: the grid on which the simulation is to be run
+
+Keyword arguments:
+===================
+ 
+- `previous_grid`: the grid on which `init_file` has been generated, if we restart from `init_file`
+- `μ_drag`: the drag coefficient for the wind stress, default: 0.001
+- `convective_adjustment`: the convective adjustment scheme, default: RiBasedVerticalDiffusivity()
+- `vertical_diffusivity`: the vertical diffusivity scheme, default: VerticalScalarDiffusivity(ν=1e-4, κ=3e-5)
+- `horizontal_closure`: the horizontal closure scheme, default: nothing
+- `coriolis`: the coriolis scheme, default: HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConservingScheme())
+- `free_surface`: the free surface scheme, default: SplitExplicitFreeSurface(; grid, cfl = 0.75)
+- `momentum_advection`: the momentum advection scheme, default: VectorInvariant(vorticity_scheme = WENO(order = 9), vertical_scheme = WENO(grid))
+- `tracer_advection`: the tracer advection scheme, default: WENO(grid)
+- `interp_init`: whether to interpolate the initial conditions from `init_file` to `grid`, default: false
+- `init_file`: the file from which to read the initial conditions, default: `nothing`
+- `Δt`: the time step, default: `5minutes`
+- `stop_time`: the time at which to stop the simulation, default: 10years
+- `stop_iteration`: the iteration at which to stop the simulation, default: Inf
+- `initial_buoyancy`: the initial buoyancy field in case of `init_file = nothing`, function of `(x, y, z)` default: `initial_buoyancy_parabola`
+- `wind_stress`: the wind stress boundary condition, default: `WindStressBoundaryCondition()` (see `src/neverworld_initial_and_boundary_conditions.jl`)
+- `buoyancy_relaxation`: the buoyancy relaxation boundary condition, default: `BuoyancyRelaxationBoundaryCondition()` (see `src/neverworld_initial_and_boundary_conditions.jl`)
+- `tracer_boundary_condition`: boundary conditions for tracers outside `:b`, default: nothing
+- `tracers`: the tracers to be advected, default: `:b`   
+"""
 function weno_neverworld_simulation(grid; 
                                     previous_grid = grid,
                                     μ_drag = 0.001,  
@@ -65,7 +118,7 @@ function weno_neverworld_simulation(grid;
                                     initial_buoyancy = initial_buoyancy_parabola,
 				                    wind_stress               = WindStressBoundaryCondition(),
                                     buoyancy_relaxation       = BuoyancyRelaxationBoundaryCondition(),
-                                    tracer_boundary_condition = nothing,
+                                    tracer_boundary_condition = NamedTuple(),
                                     tracers = :b
                                     )
 
