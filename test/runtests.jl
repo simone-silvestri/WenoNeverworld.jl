@@ -1,5 +1,6 @@
 using WenoNeverworld
 using Oceananigans
+using Oceananigans.Grids: φnode
 using Test
 
 @testset "Neverworld Grid" begin
