@@ -34,6 +34,10 @@ wind_stress = WindStressBoundaryCondition(; φs, τs)
 # the restoring time is λ = 7days
 buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days)
 
+# Wanna use a different profile? Try this:
+# @inline seasonal_cosine_scaling(y, t) = cos(π * y / 70) * sin(2π * t / 1year)
+# buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days, func = seasonal_cosine_scaling)    
+
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               wind_stress,
