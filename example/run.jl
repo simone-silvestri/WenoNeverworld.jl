@@ -36,7 +36,7 @@ buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days
 
 # Wanna use a different profile? Try this:
 # @inline seasonal_cosine_scaling(y, t) = cos(π * y / 70) * sin(2π * t / 1year)
-# buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days, func = seasonal_cosine_scaling)    
+# buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(seasonal_cosine_scaling; ΔB = 0.06, λ = 7days)    
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time,

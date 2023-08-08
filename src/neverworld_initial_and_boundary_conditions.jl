@@ -14,7 +14,7 @@ struct BuoyancyRelaxationBoundaryCondition{T, S, F} <: Function
     func::F
 end
 
-BuoyancyRelaxationBoundaryCondition(; ΔB = ΔB, λ = 7days, func = (y, t) -> parabolic_scaling(y)) = BuoyancyRelaxationBoundaryCondition(ΔB, λ, func)
+BuoyancyRelaxationBoundaryCondition(func = (y, t) -> parabolic_scaling(y); ΔB = ΔB, λ = 7days) = BuoyancyRelaxationBoundaryCondition(ΔB, λ, func)
 
 function (b::BuoyancyRelaxationBoundaryCondition)(i, j, grid, clock, fields)
     φ = φnode(i, j, grid.Nz, grid, Center(), Center(), Center())
