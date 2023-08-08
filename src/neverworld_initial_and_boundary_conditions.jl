@@ -14,12 +14,31 @@ struct BuoyancyRelaxationBoundaryCondition{T, S, F} <: Function
     func::F
 end
 
+"""
+    BuoyancyRelaxationBoundaryCondition(func = (y, t) -> parabolic_scaling(y); ΔB = ΔB, λ = 7days)
+
+Buoyancy relaxation profile which implements a latitude-time dependent boundary condition following: 
+
+`b = Δz_surface / λ * (b_surf - ΔB * func(φ, t))`
+
+Arguments:
+==========
+
+- func: function which takes the latitude φ and time t and returns a scalar
+
+Keyword arguments:
+==================
+
+- ΔB: buoyancy difference between the equator and the poles, default: 6.0e-2
+- λ: restoring time-scale, default: 7days
+"""
 BuoyancyRelaxationBoundaryCondition(func = (y, t) -> parabolic_scaling(y); ΔB = ΔB, λ = 7days) = BuoyancyRelaxationBoundaryCondition(ΔB, λ, func)
 
 function (b::BuoyancyRelaxationBoundaryCondition)(i, j, grid, clock, fields)
-    φ = φnode(i, j, grid.Nz, grid, Center(), Center(), Center())
+    φ  = φnode(i, j, grid.Nz, grid, Center(), Center(), Center())
+    Δz = Δzᶜᶜᶜ(i, j, k, grid)
     b_surf = fields.b[i, j, grid.Nz]
-    return 1 / b.λ * (b_surf - b.ΔB * b.func(φ, clock.time))
+    return Δz / b.λ * (b_surf - b.ΔB * b.func(φ, clock.time))
 end
 
 Adapt.adapt_structure(to, b::BuoyancyRelaxationBoundaryCondition) = BuoyancyRelaxationBoundaryCondition(b.ΔB, b.λ, b.func)
@@ -33,18 +52,18 @@ end
 default_φs = (-70, -45, -15, 0, 15, 45, 70)
 default_τs = (0.0, 0.2, -0.1, -0.02, -0.1, 0.1, 0.0)
     
+"""
+WindStressBoundaryCondition(; φs = default_φs, τs = default_τs) 
+
+Wind stess boundary condition which implements a piecewise cubic interpolation
+between points `φs` (`Tuple`) and `τs` (`Tuple`).
+"""
 WindStressBoundaryCondition(; φs = default_φs, τs = default_τs) =  WindStressBoundaryCondition(φs, τs, nothing)
 
 (ws::WindStressBoundaryCondition)(i, j, grid, clock, fields) = ws.stress[j]
 
 Adapt.adapt_structure(to, ws::WindStressBoundaryCondition) = WindStressBoundaryCondition(nothing, nothing, adapt(to, ws.stress))
 
-"""
-    function zonal_wind_stress(y, mid_wind)
-
-returns the zonal wind as per https://egusphere.copernicus.org/preprints/2022/egusphere-2022-186/egusphere-2022-186.pdf
-as a function of latitude `y`
-"""
 # Fallback!
 @inline regularize_boundary_condition(bc,        grid) = bc
 @inline regularize_boundary_condition(::Nothing, grid) = zerofunc
