@@ -58,7 +58,7 @@ ax  = Axis(fig[1, 1], title = L"\text{Wind stress profile}")
 lines!(ax, φ, - τ_bcs .* 1000, linewidth = 5) # (we re-convert the wind stress form kg/m² to Nm)
 
 ax  = Axis(fig[1, 2], title = L"\text{Restoring buoyancy flux}")
-lines!(ax, φ, b_bcs, linewidth = 5)
+lines!(ax, φ, - b_bcs, linewidth = 5)
 
 CairoMakie.save("boundary_conditions.png", fig)
 
