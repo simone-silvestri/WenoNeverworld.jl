@@ -36,7 +36,7 @@ BuoyancyRelaxationBoundaryCondition(func = (y, t) -> parabolic_scaling(y); ΔB =
 
 function (b::BuoyancyRelaxationBoundaryCondition)(i, j, grid, clock, fields)
     φ  = φnode(i, j, grid.Nz, grid, Center(), Center(), Center())
-    Δz = Δzᶜᶜᶜ(i, j, k, grid)
+    Δz = Δzᶜᶜᶜ(i, j, grid.Nz, grid)
     b_surf = fields.b[i, j, grid.Nz]
     return Δz / b.λ * (b_surf - b.ΔB * b.func(φ, clock.time))
 end
