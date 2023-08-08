@@ -116,16 +116,15 @@ function weno_neverworld_simulation(grid;
                                     stop_time = 10years,
                                     stop_iteration = Inf,
                                     initial_buoyancy = initial_buoyancy_parabola,
-				                    wind_stress               = WindStressBoundaryCondition(),
-                                    buoyancy_relaxation       = BuoyancyRelaxationBoundaryCondition(),
-                                    tracer_boundary_condition = NamedTuple(),
+				                    wind_stress                = WindStressBoundaryCondition(),
+                                    buoyancy_relaxation        = BuoyancyRelaxationBoundaryCondition(),
+                                    tracer_boundary_conditions = NamedTuple(),
                                     tracers = :b
                                     )
 
-    # Initializing boundary conditions
-
+    # Initializing boundary conditions    
     @info "specifying boundary conditions..."
-    boundary_conditions = neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_relaxation, tracers, tracer_boundary_condition)
+    boundary_conditions = neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_relaxation, tracers, tracer_boundary_conditions)
 
     #####
     ##### Closures

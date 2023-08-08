@@ -124,7 +124,7 @@ function neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_bou
     b_bcs                       = FieldBoundaryConditions(top = b_relaxation_bc)
 
     # Additional tracers (outside b)
-    tracers = tuple(tracers)
+    tracers = tracers isa Symbol ? tuple(tracers) : tracers
     tracers = filter(tracer -> tracer != :b, tracers)
     tracer_boundary_conditions = validate_tracer_boundary_conditions(tracers, tracer_boundary_conditions)
     tracer_boundary_conditions = materialize_tracer_boundary_conditions(tracers, grid, tracer_boundary_conditions)
@@ -136,10 +136,11 @@ end
 
 function validate_tracer_boundary_conditions(tracers, tracer_boundary_conditions)
     for tracer in tracers
-        if !(hasproperty(tracer, tracer_boundary_conditions))
+        if !(hasproperty(tracer_boundary_conditions, tracer))
             tracer_boundary_conditions = merge(tracer_boundary_conditions, (; tracer => zerofunc))
         end
     end
+    return tracer_boundary_conditions
 end
 
 materialize_tracer_boundary_conditions(tracers::NamedTuple{(), Tuple{}}, args...) = NamedTuple() 
