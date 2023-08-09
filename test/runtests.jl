@@ -1,5 +1,6 @@
 using WenoNeverworld
 using Oceananigans
+using Oceananigans.Units
 using Oceananigans.Grids: φnode
 using Test
 
