@@ -1,5 +1,6 @@
 using GLMakie
-using JLD2, Oceananigans, Statistics                                                   
+using JLD2, Oceananigans, Statistics      
+using Contour                                             
 # Load the data
 @info "Loading data..."
 path = pwd()
@@ -46,8 +47,8 @@ fig = Figure(resolution = (1000, 4000))
 ax = Axis(fig[1, 1], xlabel="longitude [∘]", xlabelsize = 30, xticklabelsize = 30, ylabel="latitude [∘]", ylabelsize = 30,title="Deformation radius, 1∘" ,  yticklabelsize = 30, titlesize=30)
 hm = heatmap!(ax, collect(lon), collect(lat), log10.(ross_2d .+ eps(1000.0)), colorrange = (3, 5), aspect_ratio = 0.8,colormap = :plasma)
 #contour lines
-ccontour_levels = 3
-ontour_labels = range(4.2, stop=4.8, length=contour_levels)
+contour_levels = 3
+contour_labels = range(4.2, stop=4.8, length=contour_levels)
 contour_lines = contour!(ax, collect(lon), collect(lat), log10.(ross_2d .+ eps(1000.0)), levels=contour_labels, linewidth=3, linecolor=:black, color=:black, labels=true, labelsize=20, labelfont=:bold, labelcolor=:black, labelformatter=(x -> "$(round(10^x/1e3, digits=0))"), constrain_labels=false)
 
 cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30)
