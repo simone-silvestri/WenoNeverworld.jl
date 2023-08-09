@@ -42,11 +42,12 @@ function all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w"
         myfiles = filter((x) -> x[1:length(filename)] == filename, files)
         numbers = parse.(Int, filter.(isdigit, myfiles))
         times   = numbers
-        
+        perm    = sortperm(times)
+        times   = times[perm]
+        myfiles = myfiles[perm]
+
         @info "loading times" times
         grid = jldopen(dir * myfiles[1])["grid"] 
-        perm = sortperm(numbers)
-        myfiles = myfiles[perm]
         for var in variables
             field = FieldTimeSeries{assumed_location(var)...}(grid, times)
             for (idx, file) in enumerate(myfiles)
