@@ -6,7 +6,6 @@ using Oceananigans.Distributed
 
 const DistributedSimulation = Simulation{<:AbstractModel{<:DistributedArch}}
 
-
 function standard_outputs!(simulation::DistributedSimulation, output_prefix; kw...) 
     rank = simulation.model.architecture.local_rank
     
@@ -163,3 +162,41 @@ function reduced_outputs!(simulation, output_prefix; overwrite_existing = true,
                                                             overwrite_existing)
 
 end                                                 
+
+"""	
+    function vertically_averaged_outputs!(simulation, output_prefix; overwrite_existing = true, 	
+                                                                     average_time       = 30days,	
+                                                                     average_window     = average_time,	    
+                                                                     average_stride     = 10)	
+
+attaches a `JLD2OutputWriter`s to `simulation` with prefix `output_prefix`	
+
+Outputs attached	
+================	
+
+- `vertically_averaged_outputs` : average of `KE` and heat content (integral of temperature in ᵒCm³)
+
+"""
+function vertically_averaged_outputs!(simulation, output_prefix; overwrite_existing = false, 
+                                                                 average_time       = 30days,
+                                                                 average_window     = average_time,
+                                                                 average_stride     = 10)
+
+    model = simulation.model
+    g = simulation.model.free_surface.gravitational_acceleration
+    α = 2e-4
+    u, v, _ = model.velocities
+    
+    T  = Field(g * α * model.tracers.b)
+    KE = Field(0.5 * (u^2 + v^2))
+
+    tke_average  = Average(KE,  dims = 3)
+    heat_content = Integral(T,  dims = 3)
+
+    output_fields = (; tke_average, heat_content)
+                                                      
+    simulation.output_writers[:vertically_averaged_outputs] = JLD2OutputWriter(model, output_fields;
+                                                              schedule = AveragedTimeInterval(average_time, window=average_window, stride = average_stride),
+                                                              filename = output_prefix * "_vertical_average",
+                                                              overwrite_existing)
+end

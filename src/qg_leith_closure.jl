@@ -31,7 +31,7 @@ using Oceananigans.BuoyancyModels: ∂x_b, ∂y_b, ∂z_b
 
 using Oceananigans.Operators: ℑxyzᶜᶜᶠ, ℑyzᵃᶜᶠ, ℑxzᶜᵃᶠ, Δxᶜᶜᶜ, Δyᶜᶜᶜ
 
-struct QGLeith{FT, M, S} <: AbstractScalarDiffusivity{ExplicitTimeDiscretization, HorizontalFormulation}
+struct QGLeith{FT, M, S} <: AbstractScalarDiffusivity{ExplicitTimeDiscretization, HorizontalFormulation, 2}
     C :: FT
     min_N² :: FT
     isopycnal_tensor :: M
@@ -152,52 +152,3 @@ end
 @inline diffusive_flux_x(i, j, k, grid, closure::QGLeith, diffusivities, ::Val{tracer_index}, c, clock, fields, buoyancy) where tracer_index = zero(grid)
 @inline diffusive_flux_y(i, j, k, grid, closure::QGLeith, diffusivities, ::Val{tracer_index}, c, clock, fields, buoyancy) where tracer_index = zero(grid)
 @inline diffusive_flux_z(i, j, k, grid, closure::QGLeith, diffusivities, ::Val{tracer_index}, c, clock, fields, buoyancy) where tracer_index = zero(grid)
-
-#=
-@inline function diffusive_flux_x(i, j, k, grid, closure::QGLeith, diffusivities, 
-                                  ::Val{tracer_index}, c, clock, fields, buoyancy) where tracer_index
-
-    νₑ    = diffusivities.νₑ
-    νₑⁱʲᵏ = ℑxᶠᵃᵃ(i, j, k, grid, νₑ)
-    ∂x_c  = ∂xᶠᶜᶜ(i, j, k, grid, c)
-
-    ϵ = tapering_factor(i, j, k, grid, closure, fields, buoyancy)
-
-    return - νₑⁱʲᵏ * ϵ * ∂x_c
-end
-
-@inline function diffusive_flux_y(i, j, k, grid, closure::QGLeith, diffusivities,
-                                  ::Val{tracer_index}, c, clock, fields, buoyancy) where tracer_index
-
-    νₑ    = diffusivities.νₑ
-    νₑⁱʲᵏ = ℑyᶠᵃᵃ(i, j, k, grid, νₑ)
-    ∂y_c  = ∂yᶜᶠᶜ(i, j, k, grid, c)
-    
-    ϵ = tapering_factor(i, j, k, grid, closure, fields, buoyancy)
-
-    return - νₑⁱʲᵏ * ϵ * ∂y_c
-end
-
-@inline function diffusive_flux_z(i, j, k, grid, closure::QGLeith, diffusivities, 
-                                  ::Val{tracer_index}, c, clock, fields, buoyancy) where tracer_index
-
-    νₑ = diffusivities.νₑ
-
-    νₑⁱʲᵏ = ℑzᵃᵃᶠ(i, j, k, grid, νₑ)
-
-    ∂x_c = ℑxzᶜᵃᶠ(i, j, k, grid, ∂xᶠᶜᶜ, c)
-    ∂y_c = ℑyzᵃᶜᶠ(i, j, k, grid, ∂yᶜᶠᶜ, c)
-    ∂z_c = ∂zᶜᶜᶠ(i, j, k, grid, c)
-
-    R₃₁ = isopycnal_rotation_tensor_xz_ccf(i, j, k, grid, buoyancy, fields, closure.isopycnal_model)
-    R₃₂ = isopycnal_rotation_tensor_yz_ccf(i, j, k, grid, buoyancy, fields, closure.isopycnal_model)
-    R₃₃ = isopycnal_rotation_tensor_zz_ccf(i, j, k, grid, buoyancy, fields, closure.isopycnal_model)
-
-    ϵ = tapering_factor(i, j, k, grid, closure, fields, buoyancy)
-
-    return - νₑⁱʲᵏ * ϵ * (
-        2 * R₃₁ * ∂x_c +
-        2 * R₃₂ * ∂y_c + 
-            R₃₃ * ∂z_c)
-end
-=#

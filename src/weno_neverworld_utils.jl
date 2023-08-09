@@ -3,6 +3,24 @@ using Oceananigans.Grids: λnode, φnode, halo_size
 using Oceananigans.Utils: instantiate
 using Oceananigans.BoundaryConditions
 
+""" 
+    function cubic_interpolate(x, x1, x2, y1, y2, d1, d2)
+
+returns a cubic function between points `(x1, y1)` and `(x2, y2)` with derivative `d1` and `d2`
+"""
+@inline function cubic_interpolate(x; x₁, x₂, y₁, y₂, d₁ = 0, d₂ = 0)
+    A = [ x₁^3 x₁^2 x₁ 1.0
+          x₂^3 x₂^2 x₂ 1.0
+          3*x₁^2 2*x₁ 1.0 0.0
+          3*x₂^2 2*x₂ 1.0 0.0]
+          
+    b = [y₁, y₂, d₁, d₂]
+
+    coeff = A \ b
+
+    return coeff[1] * x^3 + coeff[2] * x^2 + coeff[3] * x + coeff[4]
+end
+
 """	
     function update_simulation_clock!(simulation, init_file)	
 
@@ -67,6 +85,7 @@ function interpolate_per_level(old_vector, old_grid, new_grid, loc)
         k_final = 1
         loc = (loc[1], loc[2], Center)
     end
+
     old_grid = LatitudeLongitudeGrid(CPU(), size = (Nx_old, Ny_old, 1),
                                             latitude  = (-70, 0),
                                             longitude = (-5, 65),
@@ -89,7 +108,7 @@ function interpolate_per_level(old_vector, old_grid, new_grid, loc)
         set!(old_field, old_vector[:, :, k])
         fill_halo_regions!(old_field)
         for i in 1:Nx_new, j in 1:j_final
-            new_vector[i, j, k] = interpolate(old_field,  λnode(i, new_grid, loc[1]()), φnode(j, new_grid, loc[2]()), new_grid.zᵃᵃᶜ[1])
+            new_vector[i, j, k] = interpolate(old_field, λnode(i, new_grid, loc[1]()), φnode(j, new_grid, loc[2]()), new_grid.zᵃᵃᶜ[1])
         end
     end
 
