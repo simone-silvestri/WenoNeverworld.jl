@@ -54,7 +54,7 @@ simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
 checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
-vertically_averaged_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
+#vertically_averaged_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"

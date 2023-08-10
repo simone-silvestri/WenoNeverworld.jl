@@ -2,11 +2,11 @@ using WenoNeverworld
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
-using CairoMakie # You have to add this to your global enviroment: `] add CairoMakie`
+#using CairoMakie # You have to add this to your global enviroment: `] add CairoMakie`
 
 output_dir    = joinpath(@__DIR__, "./")
-output_dir = "/storage2/WenoNeverworldData"
-@show output_prefix = output_dir * "One_degree/weno_one" #CHANGE THIS
+output_dir = "/storage2/"
+@show output_prefix = output_dir * "WenoNeverworldData/weno_one" 
 
 arch = GPU()
 
@@ -55,7 +55,7 @@ simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
 checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
-vertically_averaged_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
+#vertically_averaged_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"
