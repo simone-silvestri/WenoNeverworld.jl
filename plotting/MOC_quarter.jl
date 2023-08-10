@@ -22,8 +22,7 @@ v = hfile["v"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v = 0.5 * (v[:, 1:end-1, :] + v[:, 2:end, :])
 degree_resolution = "1"
 lon = 30
-level =30
-
+level = 30
 # Create the plot
 fig = Figure(resolution=(2000, 1000))
 #ax = Axis(fig[1, 1], xlabel="latitude [∘]", xlabelsize=30, xticks=-60:10:60, xticklabelsize=30, ylabel="depth [m]", ylabelsize=30, yticks=-4000:1000:0, yticklabelsize=30, title="Interface Contours " * string(degree_resolution_1) * "∘ " * string(degree_resolution_2) * "∘", titlesize=50)
