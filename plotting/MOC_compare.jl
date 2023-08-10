@@ -7,9 +7,10 @@ local_path = pwd()
 
 
 lon = 30
-level = 30
+level = 5
 
-hfile_1 = jldopen("/storage2/WenoNeverworldData/weno_half_checkpoint_iteration985500.jld2", "r")   
+
+hfile_1 = jldopen("/storage2/WenoNeverworldData/weno_one_checkpoint_iteration5212104.jld2", "r")
 oceangrid_1 = hfile_1["grid"]
 halo = 7
 z_1 = oceangrid_1.underlying_grid.zᵃᵃᶜ[1:end-halo]
@@ -22,10 +23,10 @@ b_1 = hfile_1["b"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 u_1 = hfile_1["u"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v_1 = hfile_1["v"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v_1 = 0.5 * (v_1[:, 1:end-1, :] + v_1[:, 2:end, :])
-degree_resolution_1 = "1/2"
+degree_resolution_1 = "1"
 
 
-hfile_2 = jldopen("/storage2/WenoNeverworldData/weno_fourth_checkpoint_iteration689186.jld2", "r") 
+hfile_2 = jldopen("/storage2/WenoNeverworldData/weno_half_checkpoint_iteration985500.jld2", "r")   #weno_fourth_checkpoint_iteration689186.jld2", "r") 
 oceangrid_2 = hfile_2["grid"]
 halo = 7
 z_2 = oceangrid_2.underlying_grid.zᵃᵃᶜ[1:end-halo]
@@ -38,7 +39,7 @@ b_2 = hfile_2["b"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 u_2 = hfile_2["u"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v_2 = hfile_2["v"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v_2 = 0.5 * (v_2[:, 1:end-1, :] + v_2[:, 2:end, :])
-degree_resolution_2 = "1/4"
+degree_resolution_2 = "1/2"
 
 
 # Create the plot
@@ -89,8 +90,8 @@ end
 moc_field_2 = calculate_eulerian_MOC_2(v_2, Δz_2)
 
 
-GLMakie.contour!(ax, lat_1, z_1, moc_field_1[lon_index_1,:, :], color=:blue)
-GLMakie.contour!(ax, lat_2, z_2, moc_field_2[lon_index_2,:, :], color=:red)
+GLMakie.contour!(ax, lat_1, z_1, moc_field_1[lon_index_1,:, :],levels = level, color=:blue)
+GLMakie.contour!(ax, lat_2, z_2, moc_field_2[lon_index_2,:, :], levels = level, color=:red)
 lines!(ax, [1],[1]; color = :blue, label = string(degree_resolution_1)* "∘ ")
 lines!(ax, [1],[1]; color = :red, label = string(degree_resolution_2)* "∘ ")
 
@@ -98,6 +99,6 @@ axislegend(ax, position=:lb, framecolor=(:grey, 0.5), patchsize=(40, 40), marker
 
 
 display(fig)
-save("plotting/moc_compare_$(lon)_2.png", fig)
+save("plotting/moc_compare_$(lon)_1.png", fig)
 
 
