@@ -5,13 +5,13 @@ using JLD2, Oceananigans, Statistics
 @info "Loading data..."
 local_path = pwd()
 
-hfile_1 = jldopen("/storage2/WenoNeverworldData/weno_one_checkpoint_iteration3764471.jld2", "r")
-oceangrid_1 = hfile_1["grid"]
-halo = 7
 
 lon = 30
 level = 30
 
+hfile_1 = jldopen("/storage2/WenoNeverworldData/weno_half_checkpoint_iteration985500.jld2", "r")   
+oceangrid_1 = hfile_1["grid"]
+halo = 7
 z_1 = oceangrid_1.underlying_grid.zᵃᵃᶜ[1:end-halo]
 Δz_1 = oceangrid_1.underlying_grid.Δzᵃᵃᶜ[1:end-halo]
 lat_1 = collect(oceangrid_1.underlying_grid.φᵃᶜᵃ[1:end-halo])
@@ -22,10 +22,10 @@ b_1 = hfile_1["b"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 u_1 = hfile_1["u"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v_1 = hfile_1["v"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v_1 = 0.5 * (v_1[:, 1:end-1, :] + v_1[:, 2:end, :])
-degree_resolution_1 = "1"
+degree_resolution_1 = "1/2"
 
 
-hfile_2 = jldopen("/storage2/WenoNeverworldData/weno_half_checkpoint_iteration985500.jld2", "r")
+hfile_2 = jldopen("/storage2/WenoNeverworldData/weno_fourth_checkpoint_iteration689186.jld2", "r") 
 oceangrid_2 = hfile_2["grid"]
 halo = 7
 z_2 = oceangrid_2.underlying_grid.zᵃᵃᶜ[1:end-halo]
@@ -38,7 +38,7 @@ b_2 = hfile_2["b"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 u_2 = hfile_2["u"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v_2 = hfile_2["v"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v_2 = 0.5 * (v_2[:, 1:end-1, :] + v_2[:, 2:end, :])
-degree_resolution_2 = "1/2"
+degree_resolution_2 = "1/4"
 
 
 # Create the plot
@@ -98,6 +98,6 @@ axislegend(ax, position=:lb, framecolor=(:grey, 0.5), patchsize=(40, 40), marker
 
 
 display(fig)
-save("plotting/moc_compare_$lon.png", fig)
+save("plotting/moc_compare_$(lon)_2.png", fig)
 
 
