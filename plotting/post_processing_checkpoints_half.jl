@@ -5,7 +5,7 @@ using Oceananigans.Fields: @compute
 using GLMakie
 
 dir = "/storage2/WenoNeverworldData/"
-prefix    = "weno_fourth_check"
+prefix    = "weno_half_check"
 variables = ("u", "v", "w", "b")
 # stride = 3
 
@@ -84,28 +84,33 @@ wb_avg = Diagnostics.time_average(w′b′)
 
 @compute μ = Field(- wbᵢ_avg / vbᵢ_avg * ∂zbᵢ/ ∂ybᵢ)
 
+
+
+
+
 function plot_and_save_heatmap(data, filename, title, xlabel, ylabel; colorrange = (0, 0.02), level =10)
     fig = Figure(resolution=(2000, 1000))
-    ax = Axis(fig[1, 1], xlabel=xlabel, xlabelsize=30, yticks=0:50:250, xticklabelsize=30, ylabel=ylabel, ylabelsize=30, xticks=0:20:120, yticklabelsize=30, title=title, titlesize=50)
+    ax = Axis(fig[1, 1], xlabel=xlabel, xlabelsize=30, yticks=-0:50:250, xticklabelsize=30, ylabel=ylabel, ylabelsize=30, xticks=0:20:120, yticklabelsize=30, title=title, titlesize=50)
     hm = GLMakie.heatmap!(ax, data, colorrange=colorrange, contours=true, levels = level)
-    #GLMakie.contour!(ax, data, color=:black, linewidth=3, levels=level)
+    GLMakie.contour!(ax, data, color=:black, linewidth=3, levels=level)
     display(fig)
     save("plotting/$filename.png", fig)
 end
 
 
+
+
 print("function defined succesfully")
 # Plot and save heatmaps for each quantity
-plot_and_save_heatmap(interior(vbᵢ_avg,1, :, :), "time_averaged_fourth_moc", "Time-Averaged v", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(vbᵢ_avg,1, :, :), "time_averaged_half_moc", "Time-Averaged v", "latitude [∘]", "depth [m]", colorrange = (-0.01, 0.04))
 #plot_and_save_heatmap(interior(u′[20], :, :, 69), "time_averaged_u", "Time-Averaged u", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
-plot_and_save_heatmap(interior(IKE[20], :, :, 69), "time_averaged_fourth_IKE", "Time-Averaged IKE", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
-plot_and_save_heatmap(interior(EKE[20], :, :, 69), "time_averaged_fourth_EKE", "Time-Averaged EKE", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
-plot_and_save_heatmap(interior(MKE, :, :, 69), "time_averaged_MKE_fourth", "Mean Kinetic Energy", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(IKE[20], :, :, 69), "time_averaged_half_IKE", "Time-Averaged IKE", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(EKE[20], :, :, 69), "time_averaged_half_EKE", "Time-Averaged EKE", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(MKE, :, :, 69), "time_averaged_half_MKE", "Mean Kinetic Energy", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
+
+plot_and_save_heatmap(interior(b, :, :, 69), "time_averaged_half_stratification", "Stratification 1/2∘", "latitude [∘]", "depth [m]", colorrange = (-0.04, 0.06))
 
 
-#plot_and_save_heatmap(interior(b, :, :, 69), "time_average_stratification_fourth", "Stratification 1/4∘", "latitude [∘]", "depth [m]", colorrange = (-0.04, 0.04))
-
-##
 
 #plot_and_save_heatmap(interior(v′b′, :, :, 69), "v_prime_times_b_prime", "v' times b'", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(w′b′, :, :, 69), "w_prime_times_b_prime", "w' times b'", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
