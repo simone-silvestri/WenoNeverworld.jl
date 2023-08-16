@@ -1,6 +1,6 @@
 module Diagnostics
 
-export all_fieldtimeseries, limit_timeseries!, propagate_on_fieldtimeseries
+export all_fieldtimeseries, limit_timeseries!, propagate
 export VolumeField, AreaField, MetricField, KineticEnergyField, time_average
 
 using Oceananigans
@@ -13,25 +13,27 @@ using Oceananigans.OutputReaders: OnDisk
 using JLD2
 using Oceananigans.Fields: default_indices
 
-function propagate_on_fieldtimeseries(args...; func, nargs = 1)
+function propagate(fields...; func)
 
-    args_op   = Tuple(args[i][1] for i in 1:nargs)
-    operation = func(args_op...)
+    fields_op = Tuple(field[1] for field in fields)
+    operation = func(fields_op...)
 
-    output = FieldTimeSeries{location(operation)...}(args[1].grid, args[1].times)
+    field_output = FieldTimeSeries{location(operation)...}(fields[1].grid, fields[1].times)
     
-    set!(output[1], compute!(Field(operation)))
+    set!(field_output[1], operation)
 
-    for i in 2:length(output.times)
-        @info "time $i of $(length(output.times))"
-        args_op   = Tuple(args[j][i] for j in 1:nargs)
-        operation = func(args_op...)
-
-        set!(output[i], compute!(Field(operation)))
+    for i in 2:length(field_output.times)
+        fields_op = retrieve_operand.(fields, i)
+        operation = func(fields_op...)
+        set!(field_output[i], operation)
     end
 
-    return output
+    return field_output
 end
+
+retrieve_operand(f::Number, i)          = f
+retrieve_operand(f::Field, i)           = f
+retrieve_operand(f::FieldTimeSeries, i) = f[i]
 
 include("load_data.jl")
 include("spurious_mixing.jl")

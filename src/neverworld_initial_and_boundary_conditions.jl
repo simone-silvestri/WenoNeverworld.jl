@@ -105,19 +105,24 @@ function neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_bou
     wind_stress       = regularize_boundary_condition(wind_stress, grid)
     u_wind_stress_bc  = FluxBoundaryCondition(wind_stress, discrete_form=true)
 
-    # Quadratic bottom drag
-    drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
-    drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
+    if μ_drag > 0
+        # Quadratic bottom drag
+        drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
+        drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
 
-    u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u)
-    v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v)
+        u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u)
+        v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v)
 
-    u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ_drag)
-    v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ_drag)
-
-    u_bcs = FieldBoundaryConditions(bottom = u_bottom_drag_bc, immersed = u_immersed_bc, top = u_wind_stress_bc)
-    v_bcs = FieldBoundaryConditions(bottom = v_bottom_drag_bc, immersed = v_immersed_bc)
-
+        u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ_drag)
+        v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ_drag)
+        
+        u_bcs = FieldBoundaryConditions(bottom = u_bottom_drag_bc, immersed = u_immersed_bc, top = u_wind_stress_bc)
+        v_bcs = FieldBoundaryConditions(bottom = v_bottom_drag_bc, immersed = v_immersed_bc)
+    else
+        u_bcs = FieldBoundaryConditions(top = u_wind_stress_bc)
+        v_bcs = FieldBoundaryConditions(top = FluxBoundaryCondition(nothing))
+    end
+    
     # Buoyancy boundary conditions
     buoyancy_boundary_condition = regularize_boundary_condition(buoyancy_boundary_condition, grid)
     b_relaxation_bc             = FluxBoundaryCondition(buoyancy_boundary_condition, discrete_form=true)

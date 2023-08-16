@@ -78,15 +78,9 @@ end
 function calculate_fluctuations!(fields::Dict, variables)
 
     for var in variables
-
         field_avg  = time_average(fields[var])
-        field_fluc = FieldTimeSeries{location(fields[var])...}(fields[var].grid, fields[var].times)
-
-        for t in 1:length(fields[var].times)
-            fluc = compute!(Field(fields[var][t] - field_avg))
-            set!(field_fluc[t], fluc)
-        end
-
+        func       = (f, g) -> f - g
+        field_fluc = propagate(fields, field_avg; func)
         fields[Symbol(var, :fluc)] = field_fluc
     end
 
