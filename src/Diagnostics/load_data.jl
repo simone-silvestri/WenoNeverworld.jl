@@ -30,7 +30,10 @@ remove_last_character(s) = s[1:end-1]
 returns a dictionary containing a `FieldTimeSeries` for each variable in `variables`.
 If `checkpointer == true` it loads the data from all the checkpoint files contained in the directory `dir`
 """
-function all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w", "b"), checkpointer = false)
+function all_fieldtimeseries(filename, dir = nothing; 
+                             variables = ("u", "v", "w", "b"), 
+                             checkpointer = false,
+                             number_files = nothing)
 
     fields = Dict()
 
@@ -47,6 +50,11 @@ function all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w"
         perm    = sortperm(numbers)
         numbers = numbers[perm]
         myfiles = myfiles[perm]
+
+        if !isnothing(number_files)
+            numbers = numbers[end-number_files:end]
+            myfiles = myfiles[end-number_files:end]
+        end
 
         @info "loading iterations" numbers
         grid = jldopen(dir * myfiles[1] * "2")["grid"] 
