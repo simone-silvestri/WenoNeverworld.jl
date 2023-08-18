@@ -22,13 +22,18 @@ assumed_location(var) = var == "u" ? (Face, Center, Center) :
                         var == "w" ? (Center, Center, Face) : 
                         (Center, Center, Center)
 
+remove_last_character(s) = s[1:end-1]
+
 """
     all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w", "b"), checkpointer = false)
 
 returns a dictionary containing a `FieldTimeSeries` for each variable in `variables`.
 If `checkpointer == true` it loads the data from all the checkpoint files contained in the directory `dir`
 """
-function all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w", "b"), checkpointer = false)
+function all_fieldtimeseries(filename, dir = nothing; 
+                             variables = ("u", "v", "w", "b"), 
+                             checkpointer = false,
+                             number_files = nothing)
 
     fields = Dict()
 
@@ -40,18 +45,25 @@ function all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w"
         files = readdir(dir)
         files = filter((x) -> length(x) >= length(filename), files)
         myfiles = filter((x) -> x[1:length(filename)] == filename, files)
+        myfiles = remove_last_character.(myfiles)
         numbers = parse.(Int, filter.(isdigit, myfiles))
-        times   = numbers
-        
-        @info "loading times" times
-        grid = jldopen(dir * myfiles[1])["grid"] 
-        perm = sortperm(numbers)
+        perm    = sortperm(numbers)
+        numbers = numbers[perm]
         myfiles = myfiles[perm]
+
+        if !isnothing(number_files)
+            numbers = numbers[end-number_files:end]
+            myfiles = myfiles[end-number_files:end]
+        end
+
+        @info "loading iterations" numbers
+        grid = jldopen(dir * myfiles[1] * "2")["grid"] 
         for var in variables
-            field = FieldTimeSeries{assumed_location(var)...}(grid, times)
+            field = FieldTimeSeries{assumed_location(var)...}(grid, numbers)
             for (idx, file) in enumerate(myfiles)
                 @info "index $idx" file
-                concrete_var = jldopen(dir * file)[var * "/data"]
+                concrete_var = jldopen(dir * file * "2")[var * "/data"]
+                field.times[idx] = jldopen(dir * file * "2")["clock"].time
                 set!(field[idx], concrete_var)
             end
 
