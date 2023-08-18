@@ -1,5 +1,5 @@
 using Oceananigans.Fields: interpolate
-using Oceananigans.Grids: λnode, φnode, halo_size
+using Oceananigans.Grids: λnode, φnode, halo_size, on_architecture
 using Oceananigans.Utils: instantiate
 using Oceananigans.BoundaryConditions
 
@@ -86,14 +86,17 @@ function interpolate_per_level(old_vector, old_grid, new_grid, loc)
         loc = (loc[1], loc[2], Center)
     end
 
-    old_field  = Field(loc, old_grid)
-    new_vector = zeros(Nx_new, j_final, k_final)
+    cpu_old_grid = on_architecture(CPU(), old_grid).underlying_grid
+    cpu_new_grid = on_architecture(CPU(), new_grid).underlying_grid
 
+    old_field  = Field{loc[1], loc[2], Nothing}(cpu_old_grid)
+    new_vector = zeros(Nx_new, j_final, k_final)
+    
     for k in 1:k_final
         set!(old_field, old_vector[:, :, k])
         fill_halo_regions!(old_field)
         for i in 1:Nx_new, j in 1:j_final
-            new_vector[i, j, k] = interpolate(old_field, λnode(i, new_grid, loc[1]()), φnode(j, new_grid, loc[2]()), new_grid.zᵃᵃᶜ[1])
+            new_vector[i, j, k] = interpolate(old_field, λnode(i, cpu_new_grid, loc[1]()), φnode(j, cpu_new_grid, loc[2]()), cpu_new_grid.zᵃᵃᶜ[1])
         end
     end
 

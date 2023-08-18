@@ -6,24 +6,25 @@ using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/storage2/"
-@show output_prefix = output_dir * "WenoNeverworldData/weno_fourth"
+@show output_prefix = output_dir * "WenoNeverworldData/weno_two" 
 
 arch = GPU()
 
 # The resolution in degrees
-degree_resolution = 1/4
-new_degree = 1/4
-old_degree = 1/4
+degree_resolution = 2
+new_degree = 2
+old_degree = 1
+
 
 grid = NeverworldGrid(new_degree; arch)
 previous_grid = NeverworldGrid(old_degree; arch)
 
 # Extend the vertical advection scheme
 interp_init = true # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-init_file = "/storage2/WenoNeverworldData/weno_fourth_checkpoint_iteration5570411.jld2" # To restart from a file: `init_file = /path/to/restart`
+init_file = "/storage2/WenoNeverworldData/weno_one_checkpoint_iteration43417133.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 20minutes
+Δt        = 25minutes
 stop_time = 3000years
 
 # Latitudinal wind stress acting on the zonal velocity
@@ -43,13 +44,13 @@ stop_time = 3000years
 # buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(seasonal_cosine_scaling; ΔB = 0.06, λ = 7days)    
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(grid; Δt, stop_time, 
+simulation = weno_neverworld_simulation(grid; previous_grid, Δt, stop_time, 
                                               interp_init,
                                               init_file)
                                               
 
 # Adaptable time step
-wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 40minutes, min_Δt = 15minutes, max_change = 1.1)
+wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 45minutes, min_Δt = 15minutes, max_change = 1.1)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
