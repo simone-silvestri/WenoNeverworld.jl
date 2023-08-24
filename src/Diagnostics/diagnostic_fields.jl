@@ -14,10 +14,11 @@ import Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
 VerticalVorticityField(fields::Dict, i) = VerticalVorticityField((; u = fields[:u][i], v = fields[:v][i]))
 KineticEnergyField(fields::Dict, i)     =     KineticEnergyField((; u = fields[:u][i], v = fields[:v][i]))
 
-VerticalVorticityOperation(fields::Dict, i)   =   VerticalVorticityOperation((; u = fields[:u][i], v = fields[:v][i]))
-PotentialVorticityOperation(fields::Dict, i)  =  PotentialVorticityOperation((; u = fields[:u][i], v = fields[:v][i], b = fields[:b][i]))
-KineticEnergyOperation(fields::Dict, i)       =       KineticEnergyOperation((; u = fields[:u][i], v = fields[:v][i]))
-StratificationOperation(fields::Dict, i)      =      StratificationOperation(fields[:b][i])
+ VerticalVorticityOperation(fields::Dict, i) = VerticalVorticityOperation((; u = fields[:u][i], v = fields[:v][i]))
+PotentialVorticityOperation(fields::Dict, i) = PotentialVorticityOperation((; u = fields[:u][i], v = fields[:v][i], b = fields[:b][i]))
+     KineticEnergyOperation(fields::Dict, i) = KineticEnergyOperation((; u = fields[:u][i], v = fields[:v][i]))
+    StratificationOperation(fields::Dict, i) = StratificationOperation(fields[:b][i])
+             SlopeOperation(fields::Dict, i) = SlopeOperation(fields[:b][i])
 
 MetricField(loc, grid, metric; indices = default_indices(3)) = compute!(Field(GridMetricOperation(loc, metric, grid); indices))
 
@@ -64,14 +65,16 @@ end
 
 function StratificationOperation(b)
     grid = b.grid
-
-    N2_op = KernelFunctionOperation{Center, Center, Face}(N²ᶜᶜᶠ, grid, b)
+    loc = location(b)
+    N2_op = KernelFunctionOperation{loc[1], loc[2], Face}(N²ᶜᶜᶠ, grid, b)
 
     return N2_op
 end
 
+SlopeOperation(b) = ∂y(b) / StratificationOperation(b)
+
 @inline N²ᶠᶠᶠ(i, j, k, grid, b) = max(1e-10, ℑxyᶠᶠᵃ(i, j, k, grid, ∂zᶜᶜᶠ, b))
-@inline N²ᶜᶜᶠ(i, j, k, grid, b) = ∂zᶜᶜᶠ(i, j, k, grid, b)
+@inline N²ᶜᶜᶠ(i, j, k, grid, b) = max(1e-10, ∂zᶜᶜᶠ(i, j, k, grid, b))
 
 @inline b_term(i, j, k, grid, b) = fᶠᶠᵃ(i, j, k, grid, HydrostaticSphericalCoriolis()) / N²ᶠᶠᶠ(i, j, k, grid, b) * ℑxyᶠᶠᵃ(i, j, k, grid, b)
 @inline pvᶠᶠᶜ(i, j, k, grid, u, v, b) = ζ₃ᶠᶠᶜ(i, j, k, grid, u, v) + ∂zᶠᶠᶜ(i, j, k, grid, b_term, b) 
@@ -98,6 +101,7 @@ end
 VerticalVorticity(f::Dict, i) = compute!(Field(VerticalVorticityOperation(f, i)))
 KineticEnergy(f::Dict, i)     = compute!(Field(KineticEnergyOperation(f, i)))
 Stratification(f::Dict, i)    = compute!(Field(StratificationOperation(f, i)))
+Slope(fields, i)              = compute!(Field(SlopeOperation(fields, i)))
 
 @inline _deformation_radius(i, j, k, grid, b) = sqrt(max(0, ∂zᶜᶜᶠ(i, j, k, grid, b))) / π /
                                                 abs(ℑxyᶜᶜᵃ(i, j, k, grid, fᶠᶠᵃ, HydrostaticSphericalCoriolis()))
