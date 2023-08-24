@@ -69,7 +69,7 @@ function time_average(field::FieldTimeSeries, iterations = 1:length(field.times)
     fill!(avg, 0)
 
     for t in iterations
-        avg .+= field[t] ./ length(field.times)
+        avg .+= field[t] ./ length(iterations)
     end
 
     return avg
@@ -86,3 +86,11 @@ function calculate_fluctuations!(fields::Dict, variables)
 
     return nothing
 end
+
+function barotropic_streamfunction(fields::Dict, iterations)
+    u̅ = mean(time_average(fields[:u], iterations), dims = 3)
+    Ψ = cumsum(u̅, dims = 2) * fields[:u].grid.Δyᶠᶜᵃ
+
+    return Ψ
+end
+
