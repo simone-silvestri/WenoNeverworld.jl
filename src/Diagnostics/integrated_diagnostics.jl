@@ -87,10 +87,10 @@ function calculate_fluctuations!(fields::Dict, variables)
     return nothing
 end
 
-function barotropic_streamfunction(fields::Dict, iterations)
+function barotropic_streamfunction(fields::Dict, iterations = 1:length(fields[:u].times))
     u̅ = mean(time_average(fields[:u], iterations), dims = 3)
-    Ψ = cumsum(u̅, dims = 2) * fields[:u].grid.Δyᶠᶜᵃ
-
+    u̅ = Array(interior(u̅))
+    Ψ = cumsum(u̅, dims = 2) .* fields[:u].grid.Δyᶠᶜᵃ
     return Ψ
 end
 
