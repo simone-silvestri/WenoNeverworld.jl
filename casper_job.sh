@@ -32,7 +32,9 @@ chmod +x launch.sh
 
 export JULIA="/glade/u/home/ssilvest/julia-1.9.3/bin/julia"
 
+$JULIA --project --check-bounds=no -e 'using Pkg; Pkg.instantiate()'
+
 export RX=8
 export RY=2
 
-mpirun -n 16 ./launch.sh $JULIA --check-bounds=no --project scaling_experiments.jl 
+mpirun -n 16 ./launch.sh $JULIA --check-bounds=no --project simulations_sixtyfour/run_sixtyfour.jl 
