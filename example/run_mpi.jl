@@ -26,7 +26,7 @@ ry = parse(Int, get(ENV, "RY", "1"))
 arch = DistributedArch(GPU(), ranks = (rx, ry, 1), topology = (Periodic, Bounded, Bounded))
 
 # The resolution in degrees
-degree = 64 # 1 / 64 degree resolution
+degree = 1 / 64 # 1 / 64 degree resolution
 
 grid = NeverworldGrid(degree; arch)
 
