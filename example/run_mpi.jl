@@ -39,7 +39,7 @@ init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
 stop_time = 3000years
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(grid; previous_grid, Δt, stop_time, 
+simulation = weno_neverworld_simulation(grid; Δt, stop_time, 
                                               interp_init,
                                               init_file)
                                               
