@@ -28,7 +28,7 @@ arch = DistributedArch(GPU(), ranks = (rx, ry, 1), topology = (Periodic, Bounded
 # The resolution in degrees
 degree = 64 # 1 / 64 degree resolution
 
-grid = NeverworldGrid(new_degree; arch)
+grid = NeverworldGrid(degree; arch)
 
 # Extend the vertical advection scheme
 interp_init = true # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
