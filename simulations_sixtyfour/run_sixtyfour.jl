@@ -1,3 +1,14 @@
+using Preferences
+const iscray = parse(Bool, load_preference(Base.UUID("3da0fdf6-3ccc-4f1b-acd9-58baa6c99267"), "iscray", "false"))
+@debug "Preloading GTL library" iscray
+if iscray
+    import Libdl
+    Libdl.dlopen_e("libmpi_gtl_cuda", Libdl.RTLD_LAZY | Libdl.RTLD_GLOBAL)
+end
+
+using MPI
+MPI.Init()
+
 using WenoNeverworld
 using Oceananigans
 using Oceananigans.Units
