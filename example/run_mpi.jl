@@ -26,7 +26,7 @@ ry = parse(Int, get(ENV, "RY", "1"))
 arch = DistributedArch(GPU(), ranks = (rx, ry, 1), topology = (Periodic, Bounded, Bounded))
 
 # The resolution in degrees
-degree = 1 / 64 # 1 / 64 degree resolution
+degree = 1 / 48 # 1 / 64 degree resolution
 
 grid = NeverworldGrid(degree; arch)
 
@@ -38,14 +38,17 @@ init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
 Δt        = 1minutes
 stop_time = 3000years
 
+free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75, fixed_Δt = 2minutes)
+
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time, 
+                                              free_surface,
                                               interp_init,
                                               init_file)
                                               
 
 # Adaptable time step
-wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 45minutes, min_Δt = 15minutes, max_change = 1.1)
+wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 45minutes, min_Δt = 2minutes, max_change = 1.1)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
