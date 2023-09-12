@@ -1,11 +1,3 @@
-using Preferences
-const iscray = parse(Bool, load_preference(Base.UUID("3da0fdf6-3ccc-4f1b-acd9-58baa6c99267"), "iscray", "false"))
-@debug "Preloading GTL library" iscray
-if iscray
-    import Libdl
-    Libdl.dlopen_e("libmpi_gtl_cuda", Libdl.RTLD_LAZY | Libdl.RTLD_GLOBAL)
-end
-
 using MPI
 MPI.Init()
 
@@ -14,10 +6,9 @@ using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 using Oceananigans.Distributed
-#using CairoMakie # You have to add this to your global enviroment: `] add CairoMakie`
 
 output_dir    = joinpath(@__DIR__, "./")
-output_dir = "/storage2/"
+output_dir = "./"
 @show output_prefix = output_dir * "WenoNeverworldData/weno_two" 
 
 rx = parse(Int, get(ENV, "RX", "1"))
@@ -31,7 +22,7 @@ degree = 1 / 48 # 1 / 64 degree resolution
 grid = NeverworldGrid(degree; arch)
 
 # Extend the vertical advection scheme
-interp_init = true # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
+interp_init = false # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
 init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
