@@ -23,7 +23,7 @@ interp_init = true # Do we need to interpolate? (interp_init) If `true` from whi
 init_file = "/storage2/WenoNeverworldData/weno_fourth_checkpoint_iteration5570411.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 20minutes
+Δt        = 10minutes
 stop_time = 3000years
 
 # Latitudinal wind stress acting on the zonal velocity
@@ -49,8 +49,8 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               
 
 # Adaptable time step
-wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 40minutes, min_Δt = 15minutes, max_change = 1.1)
-simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
+# wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 40minutes, min_Δt = 15minutes, max_change = 1.1)
+# simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
 checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
@@ -58,4 +58,4 @@ checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, check
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"
-run_simulation!(simulation; interp_init, init_file)
+# run_simulation!(simulation; interp_init, init_file)
