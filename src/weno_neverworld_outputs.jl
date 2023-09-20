@@ -2,9 +2,9 @@ using Oceananigans.Operators: ζ₃ᶠᶠᶜ
 using Oceananigans.AbstractOperations: KernelFunctionOperation
 
 using Oceananigans.Models: AbstractModel
-using Oceananigans.Distributed
+using Oceananigans.DistributedComputations
 
-const DistributedSimulation = Simulation{<:AbstractModel{<:DistributedArch}}
+const DistributedSimulation = Simulation{<:AbstractModel{<:Distributed}}
 
 function standard_outputs!(simulation::DistributedSimulation, output_prefix; kw...) 
     rank = simulation.model.architecture.local_rank
