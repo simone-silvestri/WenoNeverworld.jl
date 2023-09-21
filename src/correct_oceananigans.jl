@@ -1,9 +1,9 @@
-import Oceananigans: _compute_ri_based_diffusivities!
-
 using Oceananigans.BuoyancyModels: ∂z_b
 using Oceananigans.Operators
 using Oceananigans.Grids: peripheral_node, inactive_node
 using Oceananigans.TurbulenceClosures: top_buoyancy_flux, getclosure, taper
+
+import Oceananigans.TurbulenceClosures: _compute_ri_based_diffusivities!
 
 @inline function _compute_ri_based_diffusivities!(i, j, k, diffusivities, grid, closure,
                                                   velocities, tracers, buoyancy, tracer_bcs, clock)
@@ -27,7 +27,7 @@ using Oceananigans.TurbulenceClosures: top_buoyancy_flux, getclosure, taper
 
     # Conditions
     convecting = N² < 0 # applies regardless of Qᵇ
-    entraining = (N²_above < 0) & (!convecting) & (Qᵇ > 0) & (N² != 0)
+    entraining = (N²_above < 0) & (N² > 0) & (Qᵇ > 0) 
 
     # Convective adjustment diffusivity
     κᶜᵃ = ifelse(convecting, κᶜᵃ, zero(grid))
