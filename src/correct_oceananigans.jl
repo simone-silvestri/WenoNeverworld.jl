@@ -51,8 +51,8 @@ import Oceananigans.TurbulenceClosures: _compute_ri_based_diffusivities!
     κᵘ⁺ = κᵘ★
 
     # Set to zero on periphery and NaN within inactive region
-    on_periphery = peripheral_node(i, j, k, grid, c, c, f)
-    within_inactive = inactive_node(i, j, k, grid, c, c, f)
+    on_periphery = peripheral_node(i, j, k, grid, Center(), Center(), Face())
+    within_inactive = inactive_node(i, j, k, grid, Center(), Center(), Face())
     κᶜ⁺ = ifelse(on_periphery, zero(grid), ifelse(within_inactive, NaN, κᶜ⁺))
     κᵘ⁺ = ifelse(on_periphery, zero(grid), ifelse(within_inactive, NaN, κᵘ⁺))
 
