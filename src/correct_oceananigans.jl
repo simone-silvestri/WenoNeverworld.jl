@@ -33,8 +33,6 @@ using Oceananigans.TurbulenceClosures: top_buoyancy_flux, getclosure, taper
     κᶜᵃ = ifelse(convecting, κᶜᵃ, zero(grid))
 
     # Entrainment diffusivity
-    convecting = N² < 0 # applies regardless of Qᵇ
-    entraining = (N²_above < 0) & (!convecting) & (Qᵇ > 0) & (N² != 0)
     κᵉⁿ = ifelse(entraining, Cᵉⁿ * Qᵇ / N², zero(grid))
 
     # Shear mixing diffusivity and viscosity
