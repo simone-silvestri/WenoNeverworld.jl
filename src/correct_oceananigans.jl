@@ -27,13 +27,13 @@ import Oceananigans.TurbulenceClosures: _compute_ri_based_diffusivities!
 
     # Conditions
     convecting = N² < 0 # applies regardless of Qᵇ
-    entraining = (N²_above < 0) & (N² > 0) & (Qᵇ > 0) 
+    entraining = (N²_above < 0) & (!convecting) & (Qᵇ > 0) 
 
     # Convective adjustment diffusivity
     κᶜᵃ = ifelse(convecting, κᶜᵃ, zero(grid))
 
     # Entrainment diffusivity
-    κᵉⁿ = ifelse(entraining, Cᵉⁿ * Qᵇ / N², zero(grid))
+    κᵉⁿ = ifelse(entraining, Cᵉⁿ, zero(grid))
 
     # Shear mixing diffusivity and viscosity
     Ri = ℑxyᶜᶜᵃ(i, j, k, grid, ℑxyᶠᶠᵃ, diffusivities.Ri)
