@@ -17,7 +17,7 @@ using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_glob
 ##### Default parameterizations for the Neverworld simulation
 #####
 
-default_convective_adjustment = RiBasedVerticalDiffusivity()
+default_convective_adjustment = ConvectiveAdjustmentVerticalDiffusivity(convective_κz = 1.0) # RiBasedVerticalDiffusivity()
 default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=3e-5)
 
 default_momentum_advection(grid) = VectorInvariant(vorticity_scheme = WENO(order = 9), 
