@@ -56,8 +56,8 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                         bathymetry_params = NeverWorldBathymetryParameters(),
                         z_faces = z_faces_exp()) 
 
-    Nx = ceil(Int, (λ[2] - λ[1]) / res)
-    Ny = ceil(Int, (φ[2] - φ[1]) / res)
+    Nx = ceil(Int, (longitude[2] - longitude[1]) / res)
+    Ny = ceil(Int, ( latitude[2] -  latitude[1]) / res)
     Nz = length(z_faces) - 1
 
     underlying_grid = LatitudeLongitudeGrid(arch, FT; size = (Nx, Ny, Nz),
