@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -N 2
+#SBATCH -N 1
 #SBATCH --ntasks-per-node=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=16
@@ -36,7 +36,7 @@ exec \$*
 EoF_s
 chmod +x launch.sh
 
-export RX=2
+export RX=1
 export RY=4
 
-srun --mpi=pmi2 ./launch.sh $JULIA --check-bounds=no --project example/run_mpi.jl
+srun --mpi=pmi2 ./launch.sh $JULIA --check-bounds=no --project=../ run_mpi.jl

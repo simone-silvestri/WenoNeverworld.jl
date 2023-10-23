@@ -18,7 +18,7 @@ Ry = parse(Int, get(ENV, "RY", "1"))
 arch = Distributed(GPU(), partition = Partition(Rx, Ry))
 
 # The resolution in degrees
-degree = 1 / 64 # degree resolution
+degree = 1 / 32 # degree resolution
 
 grid = NeverworldGrid(degree; arch)
 
@@ -31,6 +31,10 @@ init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
 stop_time = 3000years
 max_Δt    = 2minutes
 using Oceananigans.Models.HydrostaticFreeSurfaceModels: FixedTimeStepSize
+using Oceananigans.Grids: minimum_xspacing, minimum_yspacing
+
+@show minimum_xspacing(grid), size(grid)
+@show minimum_yspacing(grid), size(grid)
 
 substepping = FixedTimeStepSize(; cfl = 0.75, grid)
 @show substepping.Δt_barotropic
