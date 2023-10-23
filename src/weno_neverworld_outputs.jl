@@ -6,13 +6,8 @@ using Oceananigans.DistributedComputations
 
 const DistributedSimulation = Simulation{<:AbstractModel{<:Distributed}}
 
-function standard_outputs!(simulation::DistributedSimulation, output_prefix; kw...) 
-    rank = simulation.model.architecture.local_rank
-    
-    standard_outputs!(simulation, output_prefix * "_$rank"; kw...) 
-
-    return nothing
-end
+maybe_distributed_filename(simulation, output_prefix) = output_prefix
+maybe_distributed_filename(sim::DistributedSimulation, output_prefix) = output_prefix * "_$(sim.model.architecture.local_rank)"
 
 """	
     function standard_outputs!(simulation, output_prefix; overwrite_existing = true, 	
@@ -43,6 +38,8 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
                                                       average_window     = average_time,
                                                       average_stride     = 10)
 
+    output_prefix = maybe_distributed_filename(simulation, output_prefix)
+    
     model = simulation.model
     grid  = model.grid
 
@@ -96,6 +93,8 @@ attaches a `Checkpointer` to the simulation with prefix `output_prefix` that is 
 """
 function checkpoint_outputs!(simulation, output_prefix; overwrite_existing = true, checkpoint_time = 100days)
 
+    output_prefix = maybe_distributed_filename(simulation, output_prefix)
+
     model = simulation.model
 
     simulation.output_writers[:checkpointer] = Checkpointer(model;
@@ -129,6 +128,8 @@ function reduced_outputs!(simulation, output_prefix; overwrite_existing = true,
                                                      snapshot_time      = 30days,
                                                      surface_time       = 1days,
                                                      bottom_time        = 1days)
+
+    output_prefix = maybe_distributed_filename(simulation, output_prefix)
 
     model = simulation.model
     grid  = model.grid
@@ -181,6 +182,8 @@ function vertically_averaged_outputs!(simulation, output_prefix; overwrite_exist
                                                                  average_time       = 30days,
                                                                  average_window     = average_time,
                                                                  average_stride     = 10)
+
+    output_prefix = maybe_distributed_filename(simulation, output_prefix)
 
     model = simulation.model
     g = simulation.model.free_surface.gravitational_acceleration

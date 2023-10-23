@@ -9,12 +9,12 @@ using Oceananigans.DistributedComputations
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "./"
-@show output_prefix = output_dir * "WenoNeverworldData/weno_two" 
+@show output_prefix = output_dir * "test_mpi" 
 
-rx = parse(Int, get(ENV, "RX", "1"))
-ry = parse(Int, get(ENV, "RY", "1"))
+Rx = parse(Int, get(ENV, "RX", "1"))
+Ry = parse(Int, get(ENV, "RY", "1"))
 
-arch = Distributed(GPU(), partition = Partition(rx, ry))
+arch = Distributed(GPU(), partition = Partition(Rx, Ry))
 
 # The resolution in degrees
 degree = 1 / 64 # degree resolution
