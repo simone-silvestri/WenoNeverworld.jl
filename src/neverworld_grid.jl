@@ -32,7 +32,7 @@ builds a `LatitudeLongitudeGrid` with a specified `bathymetry`
 Arguments
 =========
 
-- `arch` : architecture of the grid, can be `CPU()` or `GPU()`
+- `arch` : architecture of the grid, can be `CPU()` or `GPU()` or `Distributed`
 - `resolution` : resolution in degrees.
 - `FT` : (optional) floating point precision (default = `Float64`)
 
