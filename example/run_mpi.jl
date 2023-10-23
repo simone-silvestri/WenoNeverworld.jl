@@ -6,6 +6,7 @@ using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 using Oceananigans.DistributedComputations
+using Oceananigans.DistributedComputations: all_reduce
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "./"
@@ -28,8 +29,14 @@ init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
 # Simulation parameters
 Δt        = 0.01minutes
 stop_time = 3000years
+max_Δt    = 2minutes
+using Oceananigans.Models.HydrostaticFreeSurfaceModels: FixedTimeStepSize
 
-free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75, fixed_Δt = 2minutes)
+substepping = FixedTimeStepSize(; cfl = 0.75, grid)
+substeps    = ceil(Int, 2*max_Δt / substepping.Δt_barotropic)
+substeps    = all_reduce(max, substeps, arch)
+
+free_surface = SplitExplicitFreeSurface(; substeps)
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time, 
@@ -39,7 +46,7 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               
 
 # Adaptable time step
-wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 2minutes, max_change = 1.1)
+wizard = TimeStepWizard(; cfl = 0.35, max_Δt, max_change = 1.1)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
