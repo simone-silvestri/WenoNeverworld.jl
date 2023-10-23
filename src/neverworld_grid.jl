@@ -67,13 +67,7 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                                             topology = (Periodic, Bounded, Bounded),
                                             z = z_faces)
 
-    λ_grid = underlying_grid.λᶜᵃᵃ[1:Nx]
-    φ_grid = underlying_grid.φᵃᶜᵃ[1:Ny]
+    bathymetry(λ, φ) = neverworld_bathymetry(λ, φ, bathymetry_params; longitudinal_extent, latitude)
 
-    bathy = zeros(Nx, Ny)
-    for (i, λ) in enumerate(λ_grid), (j, φ) in enumerate(φ_grid)
-        bathy[i, j] = neverworld_bathymetry(λ, φ, bathymetry_params; longitudinal_extent, latitude)
-    end
-
-    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))
+    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry))
 end
