@@ -5,7 +5,7 @@ using WenoNeverworld
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
-using Oceananigans.Distributed
+using Oceananigans.DistributedComputations
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "./"
@@ -14,10 +14,10 @@ output_dir = "./"
 rx = parse(Int, get(ENV, "RX", "1"))
 ry = parse(Int, get(ENV, "RY", "1"))
 
-arch = DistributedArch(GPU(), ranks = (rx, ry, 1), topology = (Periodic, Bounded, Bounded))
+arch = Distributed(GPU(), partition = Partition(rx, ry))
 
 # The resolution in degrees
-degree = 1 / 48 # 1 / 64 degree resolution
+degree = 1 / 64 # degree resolution
 
 grid = NeverworldGrid(degree; arch)
 
@@ -26,7 +26,7 @@ interp_init = false # Do we need to interpolate? (interp_init) If `true` from wh
 init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 1minutes
+Δt        = 0.01minutes
 stop_time = 3000years
 
 free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75, fixed_Δt = 2minutes)
@@ -39,7 +39,7 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               
 
 # Adaptable time step
-wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 45minutes, min_Δt = 2minutes, max_change = 1.1)
+wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 2minutes, max_change = 1.1)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)

@@ -1,6 +1,6 @@
 using Oceananigans.Fields: interpolate
 using Oceananigans.Grids: xnode, ynode, halo_size
-using Oceananigans.Distributed
+using Oceananigans.DistributedComputations
 
 """
     function z_faces_exp(; Nz = 69, Lz = 4000.0, e_folding = 0.06704463421863584)
@@ -56,7 +56,8 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                         bathymetry_params = NeverWorldBathymetryParameters(),
                         z_faces = z_faces_exp()) 
 
-    Nx, Ny = horizontal_size(resolution, arch, longitude, latitude)
+    Nx = ceil(Int, (λ[2] - λ[1]) / res)
+    Ny = ceil(Int, (φ[2] - φ[1]) / res)
     Nz = length(z_faces) - 1
 
     underlying_grid = LatitudeLongitudeGrid(arch, FT; size = (Nx, Ny, Nz),
@@ -75,12 +76,4 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
     end
 
     return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))
-end
-
-horizontal_size(res, arch, λ, φ) =  Int((λ[2] - λ[1]) / res), Int((φ[2]  - φ[1]) / res)
-
-function horizontal_size(res, arch::DistributedArch, λ, φ) 
-    Rx, Ry, _ = arch.ranks
-    Nx, Ny =  Int((λ[2] - λ[1]) / res), Int((φ[2]  - φ[1]) / res)
-    return Nx ÷ Rx, Ny ÷ Ry
 end
