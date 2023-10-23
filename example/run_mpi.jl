@@ -33,6 +33,7 @@ max_Δt    = 2minutes
 using Oceananigans.Models.HydrostaticFreeSurfaceModels: FixedTimeStepSize
 
 substepping = FixedTimeStepSize(; cfl = 0.75, grid)
+@show substepping.Δt_barotropic
 substeps    = ceil(Int, 2*max_Δt / substepping.Δt_barotropic)
 substeps    = all_reduce(max, substeps, arch)
 
