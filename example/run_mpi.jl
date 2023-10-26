@@ -22,9 +22,12 @@ degree = 1 / 32 # degree resolution
 
 grid = NeverworldGrid(degree; arch)
 
+# previous_grid needs to be on another architecture!!!
+# previous_grid = NeverworldGrid(previous_degree; arch = CPU())
+
 # Extend the vertical advection scheme
 interp_init = false # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
+init_file   = nothing # "test_mpi_" * string(MPI.Comm_rank(MPI.COMM_WORLD)) * "_checkpoint_iteration_" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 0.01minutes

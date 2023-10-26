@@ -2,6 +2,7 @@ using Oceananigans.Fields: interpolate
 using Oceananigans.Grids: λnode, φnode, halo_size, on_architecture
 using Oceananigans.Utils: instantiate
 using Oceananigans.BoundaryConditions
+using Oceananigans.DistributedComputations: DistributedGrid, reconstruct_global_grid
 
 """ 
     function cubic_interpolate(x, x1, x2, y1, y2, d1, d2)
@@ -69,6 +70,8 @@ interpolate `old_vector` (living on `loc`) from `old_grid` to `new_grid`
 Note: The z-levels of `old_grid` and `new_grid` should be the same!!	
 """
 function interpolate_per_level(old_vector, old_grid, new_grid, loc)
+
+    new_grid = new_grid isa DistributedGrid ? reconstruct_global_grid(new_grid) : new_grid
 
     H_new = halo_size(new_grid)
     H_old = halo_size(old_grid)
