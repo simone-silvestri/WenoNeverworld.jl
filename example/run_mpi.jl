@@ -15,7 +15,7 @@ output_dir = "./"
 Rx = parse(Int, get(ENV, "RX", "1"))
 Ry = parse(Int, get(ENV, "RY", "1"))
 
-arch = Distributed(GPU(), partition = Partition(Rx, Ry))
+arch = Distributed(GPU(), partition = Partition(Rx, Ry), synchronized_communication = true)
 
 # The resolution in degrees
 degree = 1 / 32 # degree resolution
