@@ -27,7 +27,7 @@ previous_grid = NeverworldGrid(previous_degree; arch = CPU())
 
 # Extend the vertical advection scheme
 interp_init = true # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-init_file   = "../../weno_eight_checkpoint_iteration15855224.jld2" # "test_mpi_" * string(MPI.Comm_rank(MPI.COMM_WORLD)) * "_checkpoint_iteration_" # To restart from a file: `init_file = /path/to/restart`
+init_file   = "../weno_eight_checkpoint_iteration15855224.jld2" # "test_mpi_" * string(MPI.Comm_rank(MPI.COMM_WORLD)) * "_checkpoint_iteration_" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 0.01minutes
