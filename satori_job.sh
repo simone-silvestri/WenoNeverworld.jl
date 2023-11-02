@@ -39,4 +39,4 @@ chmod +x launch.sh
 export RX=1
 export RY=4
 
-srun --mpi=pmi2 ./launch.sh $JULIA --check-bounds=no --project run_mpi.jl
+srun --mpi=pmi2 ./launch.sh $JULIA --check-bounds=no --project example/run_mpi.jl
