@@ -20,6 +20,7 @@ arch = Distributed(GPU(), partition = Partition(Rx, Ry))
 
 # The resolution in degrees
 degree = 1 / 32 # degree resolution
+previous_degree = 1 /8 
 
 grid = NeverworldGrid(degree; arch)
 # previous_grid needs to be on another architecture!!!
