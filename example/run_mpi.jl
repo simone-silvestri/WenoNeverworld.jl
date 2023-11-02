@@ -51,7 +51,6 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               interp_init,
                                               init_file)
                                               
-
 # Adaptable time step
 wizard = TimeStepWizard(; cfl = 0.35, max_Δt, max_change = 1.1)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
