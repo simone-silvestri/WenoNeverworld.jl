@@ -18,10 +18,10 @@ export OMPI_MCA_osc=^ucx
 export OMPI_MCA_btl_openib_allow_ib=true
 
 # Julia specific enviromental variables
-export COMMON="/nobackup/users/ssilvest/perlmutter-test"
+export COMMON="/nobackup/users/lcbrock/"
 export JULIA_DEPOT_PATH="${COMMON}/depot"
 export JULIA_CUDA_MEMORY_POOL=none
-export JULIA="${COMMON}/julia-1.9-src/julia"
+export JULIA="${COMMON}/julia/julia"
 
 # Profile specific variable
 export JULIA_NVTX_CALLBACKS=gc
@@ -39,4 +39,4 @@ chmod +x launch.sh
 export RX=1
 export RY=4
 
-srun --mpi=pmi2 ./launch.sh $JULIA --check-bounds=no --project=../ run_mpi.jl
+srun --mpi=pmi2 ./launch.sh $JULIA --check-bounds=no --project run_mpi.jl
