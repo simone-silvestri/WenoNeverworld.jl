@@ -3,7 +3,7 @@
 #SBATCH --ntasks-per-node=4
 #SBATCH --gres=gpu:4
 #SBATCH --cpus-per-task=16
-#SBATCH --time=24:00:00
+#SBATCH --time=12:00:00
 #SBATCH --mem=1TB
 
 # Upload modules
