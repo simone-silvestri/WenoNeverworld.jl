@@ -4,7 +4,7 @@ MPI.Init()
 using WenoNeverworld
 using Oceananigans
 using Oceananigans.Units
-using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
+using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture, minimum_xspacing, minimum_yspacing
 using Oceananigans.DistributedComputations
 using Oceananigans.DistributedComputations: all_reduce
 using Oceananigans.Models.HydrostaticFreeSurfaceModels: FixedSubstepNumber
@@ -38,7 +38,7 @@ using Oceananigans.Models.HydrostaticFreeSurfaceModels: FixedTimeStepSize
 using Oceananigans.Grids: minimum_xspacing, minimum_yspacing
 
 substepping = FixedTimeStepSize(; cfl = 0.75, grid)
-@show substepping.Δt_barotropic
+@show arch.local_rank, substepping.Δt_barotropic, grid.Lz, minimum_xspacing(grid), minimum_yspacing(grid)
 substeps    = ceil(Int, 2*max_Δt / substepping.Δt_barotropic)
 substeps    = all_reduce(max, substeps, arch)
 
