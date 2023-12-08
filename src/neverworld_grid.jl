@@ -1,5 +1,6 @@
 using Oceananigans.Fields: interpolate
 using Oceananigans.Grids: xnode, ynode, halo_size
+using Oceananigans.DistributedComputations
 
 """
     function z_faces_exp(; Nz = 69, Lz = 4000.0, e_folding = 0.06704463421863584)
@@ -31,7 +32,7 @@ builds a `LatitudeLongitudeGrid` with a specified `bathymetry`
 Arguments
 =========
 
-- `arch` : architecture of the grid, can be `CPU()` or `GPU()`
+- `arch` : architecture of the grid, can be `CPU()` or `GPU()` or `Distributed`
 - `resolution` : resolution in degrees.
 - `FT` : (optional) floating point precision (default = `Float64`)
 
@@ -55,9 +56,11 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                         bathymetry_params = NeverWorldBathymetryParameters(),
                         z_faces = z_faces_exp()) 
 
-    Nx = Int((longitude[2] - longitude[1]) / resolution)
-    Ny = Int((latitude[2]  - latitude[1]) / resolution)
+    Nx = ceil(Int, (longitude[2] - longitude[1]) / resolution)
+    Ny = ceil(Int, ( latitude[2] -  latitude[1]) / resolution)
     Nz = length(z_faces) - 1
+
+    @show Nz, z_faces
 
     underlying_grid = LatitudeLongitudeGrid(arch, FT; size = (Nx, Ny, Nz),
                                             latitude,
@@ -66,13 +69,7 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                                             topology = (Periodic, Bounded, Bounded),
                                             z = z_faces)
 
-    λ_grid = underlying_grid.λᶜᵃᵃ[1:Nx]
-    φ_grid = underlying_grid.φᵃᶜᵃ[1:Ny]
+    bathymetry(λ, φ) = neverworld_bathymetry(λ, φ, bathymetry_params; longitudinal_extent, latitude)
 
-    bathy = zeros(Nx, Ny)
-    for (i, λ) in enumerate(λ_grid), (j, φ) in enumerate(φ_grid)
-        bathy[i, j] = neverworld_bathymetry(λ, φ, bathymetry_params; longitudinal_extent, latitude)
-    end
-
-    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathy))
+    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry))
 end

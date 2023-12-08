@@ -1,7 +1,7 @@
 name = "WenoNeverworld"
 uuid = "dc645f23-3555-4f2f-8f6e-8cb879a663f8"
 authors = ["Simone Silvestri <silvestri.simone0@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
