@@ -14,9 +14,26 @@ function check_ranges(folder, ranks; H = 7, iteration = 0)
     return jranges
 end
 
+"""
+    compress_restart_file(resolution, ranks, iteration, folder = "../")
+
+Compresses the restart files for a given simulation.
+
+# Arguments
+- `resolution`: The resolution of the simulation.
+- `ranks`: The number of ranks used in the simulation.
+- `iteration`: The iteration of the checkpoint.
+- `folder`: The folder where the restart files are located. Default is `"../"`.
+
+# Examples
+```julia
+julia> compress_restart_file(1/32, 8, 0)
+```
+"""
 function compress_restart_file(resolution, ranks, iteration, folder = "../"; 
-                               output_prefix = "weno_thirtytwo",
-                               full_grid = NeverworldGrid(resolution))
+                               output_prefix = "weno_thirtytwo")
+
+    full_grid = NeverworldGrid(resolution)
 
     @info "initializing active map"
     bathymetry = interior(full_grid.immersed_boundary.bottom_heigth, :, :, 1)
@@ -75,7 +92,23 @@ end
 
 const regex = r"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$";
 
-function compress_all_restarts(resolution, ranks, dir; remove_restart = false)
+"""
+    compress_all_restarts(resolution, ranks, dir; output_prefix = "weno_thirtytwo", remove_restart = false)
+
+Compresses all restart files in the specified directory.
+
+## Arguments
+- `resolution`: The resolution of the restart files.
+- `ranks`: The number of ranks used for the simulations.
+- `dir`: The directory containing the restart files.
+
+## Keyword Arguments
+- `output_prefix`: The prefix for the compressed files. Default is "weno_thirtytwo".
+- `remove_restart`: Whether to remove the original restart files after compression. Default is `false`.
+"""
+function compress_all_restarts(resolution, ranks, dir; 
+                               output_prefix = "weno_thirtytwo",
+                               remove_restart = false)
     files = readdir(dir)
     files = filter(x -> length(x) > 30, files)
     files = filter(x -> x[1:26] == "RealisticOcean_checkpoint_", files)
@@ -95,13 +128,12 @@ function compress_all_restarts(resolution, ranks, dir; remove_restart = false)
     iterations = sort(iterations)
     for iter in iterations
         @info "compressing iteration $iter"
-        compress_restart_file(resolution, ranks, iter, dir)
+        compress_restart_file(resolution, ranks, iter, dir; output_prefix)
 
         if remove_restart
             @info "removing iteration $iter"
-
             for rank in 0:ranks-1
-                to_remove = "RealisticOcean_checkpoint_$(rank)_iteration$(iter).jld2"
+                to_remove = dir * output_prefix * "$(rank)_checkpoint_iteration$(iter).jld2"
                 cmd = `rm $to_remove`
                 run(cmd)
             end
