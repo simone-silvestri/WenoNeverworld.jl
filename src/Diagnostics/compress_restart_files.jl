@@ -1,5 +1,5 @@
 
-function check_ranges(folder, ranks; H = 7, iteration = 0)
+function individual_ranges(folder, ranks; H = 7, iteration = 0)
     Ny = Vector(undef, ranks)
     jranges = Vector(undef, ranks)
     for rank in 0:ranks - 1
@@ -8,7 +8,8 @@ function check_ranges(folder, ranks; H = 7, iteration = 0)
     end
     jranges[1] = UnitRange(1, Ny[1])
     for rank in 2:ranks
-        jranges[rank] = UnitRange(jranges[rank-1][end]+1,jranges[rank-1][end]+Ny[rank])
+        last_index = jranges[rank-1][end]
+        jranges[rank] = UnitRange(last_index + 1, last_index + Ny[rank])
     end
 
     return jranges
@@ -33,20 +34,14 @@ julia> compress_restart_file(1/32, 8, 0)
 function compress_restart_file(resolution, ranks, iteration, folder = "../"; 
                                output_prefix = "weno_thirtytwo")
 
-    full_grid = NeverworldGrid(resolution)
-
-    @info "initializing active map"
-    bathymetry = interior(full_grid.immersed_boundary.bottom_heigth, :, :, 1)
-
     fields_data = Dict()
-    fields_data[:underlying_grid] = full_grid
-    fields_data[:bathymetry] = bathymetry
+    fields_data[:resolution] = resolution # Possible to retrieve the grid with grid = NeverWorldGrid(resolution)
     fields_data[:clock] = jldopen(folder * output_prefix * "0_checkpoint_iteration$(iteration).jld2")["clock"]
 
-    jranges = check_ranges(folder, ranks; output_prefix, H, iteration)
+    jranges = individual_ranges(folder, ranks; output_prefix, H, iteration)
 
-    @info "starting the compression"
-    for var in (:u, :w, :v, :T, :S)
+    @info "starting the compression of 3D variables"
+    for var in (:u, :w, :v, :b)
         GC.gc()
 
         @info "compressing variable $var"
@@ -57,7 +52,7 @@ function compress_restart_file(resolution, ranks, iteration, folder = "../";
 
         for rank in 0:ranks-1
             @info "reading rank $rank"
-            jrange = iranges[rank+1]
+            jrange = jranges[rank+1]
             compressed_data[:, jrange, :] .= jldopen(folder * output_prefix * "$(rank)_checkpoint_iteration$(iteration).jld2")[string(var) * "/data"][H+1:end-H, H+1:end-H, H+1:end-H]
         end
 
@@ -84,6 +79,7 @@ function compress_restart_file(resolution, ranks, iteration, folder = "../";
     end
 end
 
+# The free surface has halos equal to the number of barotropic steps in the meridional direction
 function calc_free_surface_halo(jrange, data)
     Ny = size(data, 2)
     ny = length(jrange)
