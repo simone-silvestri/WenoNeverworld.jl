@@ -108,13 +108,17 @@ Compresses all restart files in the specified directory.
 """
 function compress_all_restarts(resolution, ranks, dir; 
                                output_prefix = "weno_thirtytwo",
-                               remove_restart = false)
+                               remove_restart = false,
+                               leave_last_file = true)
+    
+    minimum_length = length(output_prefix)
+    
     files = readdir(dir)
-    files = filter(x -> length(x) > 30, files)
-    files = filter(x -> x[1:26] == "RealisticOcean_checkpoint_", files)
+    files = filter(x -> length(x) > minimum_length, files)
+    files = filter(x -> x[1:minimum_length] == output_prefix, files)
     iterations = Int[]
     for file in files
-        file   = file[1:end-5]
+        file   = file[1:end-5] # remove the final .jld2 suffix
         string = ""
         i = length(file)
         while occursin(regex, "$(file[i])")
