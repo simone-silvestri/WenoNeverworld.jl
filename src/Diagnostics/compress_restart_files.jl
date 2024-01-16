@@ -93,7 +93,7 @@ end
 const regex = r"^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$";
 
 """
-    compress_all_restarts(resolution, ranks, dir; output_prefix = "weno_thirtytwo", remove_restart = false)
+    compress_all_restarts(resolution, ranks, dir; output_prefix = "weno_thirtytwo", remove_restart = false, leave_last_file = true)
 
 Compresses all restart files in the specified directory.
 
@@ -105,6 +105,7 @@ Compresses all restart files in the specified directory.
 ## Keyword Arguments
 - `output_prefix`: The prefix for the compressed files. Default is "weno_thirtytwo".
 - `remove_restart`: Whether to remove the original restart files after compression. Default is `false`.
+- `leave_last_file`: Whether to leave the last file uncompressed. Default is `true`.
 """
 function compress_all_restarts(resolution, ranks, dir; 
                                output_prefix = "weno_thirtytwo",
@@ -130,6 +131,8 @@ function compress_all_restarts(resolution, ranks, dir;
 
     iterations = unique(iterations)
     iterations = sort(iterations)
+    iterations = leave_last_file ? iterations[1:end-1] : iterations
+
     for iter in iterations
         @info "compressing iteration $iter"
         compress_restart_file(resolution, ranks, iter, dir; output_prefix)
