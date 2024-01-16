@@ -40,5 +40,6 @@ include("spurious_mixing.jl")
 include("diagnostic_fields.jl")
 include("integrated_diagnostics.jl")
 include("spectra.jl")
+include("compress_restart_files.jl")
 
 end
