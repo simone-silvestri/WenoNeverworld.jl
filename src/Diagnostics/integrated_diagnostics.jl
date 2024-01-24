@@ -12,6 +12,78 @@ function integral_kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries; stride 
     return energy
 end
 
+function integral_available_potential_energy(b::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
+    energy = Float64[]
+    vol = VolumeField(u.grid)
+
+    for i in start_time:stride:end_time
+        @info "integrating index $i of $end_time"
+        αe = compute_ape_density(b[i])
+        push!(energy, sum(compute!(Field(αe * vol))))
+    end
+
+    return energy
+end
+
+function compute_ape_density(b::Field)
+    ze = calculate_z★_diagnostics(b)
+
+    αe = Field{Center, Center, Center}(ze.grid)
+
+    zfield = HeightField(ze.grid)
+
+    @info "computing resting and available potential energy density..."
+    ρ = DensityOperation(b)
+    set!(αe, (zfield - ze) * ρ)
+
+    return αe
+end
+
+function compute_rpe_density(var)
+    ze = calculate_z★_diagnostics(var[:b])
+
+    εe = FieldTimeSeries{Center, Center, Center}(ze.grid, ze.times)
+    αe = FieldTimeSeries{Center, Center, Center}(ze.grid, ze.times)
+
+    zfield = HeightField(ze.grid)
+
+    @info "computing resting and available potential energy density..."
+    for t in 1:length(ze.times)
+        @info "doing time $t"
+        ρ = DensityOperation(var[:b][t])
+        set!(εe[t], ze[t] * ρ)
+        set!(αe[t], (zfield - ze[t]) * ρ)
+    end
+
+    return (; ze, εe, αe)
+end
+
+function calculate_RPE(st)
+    RPE = Float64[]
+
+    vol = VolumeField(st.εe[1].grid, location(st.εe[1]))
+
+    for t in 1:length(st.ze.times)
+        @info "doing time $t"
+        push!(RPE, sum(interior(compute!(Field(st.εe[t] * vol)))))
+    end
+
+    return RPE
+end
+
+function calculate_APE(st)
+    APE = Float64[]
+
+    vol = VolumeField(st.αe[1].grid, location(st.αe[1]))
+
+    for t in 1:length(st.ze.times)
+        @info "doing time $t"
+        push!(APE, sum(interior(compute!(Field(st.αe[t] * vol)))))
+    end
+
+    return APE
+end
+
 function ACC_transport(u::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
 
     transport = Float64[]

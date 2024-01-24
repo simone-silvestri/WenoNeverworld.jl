@@ -20,6 +20,17 @@ function calculate_z★_diagnostics(b::FieldTimeSeries)
     return z★
 end
 
+function calculate_z★_diagnostics(b::Field)
+
+    vol = VolumeField(b.grid)
+    z★  = Field{Center, Center, Center}(b.grid)
+
+    total_area = sum(AreaField(b.grid))
+    calculate_z★!(z★, b, vol, total_area)
+    
+    return z★
+end
+
 function calculate_z★!(z★::Field, b::Field, vol, total_area)
     grid = b.grid
     arch = architecture(grid)
