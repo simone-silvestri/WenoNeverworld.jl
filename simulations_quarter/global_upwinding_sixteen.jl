@@ -5,22 +5,22 @@ using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 #using CairoMakie # You have to add this to your global enviroment: `] add CairoMakie`
 
 output_dir    = joinpath(@__DIR__, "./")
-output_dir = "/storage4/"
-@show output_prefix = output_dir * "WenoNeverworldData/weno_fourth"
+output_dir = "/WenoNeverworldData"
+@show output_prefix = output_dir * "weno_sixteen"
 
 arch = GPU()
 
 # The resolution in degrees
-degree_resolution = 1/4
-new_degree = 1/4
-old_degree = 1/4
+degree_resolution = 1/16
+new_degree = 1/16
+old_degree = 1/16
 
 grid = NeverworldGrid(new_degree; arch)
 previous_grid = NeverworldGrid(old_degree; arch)
 
 # Extend the vertical advection scheme
-interp_init = false # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-init_file = "/storage4/WenoNeverworldData/weno_fourth_checkpoint_iteration2102400.jld2" # To restart from a file: `init_file = /path/to/restart`
+interp_init = true # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
+init_file = "/WenoNeverworldData/weno_sixteenth_checkpoint_iteration1826520.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 10minutes
@@ -49,8 +49,8 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               
 
 # Adaptable time step
-wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 40minutes, min_Δt = 10minutes, max_change = 1.1)
-simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
+# wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 40minutes, min_Δt = 15minutes, max_change = 1.1)
+# simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
 checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)

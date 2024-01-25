@@ -11,14 +11,21 @@ variables = ("u", "v", "w", "b")
 
 # Load FieldTimeSeries of "u", "v", "w", "b" and compute integrated quantities
 @info "loading files and calculating integrated variables"
-neverworld_fields = all_fieldtimeseries(prefix, dir; checkpointer = true, variables, number_files = 20);
+neverworld_fields = all_fieldtimeseries(prefix, dir; checkpointer = true, variables, number_files = 30);
 # kinetic_energy = Diagnostics.integral_kinetic_energy(neverworld_fields[:u], neverworld_fields[:b]; stride)
 # integral_heat_content = Diagnostics.heat_content(neverworld_fields[:b]; stride)
+
+
+#i = length(neverworld_fields[:u]) - 10
+#KE = Diagnostics.KineticEnergy(neverworld_fields, i)
+#vert_vorticity = Diagnostics.VerticalVorticity(neverworld_fields, i)
+#rossby_radius also has one
+
 
 grid  = neverworld_fields[:u].grid
 times = neverworld_fields[:u].times
 Nt = length(times)
-iterations    = Nt-20:Nt
+iterations    = Nt-30:Nt
 average_times = times[iterations]
 
 u = neverworld_fields[:u]
@@ -90,7 +97,7 @@ wb_avg = Diagnostics.time_average(w′b′)
 
 function plot_and_save_heatmap(data, filename, title, xlabel, ylabel; colorrange = (0, 0.02), level =10)
     fig = Figure(resolution=(2000, 1000))
-    ax = Axis(fig[1, 1], xlabel=xlabel, xlabelsize=30, yticks=0:10:280, xticklabelsize=30, ylabel=ylabel, ylabelsize=30, xticks=0:20:600, yticklabelsize=30, title=title, titlesize=50)
+    ax = Axis(fig[1, 1], xlabel=xlabel, xlabelsize=30, yticks=-4000:1000:0, xticklabelsize=30, ylabel=ylabel, ylabelsize=30, xticks=-70:20:70, yticklabelsize=30, title=title, titlesize=50)
     hm = GLMakie.heatmap!(ax, data, colorrange=colorrange, contours=true, levels = level)
     GLMakie.contour!(ax, data, color=:black, linewidth=3, levels=level)
     display(fig)
@@ -98,44 +105,51 @@ function plot_and_save_heatmap(data, filename, title, xlabel, ylabel; colorrange
 end
 
 
-
-
 print("function defined succesfully")
 # Plot and save heatmaps for each quantity
-plot_and_save_heatmap(interior(vbᵢ_avg,1, :, :), "time_averaged_half_moc", "Time-Averaged MOC 1/2∘", "latitude [∘]", "depth [m]", colorrange = (-0.01, 0.04))
+#plot_and_save_heatmap(interior(vbᵢ_avg,1, :, :), "time_averaged_half_moc", "Time-Averaged MOC 1/2∘", "latitude [∘]", "depth [m]", colorrange = (-0.01, 0.04))
 #plot_and_save_heatmap(interior(u′[20], :, :, 69), "time_averaged_u", "Time-Averaged u 1/2∘", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(IKE[20], :, :, 69), "time_averaged_half_IKE", "Time-Averaged IKE 1/2∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(EKE[20], :, :, 69), "time_averaged_half_EKE", "Time-Averaged EKE 1/2∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(MKE, :, :, 69), "time_averaged_half_MKE", "Mean Kinetic Energy 1/2∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
 
-#plot_and_save_heatmap(interior(b, :, :, 69), "time_averaged_half_stratification", "Stratification 1/2∘", "latitude [∘]", "depth [m]", colorrange = (-0.04, 0.06))
-
-
+#plot_and_save_heatmap(interior(b, :, :, 69), "ta_strat_half", "1/2∘", "Latitude [∘]", "Depth [m]", colorrange = (-0.04, 0.06))
 
 #plot_and_save_heatmap(interior(v′b′, :, :, 69), "v_prime_times_b_prime", "v' times b'", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(w′b′, :, :, 69), "w_prime_times_b_prime", "w' times b'", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(w_avg, :, :, 69), "time_averaged_w", "Time-Averaged w", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 
 
+
+#=
 using GLMakie
 using JLD2, Oceananigans, Statistics      
 
 # Load the data for the half-degree resolution
 @info "Loading data..."
 local_path = pwd()
-
-hfile_1 = jldopen("/storage2/WenoNeverworldData/wweno_half_checkpoint_iteration985500.jld2 ", "r")
+#we load the grid information which is the same everywhere from a random checkpoint, but time average over any given number of files
+hfile_1 = jldopen("/storage2/WenoNeverworldData/weno_half_checkpoint_iteration985500.jld2", "r")
 oceangrid_1 = hfile_1["grid"]
 halo = 7
 z = oceangrid_1.underlying_grid.zᵃᵃᶜ[1:end-halo]
 lat = collect(oceangrid_1.underlying_grid.φᵃᶜᵃ[1:end-halo])
+
+b_r = mean(interior(b), dims = 4)[:,:,:,1] * 100
+blims = (quantile(b_r[:], 0.2), maximum(b_r[:]))
+#blims = (7.5e-5, 3.6e-5) 
+Λ = log(blims[1]/blims[2])
+#contours_log = blims[2] * exp.(Λ .*  range(0, 1, 11) )
+contours_log = [1, 1.5, 1.75, 1.5, 2, 2.5, 3, 4]
+
 lon_index = round(Int, size(b)[1]/2)
 fig = Figure(resolution=(2000, 1000))
-ax = Axis(fig[1, 1], xlabel="Latitude [∘]", xlabelsize=30, yticks=-4000:1000:0, xticklabelsize=30, ylabel="Depth [m]", ylabelsize=30, xticks=-90:20:1120, yticklabelsize=30, title="Heatmap of Time-Averaged b 1/2", titlesize=50)
-hm = GLMakie.heatmap!(ax, lat, z, interior(b, lon_index, :, :), colormap= :plasma, contours = true, levels =10)  #colorrange = (7.5e-5, 3.6e-5))
-contour!(ax, lat, z, interior(b, lon_index, :, :), color=:black, linewidth=3, levels=10, labels = true,
+ax = Axis(fig[1, 1], xlabel="Latitude [∘]", xlabelsize=30, yticks=-5000:1000:0, xticklabelsize=30, ylabel="Depth [m]", ylabelsize=30, xticks=-90:20:1120, yticklabelsize=30, title="1/2∘", titlesize=50, aspect=2.0)
+
+hm = GLMakie.heatmap!(ax, lat, z, b_r[lon_index, :, :], colormap= :plasma, levels =10)  #colorrange = (7.5e-5, 3.6e-5))
+GLMakie.contour!(ax, lat, z,  b_r[lon_index, :, :], color=:black, linewidth=3, levels=contours_log, labels = true,
 labelsize = 30, labelfont = :bold, labelcolor = :black)
 display(fig)
-save("plotting/moc_half_final.png", fig)
+save("plotting/ta_strat_half.png", fig)
 
-
+=#

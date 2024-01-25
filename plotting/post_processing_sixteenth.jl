@@ -6,20 +6,20 @@ using GLMakie
 
 
 dir = "/storage3/WenoNeverworldData/"
-prefix    = "weno_eighth_check"
+prefix    = "weno_sixteenth_check"
 variables = ("u", "v", "w", "b")
 # stride = 3
 
 # Load FieldTimeSeries of "u", "v", "w", "b" and compute integrated quantities
 @info "loading files and calculating integrated variables"
-neverworld_fields = all_fieldtimeseries(prefix, dir; checkpointer = true, variables, number_files = 25);
+neverworld_fields = all_fieldtimeseries(prefix, dir; checkpointer = true, variables, number_files = 15);
 # kinetic_energy = Diagnostics.integral_kinetic_energy(neverworld_fields[:u], neverworld_fields[:b]; stride)
 # integral_heat_content = Diagnostics.heat_content(neverworld_fields[:b]; stride)
 
 grid  = neverworld_fields[:u].grid
 times = neverworld_fields[:u].times
 Nt = length(times)
-iterations    = Nt-25:Nt
+iterations    = Nt-15:Nt
 average_times = times[iterations]
 
 u = neverworld_fields[:u]
@@ -121,7 +121,7 @@ using JLD2, Oceananigans, Statistics
 @info "Loading data..."
 local_path = pwd()
 
-hfile_1 = jldopen("/storage3/WenoNeverworldData/weno_eighth_checkpoint_iteration9975074.jld2", "r")
+hfile_1 = jldopen("/storage3/WenoNeverworldData/ weno_sixteenth_checkpoint_iteration972420.jld2", "r")
 oceangrid_1 = hfile_1["grid"]
 halo = 7
 z = oceangrid_1.underlying_grid.zᵃᵃᶜ[1:end-halo]
@@ -136,10 +136,10 @@ contours_log = [0.5, 0.75, 1, 1.5, 2, 3, 4, 5]
 
 lon_index = round(Int, size(b)[1]/2)
 fig = Figure(resolution=(5000, 5000))
-ax = Axis(fig[1, 1], xlabel="Latitude [∘]", xlabelsize=30, yticks=-5000:1000:0, xticklabelsize=30, ylabel="Depth [m]", ylabelsize=30, xticks=-90:20:1120, yticklabelsize=30, title="1/8∘", titlesize=50, aspect=2.0)
+ax = Axis(fig[1, 1], xlabel="Latitude [∘]", xlabelsize=30, yticks=-5000:1000:0, xticklabelsize=30, ylabel="Depth [m]", ylabelsize=30, xticks=-90:20:1120, yticklabelsize=30, title="1/16∘", titlesize=50, aspect=2.0)
 
 hm = GLMakie.heatmap!(ax, lat, z, b_r[lon_index, :, :], colormap= :plasma, levels =9)  #colorrange = (7.5e-5, 3.6e-5))
 GLMakie.contour!(ax, lat, z,  b_r[lon_index, :, :], color=:black, linewidth=3, levels=contours_log, labels = true,
 labelsize = 30, labelfont = :bold, labelcolor = :black)
 display(fig)
-save("plotting/ta_strat_eighth.png", fig)
+save("plotting/ta_strat_sixteen.png", fig)

@@ -57,14 +57,25 @@ function all_fieldtimeseries(filename, dir = nothing;
         end
 
         @info "loading iterations" numbers
-        grid = jldopen(dir * myfiles[1] * "2")["grid"] 
+        grid = try
+            jldopen(dir * myfiles[1] * "2")["grid"] 
+        catch
+            NeverworldGrid(jldopen(dir * myfiles[1] * "2")["resolution"])
+        end
         for var in variables
             field = FieldTimeSeries{assumed_location(var)...}(grid, numbers)
             for (idx, file) in enumerate(myfiles)
                 @info "index $idx" file
                 concrete_var = jldopen(dir * file * "2")[var * "/data"]
+                #field.times[idx] = try
+                    #jldopen(dir * file * "2")["clock"].time
+                #catch 
+                    #jldopen(dir * file * "2")["clock"].time
+                #end
+                #set!(field[idx], concrete_var)
                 field.times[idx] = jldopen(dir * file * "2")["clock"].time
                 set!(field[idx], concrete_var)
+
             end
 
             fields[Symbol(var)] = field

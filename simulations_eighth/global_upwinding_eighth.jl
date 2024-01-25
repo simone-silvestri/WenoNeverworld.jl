@@ -6,24 +6,27 @@ using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/storage4/"
-@show output_prefix = output_dir * "WenoNeverworldData/weno_fourth"
+@show output_prefix = output_dir * "WenoNeverworldData/weno_eighth"
 
 arch = GPU()
 
 # The resolution in degrees
-degree_resolution = 1/4
-new_degree = 1/4
-old_degree = 1/4
+degree_resolution = 1/8
+new_degree = 1/8
+old_degree = 1/8
 
 grid = NeverworldGrid(new_degree; arch)
 previous_grid = NeverworldGrid(old_degree; arch)
 
+
 # Extend the vertical advection scheme
 interp_init = false # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-init_file = "/storage4/WenoNeverworldData/weno_fourth_checkpoint_iteration2102400.jld2" # To restart from a file: `init_file = /path/to/restart`
+
+init_file = "/storage3/WenoNeverworldData/weno_eighth_checkpoint_iteration15855224.jld2" # To restart from a file: `init_file = /path/to/restart`
+
 
 # Simulation parameters
-Δt        = 10minutes
+Δt        = 5minutes
 stop_time = 3000years
 
 # Latitudinal wind stress acting on the zonal velocity
@@ -49,11 +52,12 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               
 
 # Adaptable time step
-wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 40minutes, min_Δt = 10minutes, max_change = 1.1)
-simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
+
+#wizard = TimeStepWizard(; cfl = 0.3, max_Δt = 40minutes, min_Δt = 10minutes, max_change = 1.1)
+#simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
-checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
+checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 8years)
 #vertically_averaged_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
 
 # initializing the time for wall_time calculation

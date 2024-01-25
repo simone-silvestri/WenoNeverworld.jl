@@ -3,7 +3,7 @@ using GLMakie, JLD2, Oceananigans, Statistics
 # Load the data
 @info "Loading data..."
 path = pwd()
-hfile = jldopen("/storage2/WenoNeverworldData/weno_half_checkpoint_iteration985500.jld2", "r")
+hfile = jldopen("/storage3/WenoNeverworldData/weno_eighth_checkpoint_iteration9975074.jld2", "r")
 keys(hfile)
 #initialized from 1/4
 ## grab grid and fields
@@ -68,10 +68,10 @@ weighted_tke_slice = (u_slice .^ 2 + v_slice .^ 2)
 
 ##
 fig = Figure(resolution = (5000, 5000))
-ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 20, xticklabelsize = 20, ylabel="Latitude [∘]", ylabelsize = 20,title="1/2∘",  yticklabelsize = 20, titlesize=25, aspect=0.5, yticks=-70:10:70)
+ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 20, xticklabelsize = 20, ylabel="Latitude [∘]", ylabelsize = 20,title="1/8∘",  yticklabelsize = 20, titlesize=25, aspect=0.5, yticks=-70:10:70)
 hm = heatmap!(ax, lon, lat, log10.(weighted_tke_slice .+ eps(1000.0)), colorrange = (-4, 1), colormap = :plasma)
 cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30)
 display(fig)
-save("plotting/tke_slice_half.png", fig)
+save("plotting/tke_slice_eighth.png", fig)
 ##
 quantile(log10.(weighted_tke_slice .+ eps(1000.0))[:], 0.999)
