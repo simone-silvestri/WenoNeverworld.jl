@@ -12,9 +12,9 @@ function integral_kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries; stride 
     return energy
 end
 
-function integral_available_potential_energy(b::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
+function integral_available_potential_energy(b::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(b.times))
     energy = Float64[]
-    vol = VolumeField(u.grid)
+    vol = VolumeField(b.grid)
 
     for i in start_time:stride:end_time
         @info "integrating index $i of $end_time"
