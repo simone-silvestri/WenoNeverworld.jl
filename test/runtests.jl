@@ -41,6 +41,8 @@ end
 
     run_simulation!(coarse_simulation)
 
+    b_coarse = coarse_simulation.model.tracers.b
+
     # Fine simulation interpolated from the coarse one
     fine_z_faces = exponential_z_faces(Nz = 20)
     fine_grid = Neverworld(2; z = fine_z_faces)
@@ -50,4 +52,6 @@ end
                                                  init_file = "test_fields_checkpoint_iteration0.jld2")
 
     run_simulation!(fine_simulation)
+
+    b_fine = WenoNeverworld.regridded_field(b_coarse, fine_grid, (Center, Center, Center))
 end
