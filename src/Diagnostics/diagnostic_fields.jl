@@ -1,3 +1,4 @@
+using Oceananigans.Utils
 using Oceananigans.Operators
 using Oceananigans.BoundaryConditions
 using Oceananigans.Models.HydrostaticFreeSurfaceModels: hydrostatic_fields
@@ -98,17 +99,32 @@ end
 VerticalVorticity(f::Dict, i)  = compute!(Field(VerticalVorticityOperation(f, i)))
 KineticEnergy(f::Dict, i)      = compute!(Field(KineticEnergyOperation(f, i)))
 Stratification(f::Dict, i)     = compute!(Field(StratificationOperation(f, i)))
-PotentialVorticity(f::Dict, i) = compute!(Field(PotentialVorticity(f, i))) 
+PotentialVorticity(f::Dict, i) = compute!(Field(PotentialVorticityOperation(f, i))) 
 
 @inline _deformation_radius(i, j, k, grid, b) = sqrt(max(0, ∂zᶜᶜᶠ(i, j, k, grid, b))) / π /
                                                 abs(ℑxyᶜᶜᵃ(i, j, k, grid, fᶠᶠᵃ, HydrostaticSphericalCoriolis()))
 
-function DeformationRadius(f::Dict, i)
-    
-    Rop = KernelFunctionOperation{Center, Center, Face}(_deformation_radius, f[:b].grid, f[:b][i])
-    R   = compute!(Field(Integral(Rop, dims = 3))) 
+@kernel function _deformation_radius!(Ld, b, grid, ::Val{Nz}) where Nz
+    i, j = @index(Global, NTuple)
 
-    return R
+    @inbounds Ld[i, j, 1] = 0
+
+    d₁ᶜᶜᶠ = _deformation_radius(i, j, 1, grid, b)
+    @unroll for k in 1:Nz
+        d₂ᶜᶜᶠ = _deformation_radius(i, j, k+1, grid, b)
+        @inbounds Ld[i, j, k] += 0.5 * (d₁ᶜᶜᶠ + d₂ᶜᶜᶠ) * Δzᶜᶜᶜ(i, j, k, grid)
+    end
+end
+
+function DeformationRadius(f::Dict, i)
+    grid = f[:b].grid
+    arch = architecture(grid)
+
+    Ld = Field{Center, Center, Nothing}(grid) 
+
+    launch!(arch, grid, :xy, _deformation_radius!, Ld, f[:b][i], grid, Val(grid.Nz))
+
+    return Ld
 end
 
 
