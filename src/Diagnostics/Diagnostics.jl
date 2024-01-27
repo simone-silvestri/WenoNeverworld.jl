@@ -1,7 +1,8 @@
 module Diagnostics
 
 export all_fieldtimeseries, limit_timeseries!, propagate
-export VolumeField, AreaField, MetricField, KineticEnergyField, time_average
+export VolumeField, AreaField, MetricField, time_average
+export KineticEnergy, VerticalVorticity, PotentialVorticity, DeformationRadius, Stratification
 
 using Oceananigans
 using KernelAbstractions: @kernel, @index 

@@ -95,9 +95,10 @@ function KineticEnergyOperation(velocities::NamedTuple)
     return E_op
 end
 
-VerticalVorticity(f::Dict, i) = compute!(Field(VerticalVorticityOperation(f, i)))
-KineticEnergy(f::Dict, i)     = compute!(Field(KineticEnergyOperation(f, i)))
-Stratification(f::Dict, i)    = compute!(Field(StratificationOperation(f, i)))
+VerticalVorticity(f::Dict, i)  = compute!(Field(VerticalVorticityOperation(f, i)))
+KineticEnergy(f::Dict, i)      = compute!(Field(KineticEnergyOperation(f, i)))
+Stratification(f::Dict, i)     = compute!(Field(StratificationOperation(f, i)))
+PotentialVorticity(f::Dict, i) = compute!(Field(PotentialVorticity(f, i))) 
 
 @inline _deformation_radius(i, j, k, grid, b) = sqrt(max(0, ∂zᶜᶜᶠ(i, j, k, grid, b))) / π /
                                                 abs(ℑxyᶜᶜᵃ(i, j, k, grid, fᶠᶠᵃ, HydrostaticSphericalCoriolis()))

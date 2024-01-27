@@ -72,8 +72,7 @@ function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2m
     return nothing
 end
 
-# Maybe we can remove this propagate field in lieu of a diffusion, 
-# Still we'll need to do this a couple of steps on the original grid
+# Disclaimer: the `_propagate_field!` implementation is copied from https://github.com/CliMA/ClimaOcean.jl/pull/60
 @kernel function _propagate_field!(field, tmp_field)
     i, j, k = @index(Global, NTuple)
 
@@ -113,6 +112,9 @@ propagate_horizontally!(field, ::Nothing; kw...) = nothing
     propagate_horizontally!(field; max_iter = Inf)
 
 propagate horizontally a field with missing values at `field[i, j, k] == 0`
+
+disclaimer:
+the `propagate_horizontally!` implementation is inspired by https://github.com/CliMA/ClimaOcean.jl/pull/60
 """
 function propagate_horizontally!(field; max_iter = Inf) 
     iter  = 0
@@ -140,7 +142,8 @@ end
     continue_downwards!(field)
 
 continue downwards a field with missing values at `field[i, j, k] == 0`
-Grid cells where `mask == 1` will be preserved
+
+the `continue_downwards!` implementation is inspired by https://github.com/CliMA/ClimaOcean.jl/pull/60
 """
 function continue_downwards!(field)
     arch = architecture(field)
