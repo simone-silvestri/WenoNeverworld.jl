@@ -14,6 +14,18 @@ using Oceananigans.OutputReaders: OnDisk
 using JLD2
 using Oceananigans.Fields: default_indices
 
+"""
+    propagate(fields...; func)
+
+Propagates the function `func` with inputs `fields...` through time.
+
+# Arguments
+- `fields`: The input fields
+- `func`: The function to apply to the fields at each time step.
+
+# Returns
+- `field_output`: The output of function `func` as a `FieldTimeSeries` object.
+"""
 function propagate(fields...; func)
 
     fields_op = Tuple(field[1] for field in fields)

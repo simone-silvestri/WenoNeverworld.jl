@@ -27,12 +27,21 @@ assumed_location(var) = var == "u" ? (Face, Center, Center) :
 remove_last_character(s) = s[1:end-1]
 
 """
-    all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w", "b"), checkpointer = false)
+    all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w", "b"), checkpointer = false, number_files = nothing)
 
-returns a dictionary containing a `FieldTimeSeries` for each variable in `variables`.
-If `checkpointer == true` it loads the data from all the checkpoint files contained in the directory `dir`
+Load and return a dictionary of field time series data.
+
+# Arguments
+- `filename`: The name of the file containing the field data.
+- `dir`: The directory where the field data files are located. Defaults to "./".
+- `variables`: A tuple of variable names to load. Defaults to `("u", "v", "w", "b")`.
+- `checkpointer`: A boolean indicating whether to read checkpointers or time series. Defaults to `false`.
+- `number_files`: The number of files to load. Defaults to `nothing`.
+
+# Returns
+A dictionary where the keys are symbols representing the variable names and the values are `FieldTimeSeries` objects.
 """
-function all_fieldtimeseries(filename, dir = nothing; 
+function all_fieldtimeseries(filename, dir = "./"; 
                              variables = ("u", "v", "w", "b"), 
                              checkpointer = false,
                              number_files = nothing)
@@ -41,7 +50,7 @@ function all_fieldtimeseries(filename, dir = nothing;
 
     if !(checkpointer)
         for var in variables
-            fields[Symbol(var)] = FieldTimeSeries(filename, var; backend=OnDisk(), architecture=CPU())
+            fields[Symbol(var)] = FieldTimeSeries(dir * filename, var; backend=OnDisk(), architecture=CPU())
         end
     else
         files = readdir(dir)
@@ -140,8 +149,8 @@ function add_kinetic_energy_and_vorticity_to_timeseries!(fields::Dict)
     E = FieldTimeSeries{Center, Center, Center}(fields[:u].grid, fields[:u].times)
 
     for t in 1:length(E.times)
-        set!(ζ[t], VerticalVorticityField(fields, t))
-        set!(E[t], KineticEnergyField(fields, t))
+        set!(ζ[t], VerticalVorticity(fields, t))
+        set!(E[t], KineticEnergy(fields, t))
     end
 
     fields[:E] = E

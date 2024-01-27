@@ -10,13 +10,13 @@ using Test
 end
 
 @testset "Neverworld Simulation" begin
-    grid       = NeverworldGrid(4)
+    grid       = NeverworldGrid(8)
     simulation = weno_neverworld_simulation(grid; stop_iteration = 1)
     run_simulation!(simulation)
 end
 
 @testset "Tracer Boundary Conditions" begin
-    grid       = NeverworldGrid(4)
+    grid       = NeverworldGrid(8)
     tracers    = (:b, :c)
 
     @inline function c_boundary_condition(i, j, grid, clock, fields) 
@@ -34,7 +34,7 @@ end
     
     # Coarse simulation
     coarse_z_faces = exponential_z_faces(Nz = 10)
-    coarse_grid = NeverworldGrid(4; z = coarse_z_faces)
+    coarse_grid = NeverworldGrid(8; z_faces = coarse_z_faces)
 
     coarse_simulation = weno_neverworld_simulation(coarse_grid; stop_iteration = 1)
     checkpoint_outputs!(coarse_simulation, "test_fields")
@@ -45,13 +45,15 @@ end
 
     # Fine simulation interpolated from the coarse one
     fine_z_faces = exponential_z_faces(Nz = 20)
-    fine_grid = Neverworld(2; z = fine_z_faces)
+    fine_grid = Neverworld(4; z_faces = fine_z_faces)
 
+    @info "testing 3-dimensional interpolation..."
+    b_fine = WenoNeverworld.regridded_field(b_coarse, fine_grid, (Center, Center, Center))
+
+    @info "testing interpolated restart capabilities..."
     fine_simulation = weno_neverworld_simulation(fine_grid; 
                                                  previous_grid = coarse_grid,
                                                  init_file = "test_fields_checkpoint_iteration0.jld2")
 
     run_simulation!(fine_simulation)
-
-    b_fine = WenoNeverworld.regridded_field(b_coarse, fine_grid, (Center, Center, Center))
 end

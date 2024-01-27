@@ -16,7 +16,7 @@ import Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
 
 Returns the three-dimensional vertical vorticity at time index i.
 """
-VerticalVorticity(f::Dict, i; indices = (:, :, :)) = compute!(Field(VerticalVorticityOperation(f, i)); indices)
+VerticalVorticity(f::Dict, i; indices = (:, :, :)) = compute!(Field(VerticalVorticityOperation(f, i); indices))
 
 
 """
@@ -24,7 +24,7 @@ VerticalVorticity(f::Dict, i; indices = (:, :, :)) = compute!(Field(VerticalVort
 
 Returns the three-dimensional kinetic energy at time index i.
 """
-KineticEnergy(f::Dict, i; indices = (:, :, :)) = compute!(Field(KineticEnergyOperation(f, i)); indices)
+KineticEnergy(f::Dict, i; indices = (:, :, :)) = compute!(Field(KineticEnergyOperation(f, i); indices))
 
 
 """
@@ -32,14 +32,14 @@ KineticEnergy(f::Dict, i; indices = (:, :, :)) = compute!(Field(KineticEnergyOpe
 
 Returns the three-dimensional stratification at time index i.
 """
-Stratification(f::Dict, i; indices = (:, :, :)) = compute!(Field(StratificationOperation(f, i)); indices)
+Stratification(f::Dict, i; indices = (:, :, :)) = compute!(Field(StratificationOperation(f, i); indices))
 
 """
     PotentialVorticity(f::Dict, i)
 
 Returns the three-dimensional potential vorticity at time index i.
 """
-PotentialVorticity(f::Dict, i; indices = (:, :, :)) = compute!(Field(PotentialVorticityOperation(f, i)); indices) 
+PotentialVorticity(f::Dict, i; indices = (:, :, :)) = compute!(Field(PotentialVorticityOperation(f, i); indices)) 
 
 """
     DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655)
