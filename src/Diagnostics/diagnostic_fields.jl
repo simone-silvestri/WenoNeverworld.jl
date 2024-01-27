@@ -1,37 +1,88 @@
 using Oceananigans.Utils
 using Oceananigans.Operators
 using Oceananigans.BoundaryConditions
+using Oceananigans.ImmersedBoundaries: immersed_cell
 using Oceananigans.Models.HydrostaticFreeSurfaceModels: hydrostatic_fields
 using Oceananigans.Coriolis: fᶠᶠᵃ
-using Oceananigans.TurbulenceClosures: ∂ⱼ_τ₁ⱼ, ∂ⱼ_τ₂ⱼ, ∂ⱼ_τ₃ⱼ, AbstractScalarBiharmonicDiffusivity
 
 import Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
-
 
 ##### 
 ##### Usefull diagnostics
 #####
 
-VerticalVorticityField(fields::Dict, i) = VerticalVorticityField((; u = fields[:u][i], v = fields[:v][i]))
-KineticEnergyField(fields::Dict, i)     =     KineticEnergyField((; u = fields[:u][i], v = fields[:v][i]))
+"""
+    VerticalVorticity(f::Dict, i)
 
-VerticalVorticityOperation(fields::Dict, i)   =   VerticalVorticityOperation((; u = fields[:u][i], v = fields[:v][i]))
-PotentialVorticityOperation(fields::Dict, i)  =  PotentialVorticityOperation((; u = fields[:u][i], v = fields[:v][i], b = fields[:b][i]))
-KineticEnergyOperation(fields::Dict, i)       =       KineticEnergyOperation((; u = fields[:u][i], v = fields[:v][i]))
-StratificationOperation(fields::Dict, i)      =      StratificationOperation(fields[:b][i])
+Returns the three-dimensional vertical vorticity at time index i.
+"""
+VerticalVorticity(f::Dict, i) = compute!(Field(VerticalVorticityOperation(f, i)))
 
-MetricField(loc, grid, metric; indices = default_indices(3)) = compute!(Field(GridMetricOperation(loc, metric, grid); indices))
 
-VolumeField(grid, loc=(Center, Center, Center);  indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.volume; indices)
-  AreaField(grid, loc=(Center, Center, Nothing); indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.Az; indices)
+"""
+    KineticEnergy(f::Dict, i)
 
-@inline _density_operation(i, j, k, grid, b, ρ₀, g) = ρ₀ * (1 - b[i, j, k] / g)
+Returns the three-dimensional kinetic energy at time index i.
+"""
+KineticEnergy(f::Dict, i) = compute!(Field(KineticEnergyOperation(f, i)))
 
-DensityOperation(b; ρ₀ = 1000.0, g = 9.80655) = 
-    KernelFunctionOperation{Center, Center, Center}(_density_operation, b.grid, b, ρ₀, g)
 
+"""
+    Stratification(f::Dict, i)
+
+Returns the three-dimensional stratification at time index i.
+"""
+Stratification(f::Dict, i) = compute!(Field(StratificationOperation(f, i)))
+
+"""
+    PotentialVorticity(f::Dict, i)
+
+Returns the three-dimensional potential vorticity at time index i.
+"""
+PotentialVorticity(f::Dict, i) = compute!(Field(PotentialVorticityOperation(f, i))) 
+
+"""
+    DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655)
+
+Returns the three-dimensional density given a buoyancy field b.
+"""
 DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655) = compute!(Field(DensityOperation(b; ρₒ, g)))
 
+"""
+    DeformationRadius(f::Dict, i)
+
+Returns the two-dimensional deformation vorticity at time index i.
+"""
+function DeformationRadius(f::Dict, i)
+    grid = f[:b].grid
+    arch = architecture(grid)
+
+    Ld = Field{Center, Center, Nothing}(grid) 
+
+    launch!(arch, grid, :xy, _deformation_radius!, Ld, f[:b][i], grid, Val(grid.Nz))
+
+    return Ld
+end
+
+"""
+    VolumeField(grid, loc=(Center, Center, Center);  indices = default_indices(3)) 
+
+Returns a three-dimensional field containing the cell volumes at location `loc` with indices `indices`.
+"""
+VolumeField(grid, loc=(Center, Center, Center);  indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.volume; indices)
+  
+"""
+    AreaField(grid, loc=(Center, Center, Nothing); indices = default_indices(3))
+
+Returns a two-dimensional field containing the cell horizontal areas at location `loc` with indices `indices`.
+"""
+AreaField(grid, loc=(Center, Center, Nothing); indices = default_indices(3)) = MetricField(loc, grid, Oceananigans.AbstractOperations.Az; indices)
+
+"""
+    HeightField(grid, loc = (Center, Center, Center))  
+
+Returns a three-dimensional field containing the cell vertical spacing at location `loc`.
+"""
 function HeightField(grid, loc = (Center, Center, Center))  
 
     zf = Field(loc, grid)
@@ -44,14 +95,21 @@ function HeightField(grid, loc = (Center, Center, Center))
     return zf
 end
 
-function KineticEnergyField(velocities::NamedTuple)
-    u = velocities.u
-    v = velocities.v
+#####
+##### KernelFunctionOperations
+#####
 
-    E_op = @at (Center, Center, Center) 0.5 * (u^2 + v^2)
+VerticalVorticityOperation(fields::Dict, i)   =   VerticalVorticityOperation((; u = fields[:u][i], v = fields[:v][i]))
+PotentialVorticityOperation(fields::Dict, i)  =  PotentialVorticityOperation((; u = fields[:u][i], v = fields[:v][i], b = fields[:b][i]))
+KineticEnergyOperation(fields::Dict, i)       =       KineticEnergyOperation((; u = fields[:u][i], v = fields[:v][i]))
+StratificationOperation(fields::Dict, i)      =      StratificationOperation(fields[:b][i])
 
-    return compute!(Field(E_op))
-end
+MetricField(loc, grid, metric; indices = default_indices(3)) = compute!(Field(GridMetricOperation(loc, metric, grid); indices))
+
+@inline _density_operation(i, j, k, grid, b, ρ₀, g) = ρ₀ * (1 - b[i, j, k] / g)
+
+DensityOperation(b; ρ₀ = 1000.0, g = 9.80655) = 
+    KernelFunctionOperation{Center, Center, Center}(_density_operation, b.grid, b, ρ₀, g)
 
 function VerticalVorticityOperation(velocities::NamedTuple)
 
@@ -96,11 +154,6 @@ function KineticEnergyOperation(velocities::NamedTuple)
     return E_op
 end
 
-VerticalVorticity(f::Dict, i)  = compute!(Field(VerticalVorticityOperation(f, i)))
-KineticEnergy(f::Dict, i)      = compute!(Field(KineticEnergyOperation(f, i)))
-Stratification(f::Dict, i)     = compute!(Field(StratificationOperation(f, i)))
-PotentialVorticity(f::Dict, i) = compute!(Field(PotentialVorticityOperation(f, i))) 
-
 @inline _deformation_radius(i, j, k, grid, b) = sqrt(max(0, ∂zᶜᶜᶠ(i, j, k, grid, b))) / π /
                                                 abs(ℑxyᶜᶜᵃ(i, j, k, grid, fᶠᶠᵃ, HydrostaticSphericalCoriolis()))
 
@@ -112,19 +165,6 @@ PotentialVorticity(f::Dict, i) = compute!(Field(PotentialVorticityOperation(f, i
     d₁ᶜᶜᶠ = _deformation_radius(i, j, 1, grid, b)
     @unroll for k in 1:Nz
         d₂ᶜᶜᶠ = _deformation_radius(i, j, k+1, grid, b)
-        @inbounds Ld[i, j, k] += 0.5 * (d₁ᶜᶜᶠ + d₂ᶜᶜᶠ) * Δzᶜᶜᶜ(i, j, k, grid)
+        @inbounds Ld[i, j, k] += ifelse(immersed_cell(i, j, k, grid), 0, 0.5 * (d₁ᶜᶜᶠ + d₂ᶜᶜᶠ) * Δzᶜᶜᶜ(i, j, k, grid))
     end
 end
-
-function DeformationRadius(f::Dict, i)
-    grid = f[:b].grid
-    arch = architecture(grid)
-
-    Ld = Field{Center, Center, Nothing}(grid) 
-
-    launch!(arch, grid, :xy, _deformation_radius!, Ld, f[:b][i], grid, Val(grid.Nz))
-
-    return Ld
-end
-
-
