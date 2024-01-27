@@ -39,10 +39,10 @@ initializes the model according to interpolate or not on a finer/coarser grid `V
     w_init = jldopen(init_file)["w/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     
     @info "interpolating fields"
-    b_init = interpolate_per_level(b_init, previous_grid, grid, (Center, Center, Center))
-    u_init = interpolate_per_level(u_init, previous_grid, grid, (Face, Center, Center))
-    v_init = interpolate_per_level(v_init, previous_grid, grid, (Center, Face, Center))
-    w_init = interpolate_per_level(w_init, previous_grid, grid, (Center, Center, Face))
+    b_init = regridded_field(b_init, previous_grid, grid, (Center, Center, Center))
+    u_init = regridded_field(u_init, previous_grid, grid, (Face, Center, Center))
+    v_init = regridded_field(v_init, previous_grid, grid, (Center, Face, Center))
+    w_init = regridded_field(w_init, previous_grid, grid, (Center, Center, Face))
 
     set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
 end

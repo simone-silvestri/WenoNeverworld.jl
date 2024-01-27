@@ -61,5 +61,6 @@ import Oceananigans.TurbulenceClosures: _compute_ri_based_diffusivities!
     # Update by averaging in time
     @inbounds κᶜ[i, j, k] = (Cᵃᵛ * κᶜ[i, j, k] + κᶜ⁺) / (1 + Cᵃᵛ)
     @inbounds κᵘ[i, j, k] = (Cᵃᵛ * κᵘ[i, j, k] + κᵘ⁺) / (1 + Cᵃᵛ)
+    
     return nothing
 end

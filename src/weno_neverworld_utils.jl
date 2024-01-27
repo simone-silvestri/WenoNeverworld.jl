@@ -4,6 +4,15 @@ using Oceananigans.Utils: instantiate
 using Oceananigans.BoundaryConditions
 using Oceananigans.DistributedComputations: DistributedGrid, reconstruct_global_grid
 
+using KernelAbstractions: @kernel, @index
+using KernelAbstractions.Extras.LoopInfo: @unroll
+
+using Oceananigans.Fields: regrid!
+using Oceananigans.Grids: cpu_face_constructor_x, 
+                          cpu_face_constructor_y, 
+                          cpu_face_constructor_z,
+                          topology
+
 """ 
     function cubic_interpolate(x, x1, x2, y1, y2, d1, d2)
 
@@ -63,46 +72,155 @@ function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2m
     return nothing
 end
 
-"""	
-    function interpolate_per_level(old_vector, old_grid, new_grid, loc)	
+# Maybe we can remove this propagate field in lieu of a diffusion, 
+# Still we'll need to do this a couple of steps on the original grid
+@kernel function _propagate_field!(field, tmp_field)
+    i, j, k = @index(Global, NTuple)
 
-interpolate `old_vector` (living on `loc`) from `old_grid` to `new_grid` 	
-Note: The z-levels of `old_grid` and `new_grid` should be the same!!	
-"""
-function interpolate_per_level(old_vector, old_grid, new_grid, loc)
+    @inbounds begin
+        nw = field[i - 1, j, k]
+        ns = field[i, j - 1, k]
+        ne = field[i + 1, j, k]
+        nn = field[i, j + 1, k]
+        nb = (nw, ne, nn, ns)
 
-    new_grid = new_grid isa DistributedGrid ? reconstruct_global_grid(new_grid) : new_grid
+        counter = 0
+        cumsum  = 0.0 
 
-    H_new = halo_size(new_grid)
-    H_old = halo_size(old_grid)
-
-    Nx_new, Ny_new, _ = size(new_grid)
-    Nx_old, Ny_old, _ = size(old_grid)
-    Nz = size(old_vector)[3]
-
-    k_final = Nz
-
-    loc[2] == Face ? j_final = Ny_new + 1 : j_final = Ny_new
-    
-    if loc[3] == Nothing
-        k_final = 1
-        loc = (loc[1], loc[2], Center)
-    end
-
-    cpu_old_grid = on_architecture(CPU(), old_grid).underlying_grid
-    cpu_new_grid = on_architecture(CPU(), new_grid).underlying_grid
-
-    old_field  = Field{loc[1], loc[2], Nothing}(cpu_old_grid)
-    new_vector = zeros(Nx_new, j_final, k_final)
-    
-    for k in 1:k_final
-        set!(old_field, old_vector[:, :, k])
-        fill_halo_regions!(old_field)
-        for i in 1:Nx_new, j in 1:j_final
-            new_vector[i, j, k] = interpolate(old_field, λnode(i, cpu_new_grid, loc[1]()), φnode(j, cpu_new_grid, loc[2]()), cpu_new_grid.zᵃᵃᶜ[1])
+        @unroll for n in nb
+            counter += ifelse(isnan(n), 0, 1)
+            cumsum  += ifelse(isnan(n), 0, n)
         end
-    end
 
-    return new_vector
+        tmp_field[i, j, k] = ifelse(cumsum == 0, NaN, cumsum / counter)
+    end
 end
 
+@kernel function _substitute_values!(field, tmp_field)
+    i, j, k = @index(Global, NTuple)
+    @inbounds substitute = isnan(field[i, j, k])
+    @inbounds field[i, j, k] = ifelse(substitute, tmp_field[i, j, k], field[i, j, k])
+end
+
+@kernel function _nans_at_zero!(field)
+    i, j, k = @index(Global, NTuple)
+    @inbounds field[i, j, k] = ifelse(field[i, j, k] == 0, NaN, field[i, j, k])
+end
+
+propagate_horizontally!(field, ::Nothing; kw...) = nothing
+
+""" 
+    propagate_horizontally!(field; max_iter = Inf)
+
+propagate horizontally a field with missing values at `field[i, j, k] == 0`
+"""
+function propagate_horizontally!(field; max_iter = Inf) 
+    iter  = 0
+    grid  = field.grid
+    arch  = architecture(grid)
+    
+    launch!(arch, grid, :xyz, _nans_at_zero!, field)
+    fill_halo_regions!(field)
+
+    tmp_field = deepcopy(field)
+
+    while isnan(sum(interior(field))) && iter < max_iter
+        launch!(arch, grid, :xyz, _propagate_field!,   field, tmp_field)
+        launch!(arch, grid, :xyz, _substitute_values!, field, tmp_field)
+        iter += 1
+        @debug "propagate pass $iter with sum $(sum(parent(field)))"
+    end
+
+    GC.gc()
+
+    return nothing
+end
+
+""" 
+    continue_downwards!(field)
+
+continue downwards a field with missing values at `field[i, j, k] == 0`
+Grid cells where `mask == 1` will be preserved
+"""
+function continue_downwards!(field)
+    arch = architecture(field)
+    grid = field.grid
+    launch!(arch, grid, :xy, _continue_downwards!, field, grid)
+    return nothing
+end
+
+@kernel function _continue_downwards!(field, grid)
+    i, j = @index(Global, NTuple)
+
+    Nz = grid.Nz
+
+    @unroll for k = Nz-1 : -1 : 1
+        @inbounds fill_from_above = field[i, j, k] == 0
+        @inbounds field[i, j, k] = ifelse(fill_from_above, field[i, j, k+1], field[i, j, k])
+    end
+end
+
+function fill_missing_values!(tracer; max_iter = Inf)
+
+    continue_downwards!(tracer)
+    propagate_horizontally!(tracer; max_iter)
+    
+    return tracer
+end
+
+# Regrid a field in three dimensions
+function three_dimensional_regrid!(a, b)
+    target_grid = a.grid isa ImmersedBoundaryGrid ? a.grid.underlying_grid : a.grid
+    source_grid = b.grid isa ImmersedBoundaryGrid ? b.grid.underlying_grid : b.grid 
+
+    topo = topology(target_grid)
+    arch = architecture(target_grid)
+    
+    yt = cpu_face_constructor_y(target_grid)
+    zt = cpu_face_constructor_z(target_grid)
+    Nt = size(target_grid)
+
+    xs = cpu_face_constructor_x(source_grid)
+    ys = cpu_face_constructor_y(source_grid)
+    Ns = size(source_grid)
+
+    zsize = (Ns[1], Ns[2], Nt[3])
+    ysize = (Ns[1], Nt[2], Nt[3])
+
+    # Start by regridding in z
+    @debug "Regridding in z"
+    zgrid   = LatitudeLongitudeGrid(arch, size = zsize, longitude = xs, latitude = ys, z = zt, topology = topo)
+    field_z = Field(location(b), zgrid)
+    regrid!(field_z, zgrid, source_grid, b)
+
+    # regrid in y 
+    @debug "Regridding in y"
+    ygrid   = LatitudeLongitudeGrid(arch, size = ysize, longitude = xs, latitude = yt, z = zt, topology = topo)
+    field_y = Field(location(b), ygrid)
+    regrid!(field_y, ygrid, zgrid, field_z)
+
+    # Finally regrid in x
+    @debug "Regridding in x"
+    regrid!(a, target_grid, ygrid, field_y)
+
+    return a
+end
+
+"""	
+    function regridded_field(old_vector, old_grid, new_grid, loc)	
+
+interpolate `old_vector` (living on `loc`) from `old_grid` to `new_grid` 	
+"""
+function regridded_field(old_vector, old_grid, new_grid, loc)
+
+    # Old data
+    old_field = Field(loc, old_grid)
+    set!(old_field, old_vector)
+    
+    fill_halo_regions!(old_field)
+    fill_missing_values!(old_field)
+
+    new_field = Field(loc, new_grid)
+    
+    return three_dimensional_regrid!(new_field, old_field)
+end
