@@ -10,14 +10,16 @@ using Test
 end
 
 @testset "Neverworld Simulation" begin
-    grid       = NeverworldGrid(8)
+    z_faces    = exponential_z_faces(Nz = 3)
+    grid       = NeverworldGrid(8; z_faces)
     simulation = weno_neverworld_simulation(grid; stop_iteration = 1)
     run_simulation!(simulation)
 end
 
 @testset "Tracer Boundary Conditions" begin
-    grid       = NeverworldGrid(8)
-    tracers    = (:b, :c)
+    z_faces = exponential_z_faces(Nz = 3)
+    grid    = NeverworldGrid(8; z_faces)
+    tracers = (:b, :c)
 
     @inline function c_boundary_condition(i, j, grid, clock, fields) 
         ϕ = φnode(i, j, grid.Nz, grid, Center(), Center(), Center())
@@ -45,7 +47,7 @@ end
 
     # Fine simulation interpolated from the coarse one
     fine_z_faces = exponential_z_faces(Nz = 20)
-    fine_grid = Neverworld(4; z_faces = fine_z_faces)
+    fine_grid = Neverworldgrid(6; z_faces = fine_z_faces)
 
     @info "testing 3-dimensional interpolation..."
     b_fine = WenoNeverworld.regridded_field(b_coarse, fine_grid, (Center, Center, Center))

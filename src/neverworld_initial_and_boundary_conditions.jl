@@ -53,7 +53,7 @@ default_φs = (-70, -45, -15, 0, 15, 45, 70)
 default_τs = (0.0, 0.2, -0.1, -0.02, -0.1, 0.1, 0.0)
     
 """
-WindStressBoundaryCondition(; φs = default_φs, τs = default_τs) 
+    WindStressBoundaryCondition(; φs = default_φs, τs = default_τs)
 
 Wind stess boundary condition which implements a piecewise cubic interpolation
 between points `φs` (`Tuple`) and `τs` (`Tuple`).
