@@ -9,7 +9,11 @@ api = Any[
 makedocs(
     sitename = "WenoNeverworld",
     format = Documenter.HTML(),
-    modules = [WenoNeverworld]
+#     modules = [WenoNeverworld]
+    pages=[
+        "Home" => "index.md",
+        "API" => api,
+    ]
 )
 
 # Documenter can also automatically deploy documentation to gh-pages.
