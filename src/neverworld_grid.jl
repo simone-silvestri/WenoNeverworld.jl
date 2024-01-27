@@ -3,12 +3,12 @@ using Oceananigans.Grids: xnode, ynode, halo_size
 using Oceananigans.DistributedComputations
 
 """
-    function z_faces_exp(; Nz = 69, Lz = 4000.0, e_folding = 0.06704463421863584)
+    function exponential_z_faces(; Nz = 69, Lz = 4000.0, e_folding = 0.06704463421863584)
 
 generates an array of exponential z faces 
 
 """
-function z_faces_exp(; Nz = 69, Lz = 4000.0, e_folding = 0.06704463421863584)
+function exponential_z_faces(; Nz = 69, Lz = 4000.0, e_folding = 0.06704463421863584)
     z_faces   = zeros(Nz + 1)
     Nconstant = 11
 
@@ -54,7 +54,7 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                         longitude = (-2, 62), 
                         latitude = (-70, 70), 
                         bathymetry_params = NeverWorldBathymetryParameters(),
-                        z_faces = z_faces_exp()) 
+                        z_faces = exponential_z_faces()) 
 
     Nx = ceil(Int, (longitude[2] - longitude[1]) / resolution)
     Ny = ceil(Int, ( latitude[2] -  latitude[1]) / resolution)

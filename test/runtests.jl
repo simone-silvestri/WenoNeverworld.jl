@@ -1,4 +1,5 @@
 using WenoNeverworld
+using WenoNeverworld: exponential_z_faces
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnode
@@ -27,4 +28,26 @@ end
 
     simulation = weno_neverworld_simulation(grid; stop_iteration = 1, tracers, tracer_boundary_conditions)
     run_simulation!(simulation)
+end
+
+@testset "Interpolation tests" begin
+    
+    # Coarse simulation
+    coarse_z_faces = exponential_z_faces(Nz = 10)
+    coarse_grid = NeverworldGrid(4; z = coarse_z_faces)
+
+    coarse_simulation = weno_neverworld_simulation(coarse_grid; stop_iteration = 1)
+    checkpoint_outputs!(coarse_simulation, "test_fields")
+
+    run_simulation!(coarse_simulation)
+
+    # Fine simulation interpolated from the coarse one
+    fine_z_faces = exponential_z_faces(Nz = 20)
+    fine_grid = Neverworld(2; z = fine_z_faces)
+
+    fine_simulation = weno_neverworld_simulation(fine_grid; 
+                                                 previous_grid = coarse_grid,
+                                                 init_file = "test_fields_checkpoint_iteration0.jld2")
+
+    run_simulation!(fine_simulation)
 end
