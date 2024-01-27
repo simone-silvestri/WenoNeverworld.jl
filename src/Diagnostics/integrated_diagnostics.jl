@@ -43,7 +43,7 @@ Compute the integral available potential energy (APE) over time for a given `Fie
 - `energy::Vector{Float64}`: The vector of integrated APE values over time.
 
 """
-function integral_available_potential_energy(b::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
+function integral_available_potential_energy(b::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(b.times))
     energy = Float64[]
     vol = VolumeField(b.grid)
 
