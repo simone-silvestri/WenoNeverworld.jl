@@ -60,8 +60,6 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
     Ny = ceil(Int, ( latitude[2] -  latitude[1]) / resolution)
     Nz = length(z_faces) - 1
 
-    @show Nz, z_faces
-
     underlying_grid = LatitudeLongitudeGrid(arch, FT; size = (Nx, Ny, Nz),
                                             latitude,
                                             longitude,
