@@ -9,9 +9,7 @@ using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
 using Oceananigans.Operators: Δx, Δy, Az 
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
-using Oceananigans.TurbulenceClosures: HorizontalDivergenceFormulation, HorizontalDivergenceScalarBiharmonicDiffusivity
 using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
-using Oceananigans.MultiRegion: multi_region_object_from_array, reconstruct_global_grid
 
 #####
 ##### Default parameterizations for the Neverworld simulation
@@ -81,18 +79,18 @@ Keyword arguments:
 ===================
  
 - `previous_grid`: the grid on which `init_file` has been generated, if we restart from `init_file`
-- `μ_drag`: the drag coefficient for the wind stress, default: 0.001
-- `convective_adjustment`: the convective adjustment scheme, default: RiBasedVerticalDiffusivity()
-- `vertical_diffusivity`: the vertical diffusivity scheme, default: VerticalScalarDiffusivity(ν=1e-4, κ=3e-5)
-- `horizontal_closure`: the horizontal closure scheme, default: nothing
-- `coriolis`: the coriolis scheme, default: HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving())
+- `μ_drag`: the drag coefficient for the quadratic bottom drag, default: `0.001`
+- `convective_adjustment`: the convective adjustment scheme, default: `RiBasedVerticalDiffusivity()`
+- `vertical_diffusivity`: the vertical diffusivity scheme, default: `VerticalScalarDiffusivity(ν=1e-4, κ=3e-5)`
+- `horizontal_closure`: the horizontal closure scheme, default: `nothing`
+- `coriolis`: the coriolis scheme, default: `HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving())`
 - `free_surface`: the free surface scheme, default: SplitExplicitFreeSurface(; grid, cfl = 0.75)
-- `momentum_advection`: the momentum advection scheme, default: VectorInvariant(vorticity_scheme = WENO(order = 9), vertical_scheme = WENO(grid))
-- `tracer_advection`: the tracer advection scheme, default: WENO(grid)
+- `momentum_advection`: the momentum advection scheme, default: `VectorInvariant(vorticity_scheme = WENO(order = 9), vertical_scheme = WENO(grid))`
+- `tracer_advection`: the tracer advection scheme, default: `WENO(grid)`
 - `interp_init`: whether to interpolate the initial conditions from `init_file` to `grid`, default: false
 - `init_file`: the file from which to read the initial conditions, default: `nothing`
 - `Δt`: the time step, default: `5minutes`
-- `stop_time`: the time at which to stop the simulation, default: 10years
+- `stop_time`: the time at which to stop the simulation, default: `10years`
 - `stop_iteration`: the iteration at which to stop the simulation, default: Inf
 - `initial_buoyancy`: the initial buoyancy field in case of `init_file = nothing`, function of `(x, y, z)` default: `initial_buoyancy_parabola`
 - `wind_stress`: the wind stress boundary condition, default: `WindStressBoundaryCondition()` (see `src/neverworld_initial_and_boundary_conditions.jl`)

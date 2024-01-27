@@ -1,4 +1,7 @@
-# All fixes that still didn't get merged in Oceananigans.jl
+
+####
+#### This file contains all the bug-fixes that still didn't get merged in Oceananigans.jl
+####
 
 using Oceananigans.BuoyancyModels: ∂z_b
 using Oceananigans.Operators

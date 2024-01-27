@@ -1,76 +1,3 @@
-using Oceananigans.Fields: interpolate
-using Oceananigans.Grids: λnode, φnode, halo_size, on_architecture
-using Oceananigans.Utils: instantiate
-using Oceananigans.BoundaryConditions
-using Oceananigans.DistributedComputations: DistributedGrid, reconstruct_global_grid
-
-using KernelAbstractions: @kernel, @index
-using KernelAbstractions.Extras.LoopInfo: @unroll
-
-using Oceananigans.Fields: regrid!
-using Oceananigans.Grids: cpu_face_constructor_x, 
-                          cpu_face_constructor_y, 
-                          cpu_face_constructor_z,
-                          topology
-
-""" 
-    function cubic_interpolate(x, x1, x2, y1, y2, d1, d2)
-
-returns a cubic function between points `(x1, y1)` and `(x2, y2)` with derivative `d1` and `d2`
-"""
-@inline function cubic_interpolate(x; x₁, x₂, y₁, y₂, d₁ = 0, d₂ = 0)
-    A = [ x₁^3 x₁^2 x₁ 1.0
-          x₂^3 x₂^2 x₂ 1.0
-          3*x₁^2 2*x₁ 1.0 0.0
-          3*x₂^2 2*x₂ 1.0 0.0]
-          
-    b = [y₁, y₂, d₁, d₂]
-
-    coeff = A \ b
-
-    return coeff[1] * x^3 + coeff[2] * x^2 + coeff[3] * x + coeff[4]
-end
-
-"""	
-    function update_simulation_clock!(simulation, init_file)	
-
-updates the `clock` of `simulation` with the time in `init_file`	
-"""
-function update_simulation_clock!(simulation, init_file)
-    clock = jldopen(init_file)["clock"]
-    simulation.model.clock.time = clock.time	
-    simulation.model.clock.iteration = clock.iteration	
-
-    return nothing
-end
-
-"""	
-    function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2minutes)
-
-utility to update the `Δt` of a `simulation` after a certain `cutoff_time` with `new_Δt`.	
-Note: this function adds a `callback` to simulation, so the order of `increase_simulation_Δt!` 	
-matters (i.e. the `Δt` will be updated based on the order of `increase_simulation_Δt!` specified)	
-"""	
-function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2minutes)
-    
-    counter = 0
-    for (name, callback) in simulation.callbacks
-        if occursin("increase_Δt!", string(name))
-            counter = max(counter, parse(Int, string(name)[end]) + 1)
-        end
-    end
-
-    increase_Δt! = Symbol(:increase_Δt!, counter)
-
-    @eval begin
-        $increase_Δt!(simulation) = simulation.Δt = $new_Δt
-        callback = Callback($increase_Δt!, SpecifiedTimes(cutoff_time))
-    end
-
-    simulation.callbacks[increase_Δt!] = callback
-
-    return nothing
-end
 
 # Disclaimer: the `_propagate_field!` implementation is copied from https://github.com/CliMA/ClimaOcean.jl/pull/60
 @kernel function _propagate_field!(field, tmp_field)
@@ -214,7 +141,7 @@ end
 
 interpolate `old_vector` (living on `loc`) from `old_grid` to `new_grid` 	
 """
-function regridded_field(old_vector, old_grid, new_grid, loc)
+function regrid_field(old_vector, old_grid, new_grid, loc)
 
     # Old data
     old_field = Field(loc, old_grid)
@@ -227,3 +154,4 @@ function regridded_field(old_vector, old_grid, new_grid, loc)
     
     return three_dimensional_regrid!(new_field, old_field)
 end
+
