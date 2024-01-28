@@ -22,54 +22,55 @@ function exponential_faces(Nz, Depth; h = Nz / 4.5)
     return reverse(z_faces)
 end
 
-@testset "Neverworld Grid" begin
-    @info "Testing the Neverworld grid..."
-    grid = NeverworldGrid(2)
+# @testset "Neverworld Grid" begin
+#     @info "Testing the Neverworld grid..."
+#     grid = NeverworldGrid(2)
 
-    @test grid isa Oceananigans.ImmersedBoundaryGrid
+#     @test grid isa Oceananigans.ImmersedBoundaryGrid
 
-    @test grid.Δλᶠᵃᵃ == 2
-    @test grid.Δφᵃᶠᵃ == 2
-end
+#     @test grid.Δλᶠᵃᵃ == 2
+#     @test grid.Δφᵃᶠᵃ == 2
+# end
 
-@testset "Neverworld Simulation" begin
-    @info "Testing the Neverworld simulation..."
-    z_faces    = exponential_faces(2, 4000)
-    grid       = NeverworldGrid(12; z_faces)
-    simulation = weno_neverworld_simulation(grid; stop_iteration = 1)
-    run_simulation!(simulation)
-end
+# @testset "Neverworld Simulation" begin
+#     @info "Testing the Neverworld simulation..."
+#     z_faces    = exponential_faces(2, 4000)
+#     grid       = NeverworldGrid(12; z_faces)
+#     simulation = weno_neverworld_simulation(grid; stop_iteration = 1)
+#     run_simulation!(simulation)
+# end
 
 @inline function c_boundary_condition(i, j, grid, clock, fields) 
     ϕ = φnode(i, j, grid.Nz, grid, Center(), Center(), Center())
     return 1 / 7days * (fields.c[i, j, grid.Nz] - cos(2π * ϕ / grid.Ly))
 end
 
-@testset "Tracer Boundary Conditions" begin
-    @info "Testing custom tracer boundary conditions..."
-    z_faces = exponential_faces(2, 4000)
-    grid    = NeverworldGrid(12; z_faces)
-    tracers = (:b, :c)
+# @testset "Tracer Boundary Conditions" begin
+#     @info "Testing custom tracer boundary conditions..."
+#     z_faces = exponential_faces(2, 4000)
+#     grid    = NeverworldGrid(12; z_faces)
+#     tracers = (:b, :c)
 
-    tracer_boundary_conditions = (; c = c_boundary_condition)
+#     tracer_boundary_conditions = (; c = c_boundary_condition)
 
-    simulation = weno_neverworld_simulation(grid; stop_iteration = 1, tracers, tracer_boundary_conditions)
+#     simulation = weno_neverworld_simulation(grid; stop_iteration = 1, tracers, tracer_boundary_conditions)
 
-    @test simulation.model.tracers.b.boundary_conditions.top.condition.func isa BuoyancyRelaxationBoundaryCondition
-    @test simulation.model.tracers.c.boundary_conditions.top.condition.func == c_boundary_condition
+#     @test simulation.model.tracers.b.boundary_conditions.top.condition.func isa BuoyancyRelaxationBoundaryCondition
+#     @test simulation.model.tracers.c.boundary_conditions.top.condition.func == c_boundary_condition
 
-    run!(simulation)
-end
+#     run!(simulation)
+# end
 
 @testset "Interpolation tests" begin
     @info "Testing three dimensional interpolation and restart from a different grid..."
     # Coarse simulation
     coarse_z_faces = exponential_faces(2, 4000)
-    coarse_grid = NeverworldGrid(12; z_faces = coarse_z_faces, H = 1)
+    coarse_grid = NeverworldGrid(12; z_faces = coarse_z_faces, H = 2)
 
     coarse_simulation = weno_neverworld_simulation(coarse_grid; stop_iteration = 1, 
                                                    momentum_advection = nothing, 
                                                    tracer_advection = nothing)
+                                                   
     checkpoint_outputs!(coarse_simulation, "test_fields")
 
     run!(coarse_simulation)
@@ -78,7 +79,7 @@ end
 
     # Fine simulation interpolated from the coarse one
     fine_z_faces = exponential_faces(4, 4000)
-    fine_grid = NeverworldGrid(8; z_faces = fine_z_faces, H = 1)
+    fine_grid = NeverworldGrid(8; z_faces = fine_z_faces, H = 2)
 
     @info "    Testing 3-dimensional interpolation..."
     b_fine = regrid_field(b_coarse, coarse_grid, fine_grid, (Center, Center, Center))

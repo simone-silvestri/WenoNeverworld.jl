@@ -1,3 +1,4 @@
+using Oceananigans.Fields: interpolate!
 
 # Disclaimer: the `_propagate_field!` implementation is copied from https://github.com/CliMA/ClimaOcean.jl/pull/60
 @kernel function _propagate_field!(field, tmp_field)
@@ -57,7 +58,7 @@ function propagate_horizontally!(field; max_iter = Inf)
         launch!(arch, grid, :xyz, _propagate_field!,   field, tmp_field)
         launch!(arch, grid, :xyz, _substitute_values!, field, tmp_field)
         iter += 1
-        @debug "propagate pass $iter with sum $(sum(parent(field)))"
+        @info "propagate pass $iter with sum $(sum(parent(field)))"
     end
 
     GC.gc()
@@ -100,19 +101,17 @@ end
 
 # Regrid a field in three dimensions
 function three_dimensional_regrid!(a, b)
-    target_grid = a.grid isa ImmersedBoundaryGrid ? a.grid.underlying_grid : a.grid
-    source_grid = b.grid isa ImmersedBoundaryGrid ? b.grid.underlying_grid : b.grid 
 
-    topo = topology(target_grid)
-    arch = architecture(target_grid)
+    topo = topology(a.grid)
+    arch = architecture(a.grid)
     
-    yt = cpu_face_constructor_y(target_grid)
-    zt = cpu_face_constructor_z(target_grid)
-    Nt = size(target_grid)
+    yt = cpu_face_constructor_y(a.grid)
+    zt = cpu_face_constructor_z(a.grid)
+    Nt = size(a.grid)
 
-    xs = cpu_face_constructor_x(source_grid)
-    ys = cpu_face_constructor_y(source_grid)
-    Ns = size(source_grid)
+    xs = cpu_face_constructor_x(b.grid)
+    ys = cpu_face_constructor_y(b.grid)
+    Ns = size(b.grid)
 
     zsize = (Ns[1], Ns[2], Nt[3])
     ysize = (Ns[1], Nt[2], Nt[3])
@@ -121,17 +120,17 @@ function three_dimensional_regrid!(a, b)
     @debug "Regridding in z"
     zgrid   = LatitudeLongitudeGrid(arch, size = zsize, longitude = xs, latitude = ys, z = zt, topology = topo)
     field_z = Field(location(b), zgrid)
-    regrid!(field_z, zgrid, source_grid, b)
+    interpolate!(field_z, b)
 
     # regrid in y 
     @debug "Regridding in y"
     ygrid   = LatitudeLongitudeGrid(arch, size = ysize, longitude = xs, latitude = yt, z = zt, topology = topo)
     field_y = Field(location(b), ygrid)
-    regrid!(field_y, ygrid, zgrid, field_z)
+    interpolate!(field_y, field_z)
 
     # Finally regrid in x
     @debug "Regridding in x"
-    regrid!(a, target_grid, ygrid, field_y)
+    interpolate!(a, field_y)
 
     return a
 end
@@ -143,14 +142,17 @@ interpolate `old_vector` (living on `loc`) from `old_grid` to `new_grid`
 """
 function regrid_field(old_vector, old_grid, new_grid, loc)
 
+    source_grid = old_grid isa ImmersedBoundaryGrid ? old_grid.underlying_grid : old_grid
+    target_grid = new_grid isa ImmersedBoundaryGrid ? new_grid.underlying_grid : new_grid 
+
     # Old data
-    old_field = Field(loc, old_grid)
+    old_field = Field(loc, source_grid)
     set!(old_field, old_vector)
     
     fill_halo_regions!(old_field)
     fill_missing_values!(old_field)
 
-    new_field = Field(loc, new_grid)
+    new_field = Field(loc, target_grid)
     
     return three_dimensional_regrid!(new_field, old_field)
 end
