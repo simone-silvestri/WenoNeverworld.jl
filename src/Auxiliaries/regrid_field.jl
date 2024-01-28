@@ -58,7 +58,7 @@ function propagate_horizontally!(field; max_iter = Inf)
         launch!(arch, grid, :xyz, _propagate_field!,   field, tmp_field)
         launch!(arch, grid, :xyz, _substitute_values!, field, tmp_field)
         iter += 1
-        @info "propagate pass $iter with sum $(sum(parent(field)))"
+        @debug "propagate pass $iter with sum $(sum(parent(field)))"
     end
 
     GC.gc()
