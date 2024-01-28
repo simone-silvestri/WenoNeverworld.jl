@@ -8,3 +8,8 @@
   </a>
  <a href="https://github.com/SciML/ColPrac">
     <img alt="ColPrac: Contributor's Guide on Collaborative Practices for Community Packages" src="https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet?style=flat-square"> -->
+
+Snapshots of surface variables (kinetic energy, vorticity and bouyancy) in the Neverworld
+simulation at 1/32ᵒ horizontal resolution
+
+![](https://github.com/simone-silvestri/FiguresAndArtifacts/blob/main/neverworld_fig.png)
