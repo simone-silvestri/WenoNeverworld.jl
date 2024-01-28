@@ -51,9 +51,6 @@ end
     return (∂xδ^2 + ∂yδ^2)
 end
 
-"Return the filter width for a Leith Diffusivity on a general grid."
-@inline Δ²ᶜᶜᶜ(i, j, k, grid) =  2 * (1 / (1 / Δxᶜᶜᶜ(i, j, k, grid)^2 + 1 / Δyᶜᶜᶜ(i, j, k, grid)^2))
-
 @kernel function calculate_qgleith_viscosity!(ν, Ld, qˣ, qʸ, grid, closure, velocities, coriolis)
     i, j, k = @index(Global, NTuple)
 
