@@ -23,7 +23,7 @@ Oceananigans = "^0.90"
 julia = "1.9"
 
 [extras]
-UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test"]
