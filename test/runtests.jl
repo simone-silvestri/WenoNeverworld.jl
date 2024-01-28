@@ -5,9 +5,13 @@ using WenoNeverworld.Parameterizations
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnode
+using CUDA
 using Test
 
 @inline exponential_profile(z; Lz, h) = (exp(z / h) - exp( - Lz / h)) / (1 - exp( - Lz / h)) 
+
+
+arch = CUDA.has_cuda_gpu() ? GPU() : CPU()
 
 function exponential_faces(Nz, Depth; h = Nz / 4.5)
 
@@ -24,7 +28,7 @@ end
 
 @testset "Neverworld Grid" begin
     @info "Testing the Neverworld grid..."
-    grid = NeverworldGrid(2)
+    grid = NeverworldGrid(2; arch)
 
     @test grid isa Oceananigans.ImmersedBoundaryGrid
 
@@ -35,7 +39,7 @@ end
 @testset "Neverworld Simulation" begin
     @info "Testing the Neverworld simulation..."
     z_faces    = exponential_faces(2, 4000)
-    grid       = NeverworldGrid(12; z_faces)
+    grid       = NeverworldGrid(12; z_faces, arch)
     simulation = weno_neverworld_simulation(grid; stop_iteration = 1)
     run_simulation!(simulation)
 end
@@ -48,7 +52,7 @@ end
 @testset "Tracer Boundary Conditions" begin
     @info "Testing custom tracer boundary conditions..."
     z_faces = exponential_faces(2, 4000)
-    grid    = NeverworldGrid(12; z_faces)
+    grid    = NeverworldGrid(12; z_faces, arch)
     tracers = (:b, :c)
 
     tracer_boundary_conditions = (; c = c_boundary_condition)
@@ -65,7 +69,7 @@ end
     @info "Testing three dimensional interpolation and restart from a different grid..."
     # Coarse simulation
     coarse_z_faces = exponential_faces(2, 4000)
-    coarse_grid = NeverworldGrid(12; z_faces = coarse_z_faces, H = 2)
+    coarse_grid = NeverworldGrid(12; z_faces = coarse_z_faces, H = 2, arch)
 
     coarse_simulation = weno_neverworld_simulation(coarse_grid; stop_iteration = 1, 
                                                    momentum_advection = nothing, 
@@ -79,7 +83,7 @@ end
 
     # Fine simulation interpolated from the coarse one
     fine_z_faces = exponential_faces(4, 4000)
-    fine_grid = NeverworldGrid(8; z_faces = fine_z_faces, H = 2)
+    fine_grid = NeverworldGrid(8; z_faces = fine_z_faces, H = 2, arch)
 
     @info "    Testing 3-dimensional interpolation..."
     b_fine = regrid_field(b_coarse, coarse_grid, fine_grid, (Center, Center, Center))
@@ -98,7 +102,7 @@ end
 @testset "Parameterizations" begin
     @info "Testing parameterization..."
 
-    grid = NeverworldGrid(12; z_faces = [-4000, -2000, 0])
+    grid = NeverworldGrid(12; z_faces = [-4000, -2000, 0], arch)
     horizontal_closures = (QGLeith(), EnergyBackScattering())
     for horizontal_closure in horizontal_closures
         @info "    Testing $(typeof(horizontal_closure).name.wrapper) parameterization..."
