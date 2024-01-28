@@ -1,6 +1,6 @@
 module Parameterizations
 
-export QGLeith
+export QGLeith, EnergyBackScattering
 
 using Oceananigans
 using KernelAbstractions: @index, @kernel
@@ -8,6 +8,7 @@ using KernelAbstractions.Extras.LoopInfo: @unroll
 
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: 
+        AbstractTurbulenceClosure,
         HorizontalFormulation,
         HorizontalDivergenceFormulation, 
         HorizontalDivergenceScalarBiharmonicDiffusivity
@@ -43,5 +44,6 @@ using Oceananigans.BuoyancyModels: ∂x_b, ∂y_b, ∂z_b
 using Oceananigans.Operators: ℑxyzᶜᶜᶠ, ℑyzᵃᶜᶠ, ℑxzᶜᵃᶠ, Δxᶜᶜᶜ, Δyᶜᶜᶜ
 
 include("quasi_geostrophic_leith.jl")
+include("energy_backscattering.jl")
 
 end

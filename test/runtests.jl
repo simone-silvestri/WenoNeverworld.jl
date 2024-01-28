@@ -91,11 +91,13 @@ end
 end
 
 @testset "Parameterizations" begin
-    @info "Testing QGLeith parameterization..."
+    @info "Testing parameterization..."
 
     grid = NeverworldGrid(12; z_faces = [-4000, -2000, 0])
-    horizontal_closure = QGLeith()
-    simulation = weno_neverworld_simulation(grid; stop_iteration = 1, horizontal_closure)
-
-    run!(simulation)
+    horizontal_closures = (QGLeith(), EnergyBackScattering())
+    for horizontal_closure in horizontal_closures
+        @info "    Testing $(typeof(horizontal_closure).name.wrapper) parameterization..."
+        simulation = weno_neverworld_simulation(grid; stop_iteration = 1, horizontal_closure)
+        run!(simulation)
+    end
 end
