@@ -19,19 +19,24 @@ using Oceananigans.Architectures: arch_array, architecture
 using Oceananigans.Grids: on_architecture
 using Oceananigans.ImmersedBoundaries
 
-
 const years = 365days
 
 include("correct_oceananigans.jl")
-include("weno_neverworld_utils.jl")
-include("neverworld_bathymetry.jl")
-include("neverworld_grid.jl")
-include("neverworld_initial_and_boundary_conditions.jl")
+include("Constants.jl")
+include("Auxiliaries/Auxiliaries.jl")
+include("NeverworldGrids/NeverworldGrids.jl")
+
+include("NeverworldBoundaries/NeverworldBoundaries.jl")
+include("Parameterizations/Parameterizations.jl")
+
 include("weno_neverworld.jl")
 include("weno_neverworld_outputs.jl")
 
 include("Diagnostics/Diagnostics.jl")
 
+using .Utils
+using .NeverworldGrids
+using .NeverworldBoundaries
 using .Diagnostics
 
 end # module WenoNeverworld

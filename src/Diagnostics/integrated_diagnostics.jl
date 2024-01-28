@@ -1,3 +1,19 @@
+"""
+    integral_kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
+
+Compute the integral kinetic energy over time for the given field time series `u` and `v`.
+
+# Arguments
+- `u::FieldTimeSeries`: The field time series for the u-component of the velocity.
+- `v::FieldTimeSeries`: The field time series for the v-component of the velocity.
+- `stride::Int`: The stride between time steps to consider. Default is 1.
+- `start_time::Int`: The starting time step to consider. Default is 1.
+- `end_time::Int`: The ending time step to consider. Default is the length of `u.times`.
+
+# Returns
+- `energy::Vector{Float64}`: The computed integral of kinetic energy over time.
+
+"""
 function integral_kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
 
     energy = Float64[]
@@ -12,6 +28,21 @@ function integral_kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries; stride 
     return energy
 end
 
+"""
+    integral_available_potential_energy(b::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
+
+Compute the integral available potential energy (APE) over time for a given `FieldTimeSeries` `b`.
+
+# Arguments
+- `b::FieldTimeSeries`: The field time series containing bouyancy data.
+- `stride::Int`: The stride value for iterating over the time steps. Default is 1.
+- `start_time::Int`: The starting time step for integration. Default is 1.
+- `end_time::Int`: The ending time step for integration. Default is the length of `u.times`.
+
+# Returns
+- `energy::Vector{Float64}`: The vector of integrated APE values over time.
+
+"""
 function integral_available_potential_energy(b::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(b.times))
     energy = Float64[]
     vol = VolumeField(b.grid)

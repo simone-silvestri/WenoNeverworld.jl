@@ -1,4 +1,7 @@
-# All fixes that still didn't get merged in Oceananigans.jl
+
+####
+#### This file contains all the bug-fixes that still didn't get merged in Oceananigans.jl
+####
 
 using Oceananigans.BuoyancyModels: ∂z_b
 using Oceananigans.Operators
@@ -61,5 +64,6 @@ import Oceananigans.TurbulenceClosures: _compute_ri_based_diffusivities!
     # Update by averaging in time
     @inbounds κᶜ[i, j, k] = (Cᵃᵛ * κᶜ[i, j, k] + κᶜ⁺) / (1 + Cᵃᵛ)
     @inbounds κᵘ[i, j, k] = (Cᵃᵛ * κᵘ[i, j, k] + κᵘ⁺) / (1 + Cᵃᵛ)
+    
     return nothing
 end
