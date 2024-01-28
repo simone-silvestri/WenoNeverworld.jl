@@ -38,7 +38,7 @@ struct EnergyBackScattering{FT} <: AbstractTurbulenceClosure{ExplicitTimeDiscret
     ν :: FT
 end
 
-EnergyBackScattering(FT::DataType = Float64; ν=FT(-4.87e7)) = ZannaBoltonBackScattering(ν) 
+EnergyBackScattering(FT::DataType = Float64; ν=FT(-4.87e7)) = EnergyBackScattering(ν) 
 
 const MBS = EnergyBackScattering
 

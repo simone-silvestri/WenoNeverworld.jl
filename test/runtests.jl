@@ -65,9 +65,11 @@ end
     @info "Testing three dimensional interpolation and restart from a different grid..."
     # Coarse simulation
     coarse_z_faces = exponential_faces(2, 4000)
-    coarse_grid = NeverworldGrid(12; z_faces = coarse_z_faces)
+    coarse_grid = NeverworldGrid(12; z_faces = coarse_z_faces, H = 1)
 
-    coarse_simulation = weno_neverworld_simulation(coarse_grid; stop_iteration = 1)
+    coarse_simulation = weno_neverworld_simulation(coarse_grid; stop_iteration = 1, 
+                                                   momentum_advection = nothing, 
+                                                   tracer_advection = nothing)
     checkpoint_outputs!(coarse_simulation, "test_fields")
 
     run!(coarse_simulation)
@@ -76,7 +78,7 @@ end
 
     # Fine simulation interpolated from the coarse one
     fine_z_faces = exponential_faces(4, 4000)
-    fine_grid = NeverworldGrid(8; z_faces = fine_z_faces)
+    fine_grid = NeverworldGrid(8; z_faces = fine_z_faces, H = 1)
 
     @info "    Testing 3-dimensional interpolation..."
     b_fine = regrid_field(b_coarse, coarse_grid, fine_grid, (Center, Center, Center))
@@ -85,6 +87,8 @@ end
     fine_simulation = weno_neverworld_simulation(fine_grid; 
                                                  previous_grid = coarse_grid,
                                                  stop_iteration = 1,
+                                                 momentum_advection = nothing, 
+                                                 tracer_advection = nothing,
                                                  init_file = "test_fields_checkpoint_iteration0.jld2")
 
     run!(fine_simulation)
