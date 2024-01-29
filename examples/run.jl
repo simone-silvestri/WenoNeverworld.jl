@@ -2,7 +2,7 @@ using WenoNeverworld
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
-using CairoMakie # You have to add this to your global enviroment: `] add CairoMakie`
+using CairoMakie 
 
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
