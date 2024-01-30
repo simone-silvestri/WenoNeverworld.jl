@@ -12,6 +12,7 @@ using Oceananigans.Grids: λnode, φnode, halo_size, on_architecture
 using Oceananigans.Architectures: arch_array, architecture
 using Oceananigans.Utils: instantiate
 using Oceananigans.BoundaryConditions
+using JLD2
 
 using KernelAbstractions: @kernel, @index
 using KernelAbstractions.Extras.LoopInfo: @unroll
