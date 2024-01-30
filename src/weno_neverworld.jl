@@ -1,7 +1,3 @@
-#####
-##### Boundary conditions
-#####
-
 using Oceananigans.Utils
 using Oceananigans.Grids: node, halo_size, interior_parent_indices
 using Oceananigans.TurbulenceClosures: FluxTapering
@@ -10,6 +6,8 @@ using Oceananigans.Operators: Δx, Δy, Az
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
+
+using WenoNeverworld.Auxiliaries
 
 #####
 ##### Default parameterizations for the Neverworld simulation

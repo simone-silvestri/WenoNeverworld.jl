@@ -1,7 +1,6 @@
 using Documenter
 using WenoNeverworld
 
-
 api = Any[
     "API" => "neverworld.md"
 ]
