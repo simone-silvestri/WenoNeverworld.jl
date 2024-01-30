@@ -7,7 +7,7 @@ using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
 
-using WenoNeverworld.Auxiliaires
+using WenoNeverworld.Auxiliaries
 
 #####
 ##### Default parameterizations for the Neverworld simulation
