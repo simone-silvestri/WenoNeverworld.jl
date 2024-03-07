@@ -1,5 +1,6 @@
 using Oceananigans.Operators: ζ₃ᶠᶠᶜ
 using Oceananigans.AbstractOperations: KernelFunctionOperation
+using Oceananigans.Models.HydrostaticFreeSurfaceModels: ZStarSpacingGrid
 
 using Oceananigans.Models: AbstractModel
 using Oceananigans.DistributedComputations
@@ -47,6 +48,10 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
     b = model.tracers.b
 
     output_fields = (; u, v, w, b)
+
+    if grid isa ZStarSpacingGrid
+        output_fields = merge(output_fields, (; sⁿ = grid.Δzᵃᵃᶠ.sⁿ, wᵍ = grid.Δzᵃᵃᶠ.∂t_∂s))
+    end
 
     u2 = u^2
     v2 = v^2
@@ -139,6 +144,10 @@ function reduced_outputs!(simulation, output_prefix; overwrite_existing = true,
 
     output_fields = (; u, v, w, b)
 
+    if grid isa ZStarSpacingGrid
+        output_fields = merge(output_fields, (; sⁿ = grid.Δzᵃᵃᶠ.sⁿ, wᵍ = grid.Δzᵃᵃᶠ.∂t_∂s))
+    end
+    
     simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields;
                                                                 schedule = TimeInterval(snapshot_time),
                                                                 filename = output_prefix * "_snapshots",
