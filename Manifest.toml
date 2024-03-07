@@ -792,11 +792,11 @@ version = "1.2.0"
 
 [[deps.Oceananigans]]
 deps = ["Adapt", "CUDA", "Crayons", "CubedSphere", "Dates", "Distances", "DocStringExtensions", "FFMPEG", "FFTW", "Glob", "IncompleteLU", "InteractiveUtils", "IterativeSolvers", "JLD2", "KernelAbstractions", "LinearAlgebra", "Logging", "MPI", "NCDatasets", "OffsetArrays", "OrderedCollections", "PencilArrays", "PencilFFTs", "Pkg", "Printf", "Random", "Rotations", "SeawaterPolynomials", "SparseArrays", "Statistics", "StructArrays"]
-git-tree-sha1 = "67c2d71453adf95e539dfe25e869c9407c5e9dd4"
+git-tree-sha1 = "78398b9a5d5152c12527538c257e58535d261355"
 repo-rev = "ss/z-star-coordinate"
 repo-url = "https://github.com/CliMA/Oceananigans.jl.git"
 uuid = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
-version = "0.90.9"
+version = "0.90.10"
 
     [deps.Oceananigans.extensions]
     OceananigansEnzymeExt = "Enzyme"
