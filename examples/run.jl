@@ -42,7 +42,7 @@ buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               wind_stress,
-                                              generalized_vertical_coordinate = ZStar(),
+#                                              generalized_vertical_coordinate = ZStar(),
                                               buoyancy_relaxation,
                                               interp_init,
                                               init_file)
