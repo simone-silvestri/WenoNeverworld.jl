@@ -6,12 +6,12 @@ using Oceananigans.Models.HydrostaticFreeSurfaceModels: ZStar
 using CairoMakie 
 
 output_dir    = joinpath(@__DIR__, "./")
-@show output_prefix = output_dir * "/neverworld_quarter_resolution"
+@show output_prefix = output_dir * "/quarter_resolution_zstar"
 
-arch = GPU()
+arch = CPU()
 
 # The resolution in degrees
-degree_resolution = 1/4
+degree_resolution = 1/2
 
 grid = NeverworldGrid(degree_resolution; arch)
 
