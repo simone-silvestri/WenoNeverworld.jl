@@ -1,6 +1,6 @@
 using Oceananigans.AbstractOperations: GridMetricOperation
 using Oceananigans.Grids: architecture, znode
-using Oceananigans.Architectures: device, arch_array
+using Oceananigans.Architectures: device, on_architecture
 
 function calculate_z★_diagnostics(b::FieldTimeSeries)
 
