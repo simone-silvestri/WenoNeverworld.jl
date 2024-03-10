@@ -54,7 +54,8 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                         longitude = (-2, 62), 
                         latitude = (-70, 70), 
                         bathymetry_params = NeverWorldBathymetryParameters(),
-                        z_faces = exponential_z_faces()) 
+                        z_faces = exponential_z_faces(),
+                        bottom = GridFittedBottom) 
 
     Nx = ceil(Int, (longitude[2] - longitude[1]) / resolution)
     Ny = ceil(Int, ( latitude[2] -  latitude[1]) / resolution)
@@ -69,5 +70,5 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
 
     bathymetry(λ, φ) = neverworld_bathymetry(λ, φ, bathymetry_params; longitudinal_extent, latitude)
 
-    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry))
+    return ImmersedBoundaryGrid(underlying_grid, bottom(bathymetry))
 end

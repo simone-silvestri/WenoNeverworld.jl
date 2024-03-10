@@ -16,7 +16,7 @@ using Oceananigans.Units
 using Oceananigans.Operators
 using Oceananigans.BoundaryConditions
 using Oceananigans.Fields: interpolate
-using Oceananigans.Architectures: architecture, arch_array
+using Oceananigans.Architectures: architecture, on_architecture
 using Oceananigans.Grids: λnode, φnode, halo_size, on_architecture
 using Oceananigans.Utils: instantiate
 using Oceananigans.ImmersedBoundaries: ImmersedBoundaryCondition
