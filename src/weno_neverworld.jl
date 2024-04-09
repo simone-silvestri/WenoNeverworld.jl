@@ -5,6 +5,7 @@ using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
 using Oceananigans.Operators: Δx, Δy, Az 
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
+using Oceananigans.Models.HydrostaticFreeSurfaceModels: ZStar
 using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
 
 using WenoNeverworld.Auxiliaries
@@ -102,6 +103,7 @@ function weno_neverworld_simulation(grid;
                                     convective_adjustment = default_convective_adjustment,
                                     vertical_diffusivity  = default_vertical_diffusivity,
                                     horizontal_closure    = nothing,
+                                    generalized_vertical_coordinate = ZStar(),
                                     coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving()),
                                     free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
                                     momentum_advection = default_momentum_advection(grid.underlying_grid),
@@ -138,6 +140,7 @@ function weno_neverworld_simulation(grid;
                                           coriolis,
                                           closure, 
                                           tracers, 
+                                          generalized_vertical_coordinate,
                                           momentum_advection, 
                                           tracer_advection, 
                                           boundary_conditions, 
