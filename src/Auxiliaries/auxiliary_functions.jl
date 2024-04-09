@@ -4,6 +4,7 @@ using WenoNeverworld.Constants
 @inline exponential_profile(z; Δ = Constants.ΔB, Lz = Constants.Lz, h = Constants.h) = ( Δ * (exp(z / h) - exp( - Lz / h)) / (1 - exp( - Lz / h)) )
 @inline parabolic_scaling(y) = - 1 / Constants.max_latitude^2 * y^2 + 1
 @inline initial_buoyancy_parabola(x, y, z) = exponential_profile(z) * parabolic_scaling(y) 
+@inline initial_buoyancy_linear(x, y, z) = Constants.ΔB * (Constants.Lz + z / 2) / Constants.Lz
 
 """ 
     function cubic_interpolate(x, x1, x2, y1, y2, d1, d2)

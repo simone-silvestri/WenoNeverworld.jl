@@ -43,6 +43,7 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               wind_stress,
                                               buoyancy_relaxation,
                                               interp_init,
+                                              initial_bouyancy = WenoNeverworld.Auxiliaries.initial_buoyancy_linear,
                                               init_file)
                                               
 model = simulation.model
