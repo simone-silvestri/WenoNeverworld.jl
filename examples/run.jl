@@ -7,10 +7,10 @@ using CairoMakie
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
 
-arch = GPU()
+arch = CPU()
 
 # The resolution in degrees
-degree_resolution = 1/4
+degree_resolution = 10
 
 grid = NeverworldGrid(degree_resolution; arch)
 
@@ -42,7 +42,7 @@ buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days
 using WenoNeverworld.Constants
 
 # Change it at your whim
-@inline κz(x, y, z) = 1e-5 - z / Constants.Lz * (1e-4 - 1e-5)
+@inline κz(x, y, z, time) = 1e-5 - z / Constants.Lz * (1e-4 - 1e-5)
 vertical_diffusivity = VerticalScalarDiffusivity(ν=1e-4, κ=κz)
 
 # Construct the neverworld simulation
