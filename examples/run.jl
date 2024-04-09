@@ -38,10 +38,19 @@ buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days
 # @inline seasonal_cosine_scaling(y, t) = cos(π * y / 70) * sin(2π * t / 1year)
 # buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(seasonal_cosine_scaling; ΔB = 0.06, λ = 7days)    
 
+# Write a new vertical diffusivity with a varying κ
+using WenoNeverworld.Constants
+
+# Change it at your whim
+@inline κz(x, y, z) = 1e-5 - z / Constants.Lz * (1e-4 - 1e-5)
+vertical_diffusivity = VerticalScalarDiffusivity(ν=1e-4, κ=κz)
+
+
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               wind_stress,
                                               buoyancy_relaxation,
+                                              vertical_diffusivity,
                                               interp_init,
                                               initial_bouyancy = WenoNeverworld.Auxiliaries.initial_buoyancy_linear,
                                               init_file)
