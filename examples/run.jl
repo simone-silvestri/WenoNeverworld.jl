@@ -45,14 +45,13 @@ using WenoNeverworld.Constants
 @inline κz(x, y, z) = 1e-5 - z / Constants.Lz * (1e-4 - 1e-5)
 vertical_diffusivity = VerticalScalarDiffusivity(ν=1e-4, κ=κz)
 
-
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               wind_stress,
                                               buoyancy_relaxation,
                                               vertical_diffusivity,
                                               interp_init,
-                                              initial_bouyancy = WenoNeverworld.Auxiliaries.initial_buoyancy_linear,
+                                              initial_buoyancy = WenoNeverworld.Auxiliaries.initial_buoyancy_linear,
                                               init_file)
                                               
 model = simulation.model
