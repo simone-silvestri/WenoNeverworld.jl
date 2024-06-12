@@ -7,3 +7,4 @@
 *.out
 *.sh
 *core*
+Manifest.toml
