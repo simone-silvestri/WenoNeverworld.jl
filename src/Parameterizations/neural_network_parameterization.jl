@@ -4,8 +4,10 @@ import Oceananigans.TurbulenceClosures:
                         ∂ⱼ_τ₃ⱼ,
                         ∇_dot_qᶜ
 
+const RequiredHalo = 5
 
-struct NNParameterization{M, C2, C3} <: AbstractTurbulenceClosure
+# TD can be VerticallyImplicitTimeDiscretization, 
+struct NNParameterization{M, C2, C3} <: AbstractTurbulenceClosure{ExplicitTimeDiscretization, RequiredHalo}
     matrix :: M
     param2 :: C2
     param3 :: C3
