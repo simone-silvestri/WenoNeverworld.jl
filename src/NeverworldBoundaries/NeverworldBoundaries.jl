@@ -19,7 +19,7 @@ using Oceananigans.Fields: interpolate
 using Oceananigans.Architectures: architecture, arch_array
 using Oceananigans.Grids: λnode, φnode, halo_size, on_architecture
 using Oceananigans.Utils: instantiate
-using Oceananigans.ImmersedBoundaries: ImmersedBoundaryCondition
+using Oceananigans.ImmersedBoundaries: ImmersedBoundaryCondition, immersed_peripheral_node
 
 using KernelAbstractions: @kernel, @index
 using KernelAbstractions.Extras.LoopInfo: @unroll
