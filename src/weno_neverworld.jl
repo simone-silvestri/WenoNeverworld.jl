@@ -106,7 +106,7 @@ function weno_neverworld_simulation(grid;
                                     horizontal_closure    = nothing,
                                     generalized_vertical_coordinate = ZStar(),
                                     coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving()),
-                                    free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
+                                    free_surface = SplitExplicitFreeSurface(grid; cfl = 0.75),
                                     momentum_advection = default_momentum_advection(grid.underlying_grid),
 				                    tracer_advection   = WENO(grid.underlying_grid), 
                                     interp_init = false,
