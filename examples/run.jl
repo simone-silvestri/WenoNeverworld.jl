@@ -10,7 +10,7 @@ output_dir    = joinpath(@__DIR__, "./")
 arch = CPU()
 
 # The resolution in degrees
-degree_resolution = 10
+degree_resolution = 1/2
 
 grid = NeverworldGrid(degree_resolution; arch)
 
@@ -51,45 +51,9 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               buoyancy_relaxation,
                                               vertical_diffusivity,
                                               interp_init,
-                                              initial_buoyancy = WenoNeverworld.Auxiliaries.initial_buoyancy_linear,
                                               init_file)
                                               
-model = simulation.model
-
 # Let's visualize our boundary conditions!
-cpu_grid = on_architecture(CPU(), grid)
-φ = φnodes(cpu_grid.underlying_grid, Center(), Center(), Center())
-τ_bcs = Array(model.velocities.u.boundary_conditions.top.condition.func.stress)
-b_bcs = zeros(length(τ_bcs))
-b = Array(interior(model.tracers.b))
-for j in 1:grid.Ny
-    b_bcs[j] = buoyancy_relaxation(grid.Nx÷2, j, grid, model.clock, (; b))
-end
-
-fig = Figure()
-ax  = Axis(fig[1, 1], title = L"\text{Wind stress profile}")
-lines!(ax, φ, - τ_bcs .* 1000, linewidth = 5) # (we re-convert the wind stress form kg/m² to Nm)
-
-ax  = Axis(fig[1, 2], title = L"\text{Restoring buoyancy flux}")
-lines!(ax, φ, - b_bcs, linewidth = 5)
-
-CairoMakie.save("boundary_conditions.png", fig)
-
-# Let's plot the initial conditions to make sure they are reasonable
-λ = λnodes(cpu_grid.underlying_grid, Center(), Center(), Center())
-z = znodes(cpu_grid.underlying_grid, Center(), Center(), Center())
-
-fig = Figure(resolution = (800, 2000))
-ax  = Axis(fig[1:4, 1], title = "Surface initial buoyancy")
-hm  = heatmap!(ax, λ, φ, b[:, :, grid.Nz], colormap = :thermometer)
-cb  = Colorbar(fig[1:4, 2], hm) 
-
-ax  = Axis(fig[5, 1], title = "Mid longitude buoyancy")
-hm  = heatmap!(ax, φ, z, b[grid.Nx ÷ 2, :, :], colormap = :thermometer)
-ct  = contour!(ax, φ, z, b[grid.Nx ÷ 2, :, :], levels = range(0, 0.06, length = 10), color = :black)
-cb  = Colorbar(fig[5, 2], hm) 
-
-CairoMakie.save("initial_conditions.png", fig)
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
 checkpoint_outputs!(simulation, output_prefix)
