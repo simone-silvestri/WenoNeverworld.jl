@@ -67,11 +67,15 @@ v_slice = v[:, :, z_index]
 weighted_tke_slice = (u_slice .^ 2 + v_slice .^ 2)
 
 ##
-fig = Figure(resolution = (5000, 5000))
-ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 20, xticklabelsize = 20, ylabel="Latitude [∘]", ylabelsize = 20,title="1/2∘",  yticklabelsize = 20, titlesize=25, aspect=0.5, yticks=-70:10:70)
+fig = Figure(resolution = (1000, 2000))
+ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 40, xticklabelsize = 40, ylabel="Latitude [∘]", ylabelsize = 40,title="1/2∘", yticklabelsize = 40, titlesize=45, aspect=0.5, yticks=-70:10:70, yticksize = 15, xticksize = 15)
 hm = heatmap!(ax, lon, lat, log10.(weighted_tke_slice .+ eps(1000.0)), colorrange = (-4, 1), colormap = :plasma)
-cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30)
+#cbar1 = Colorbar(fig[1,2], hm, width = 25, ticksize = 10, ticklabelsize = 20)
 display(fig)
-save("plotting/tke_slice_half.png", fig)
+#save("plotting/tke_slice_half_colorbar.png", fig)
+
+using CairoMakie
+CairoMakie.activate!()
+CairoMakie.save("KE_half_new.png", fig, px_per_unit = 5)
 ##
 quantile(log10.(weighted_tke_slice .+ eps(1000.0))[:], 0.999)

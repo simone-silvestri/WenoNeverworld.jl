@@ -6,35 +6,33 @@ using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/storage4/"
-@show output_prefix = output_dir * "WenoNeverworldData/weno_eighth"
+@show output_prefix = output_dir * "WenoNeverworldData/half_degree/weno_half_original" 
 
 arch = GPU()
 
 # The resolution in degrees
-degree_resolution = 1/8
-new_degree = 1/8
-old_degree = 1/8
+degree_resolution = 1/2
+new_degree = 1/2
+old_degree = 1
+
 
 grid = NeverworldGrid(new_degree; arch)
 previous_grid = NeverworldGrid(old_degree; arch)
 
-
 # Extend the vertical advection scheme
 interp_init = false # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-
-init_file = "/storage4/WenoNeverworldData/weno_eighth_checkpoint_iteration20007464.jld2" # To restart from a file: `init_file = /path/to/restart`
-
+init_file = nothing #"/storage2/WenoNeverworldData/weno_one_checkpoint_iteration43417133.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 10minutes
-stop_time = 2000years
+Δt        = 25minutes
+stop_time = 300years
 
 # Latitudinal wind stress acting on the zonal velocity
 # a piecewise-cubic profile interpolated between
 # x = φs (latitude) and y = τs (stress)
-#φs = (-70.0, -45.0, -15.0,  0.0,  15.0, 45.0, 70.0)
-#τs = (  0.0,   0.2,  -0.1, -0.02, -0.1,  0.1,  0.0)
-#wind_stress = WindStressBoundaryCondition(; φs, τs)
+φs = (-70.0, -45.0, -15.0,  0.0,  15.0, 45.0, 70.0)
+τs = (  0.0,   0.2,  -0.1, -0.02, -0.1,  0.1,  0.0)
+wind_stress = WindStressBoundaryCondition(; φs, τs)
 
 # Buoyancy relaxation profile:
 # a parabolic profile between 0, at the poles, and ΔB = 0.06 at the equator
@@ -46,18 +44,17 @@ stop_time = 2000years
 # buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(seasonal_cosine_scaling; ΔB = 0.06, λ = 7days)    
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(grid; Δt, stop_time, 
+simulation = weno_neverworld_simulation(grid; previous_grid, Δt, stop_time, 
                                               interp_init,
                                               init_file)
                                               
 
 # Adaptable time step
-
-#wizard = TimeStepWizard(; cfl = 0.3, max_Δt = 40minutes, min_Δt = 10minutes, max_change = 1.1)
-#simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
+wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 45minutes, min_Δt = 15minutes, max_change = 1.1)
+simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
-checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 8years)
+checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
 #vertically_averaged_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
 
 # initializing the time for wall_time calculation

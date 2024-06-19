@@ -10,9 +10,46 @@ import Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
 ##### 
 ##### Usefull diagnostics
 #####
+"""
+Returns the three-dimensional vertical vorticity at time index i.
+"""
+VerticalVorticity(f::Dict, i; indices = (:, :, :)) = compute!(Field(VerticalVorticityOperation(f, i); indices))
+
+"""
+    KineticEnergy(f::Dict, i)
+
+Returns the three-dimensional kinetic energy at time index i.
+"""
+KineticEnergy(f::Dict, i; indices = (:, :, :)) = compute!(Field(KineticEnergyOperation(f, i); indices))
+
+"""
+    Stratification(f::Dict, i)
+
+Returns the three-dimensional stratification at time index i.
+"""
+Stratification(f::Dict, i; indices = (:, :, :)) = compute!(Field(StratificationOperation(f, i); indices))
+
+"""
+    PotentialVorticity(f::Dict, i)
+
+Returns the three-dimensional potential vorticity at time index i.
+"""
+PotentialVorticity(f::Dict, i; indices = (:, :, :)) = compute!(Field(PotentialVorticityOperation(f, i); indices)) 
+
+"""
+    DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655)
+
+Returns the three-dimensional density given a buoyancy field b.
+"""
+DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655, indices = (:, :, :)) = compute!(Field(DensityOperation(b; ρₒ, g); indices))
+
+
+
 
 VerticalVorticityField(fields::Dict, i) = VerticalVorticityField((; u = fields[:u][i], v = fields[:v][i]))
 KineticEnergyField(fields::Dict, i)     =     KineticEnergyField((; u = fields[:u][i], v = fields[:v][i]))
+PotentialEnergyField(fields::Dict, i)     =     PotentialEnergyField((; u = fields[:u][i], v = fields[:v][i]))
+
 
 VerticalVorticityOperation(fields::Dict, i)   =   VerticalVorticityOperation((; u = fields[:u][i], v = fields[:v][i]))
 PotentialVorticityOperation(fields::Dict, i)  =  PotentialVorticityOperation((; u = fields[:u][i], v = fields[:v][i], b = fields[:b][i]))
@@ -30,18 +67,9 @@ DensityOperation(b; ρ₀ = 1000.0, g = 9.80655) =
     KernelFunctionOperation{Center, Center, Center}(_density_operation, b.grid, b, ρ₀, g)
 
 DensityField(b::Field; ρ₀ = 1000.0, g = 9.80655) = compute!(Field(DensityOperation(b; ρₒ, g)))
+HeightField(grid, loc = (Center, Center, Center))  = MetricField(loc, grid, Oceananigans.AbstractOperations.Δz)
 
-function HeightField(grid, loc = (Center, Center, Center))  
-
-    zf = Field(loc, grid)
-    Lz = grid.Lz
-
-    for k in 1:size(zf, 3)
-        interior(zf, :, :, k) .= Lz + znode(k, grid, loc[3]())
-    end
-
-    return zf
-end
+PotentialEnergyField(fields::NamedTuple) = compute_ape_density(fields.b)
 
 function KineticEnergyField(velocities::NamedTuple)
     u = velocities.u

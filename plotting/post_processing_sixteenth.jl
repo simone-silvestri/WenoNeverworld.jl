@@ -4,7 +4,6 @@ using WenoNeverworld.Diagnostics
 using Oceananigans.Fields: @compute
 using GLMakie
 
-
 dir = "/storage3/WenoNeverworldData/"
 prefix    = "weno_sixteenth_check"
 variables = ("u", "v", "w", "b")
@@ -12,14 +11,14 @@ variables = ("u", "v", "w", "b")
 
 # Load FieldTimeSeries of "u", "v", "w", "b" and compute integrated quantities
 @info "loading files and calculating integrated variables"
-neverworld_fields = all_fieldtimeseries(prefix, dir; checkpointer = true, variables, number_files = 15);
+neverworld_fields = all_fieldtimeseries(prefix, dir; checkpointer = true, variables, number_files = 20);
 # kinetic_energy = Diagnostics.integral_kinetic_energy(neverworld_fields[:u], neverworld_fields[:b]; stride)
 # integral_heat_content = Diagnostics.heat_content(neverworld_fields[:b]; stride)
 
 grid  = neverworld_fields[:u].grid
 times = neverworld_fields[:u].times
 Nt = length(times)
-iterations    = Nt-15:Nt
+iterations    = Nt-20:Nt
 average_times = times[iterations]
 
 u = neverworld_fields[:u]
@@ -29,25 +28,26 @@ b = neverworld_fields[:b]
 
 # Average relevant variables
 @info "Averaging relevant variables over" average_times
-ū = Diagnostics.time_average(u, iterations)
-v̄ = Diagnostics.time_average(v, iterations)
-w_avg = Diagnostics.time_average(w, iterations)
+#ū = Diagnostics.time_average(u, iterations)
+#v̄ = Diagnostics.time_average(v, iterations)
+#w_avg = Diagnostics.time_average(w, iterations)
 b̄ = Diagnostics.time_average(b, iterations)
-ψ = Diagnostics.calculate_eulerian_MOC(v̄)
+#ψ = Diagnostics.calculate_eulerian_MOC(v̄)
 
 @compute b̄ᵢ = Field(Average(b̄, dims = 1))
 
-loc = location(u^2 + v^2)
-EKE = FieldTimeSeries{loc...}(grid, average_times)
-IKE = FieldTimeSeries{loc...}(grid, average_times)
+#loc = location(u^2 + v^2)
+#EKE = FieldTimeSeries{loc...}(grid, average_times)
+#IKE = FieldTimeSeries{loc...}(grid, average_times)
 
-@compute MKE = Field(0.5 * (ū^2 + v̄^2))
+#@compute MKE = Field(0.5 * (ū^2 + v̄^2))
 
-u′ = FieldTimeSeries{location(u)...}(grid, average_times)
-v′ = FieldTimeSeries{location(v)...}(grid, average_times)
-w′ = FieldTimeSeries{location(w)...}(grid, average_times)
+#u′ = FieldTimeSeries{location(u)...}(grid, average_times)
+#v′ = FieldTimeSeries{location(v)...}(grid, average_times)
+#w′ = FieldTimeSeries{location(w)...}(grid, average_times)
 b′ = FieldTimeSeries{location(b)...}(grid, average_times)
 
+#=
 @info "Computing fluctuating fields" 
 for (idx, iter) in enumerate(iterations)
     @info "at iter $iter of $(iterations[end])"
@@ -85,43 +85,43 @@ wb_avg = Diagnostics.time_average(w′b′)
 
 @compute μ = Field(- wbᵢ_avg / vbᵢ_avg * ∂zbᵢ/ ∂ybᵢ)
 
-
 function plot_and_save_heatmap(data, filename, title, xlabel, ylabel; colorrange = (0, 0.02), level =10)
     fig = Figure(resolution=(2000, 1000))
-    ax = Axis(fig[1, 1], xlabel=xlabel, xlabelsize=30, yticks=0:50:1200, xticklabelsize=30, ylabel=ylabel, ylabelsize=30, xticks=0:50:1120, yticklabelsize=30, title=title, titlesize=50)
+    ax = Axis(fig[1, 1], xlabel=xlabel, xlabelsize=30, yticks=0:50:600, xticklabelsize=30, ylabel=ylabel, ylabelsize=30, xticks=0:20:600, yticklabelsize=30, title=title, titlesize=50)
     hm = GLMakie.heatmap!(ax, data, colorrange=colorrange, contours=true, levels = level)
     #GLMakie.contour!(ax, data, color=:black, linewidth=3, levels=level)
     display(fig)
     save("plotting/$filename.png", fig)
 end
 
+
 print("function defined succesfully")
 # Plot and save heatmaps for each quantity
-#plot_and_save_heatmap(interior(vbᵢ_avg,1, :, :), "time_averaged_eighth_moc", "Time-Averaged MOC 1/8∘", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(vbᵢ_avg,1, :, :), "time_averaged_fourth_moc", "Time-Averaged MOC 1/4∘", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(u′[20], :, :, 69), "time_averaged_u", "Time-Averaged u 1/4∘", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(IKE[20], :, :, 69), "time_averaged_fourth_IKE", "Time-Averaged IKE 1/4∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(EKE[20], :, :, 69), "time_averaged_fourth_EKE", "Time-Averaged EKE 1/4∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(MKE, :, :, 69), "time_averaged_MKE_fourth", "Mean Kinetic Energy 1/4∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
 
-#plot_and_save_heatmap(interior(IKE[20], :, :, 69), "time_averaged_eighth_IKE", "Time-Averaged IKE 1/8∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.04))
-#plot_and_save_heatmap(interior(EKE[20], :, :, 69), "time_averaged_eighth_EKE", "Time-Averaged EKE 1/8∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.04))
-#plot_and_save_heatmap(interior(MKE, :, :, 69), "time_averaged_MKE_eighth", "Mean Kinetic Energy 1/8∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.04))
+#plot_and_save_heatmap(interior(b, :, :, 69), "time_averaged_fourth_stratification", "Stratification 1/4∘", "latitude [∘]", "depth [m]", colorrange = (-0.04, 0.04))
 
+##
 
-#plot_and_save_heatmap(interior(b, :, :, 69), "time_averaged_eighth_stratification", "Stratification 1/8∘", "latitude [∘]", "depth [m]", colorrange = (-0.04, 0.04))
-
-
-
-
-#plot_and_save_heatmap(interior(u′[20], :, :, 69), "time_averaged_u", "Time-Averaged u", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(v′b′, :, :, 69), "v_prime_times_b_prime", "v' times b'", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(w′b′, :, :, 69), "w_prime_times_b_prime", "w' times b'", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(w_avg, :, :, 69), "time_averaged_w", "Time-Averaged w", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 
+#extrema(interior(vbᵢ_avg,1, :, :))
+
+=#
+
 using GLMakie
 using JLD2, Oceananigans, Statistics      
 
-# Load the data for the half-degree resolution
 @info "Loading data..."
 local_path = pwd()
 
-hfile_1 = jldopen("/storage3/WenoNeverworldData/ weno_sixteenth_checkpoint_iteration972420.jld2", "r")
+hfile_1 = jldopen("/storage3/WenoNeverworldData/weno_sixteenth_checkpoint_iteration709620.jld2", "r")
 oceangrid_1 = hfile_1["grid"]
 halo = 7
 z = oceangrid_1.underlying_grid.zᵃᵃᶜ[1:end-halo]
@@ -135,7 +135,7 @@ blims = (quantile(b_r[:], 0.2), maximum(b_r[:]))
 contours_log = [0.5, 0.75, 1, 1.5, 2, 3, 4, 5]
 
 lon_index = round(Int, size(b)[1]/2)
-fig = Figure(resolution=(5000, 5000))
+fig = Figure(resolution=(1000, 2000))
 ax = Axis(fig[1, 1], xlabel="Latitude [∘]", xlabelsize=30, yticks=-5000:1000:0, xticklabelsize=30, ylabel="Depth [m]", ylabelsize=30, xticks=-90:20:1120, yticklabelsize=30, title="1/16∘", titlesize=50, aspect=2.0)
 
 hm = GLMakie.heatmap!(ax, lat, z, b_r[lon_index, :, :], colormap= :plasma, levels =9)  #colorrange = (7.5e-5, 3.6e-5))

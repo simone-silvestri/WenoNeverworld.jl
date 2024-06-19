@@ -98,9 +98,9 @@ print("function defined succesfully")
 # Plot and save heatmaps for each quantity
 #plot_and_save_heatmap(interior(vbᵢ_avg,1, :, :), "time_averaged_fourth_moc", "Time-Averaged MOC 1/4∘", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(u′[20], :, :, 69), "time_averaged_u", "Time-Averaged u 1/4∘", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
-plot_and_save_heatmap(interior(IKE[20], :, :, 69), "time_averaged_fourth_IKE", "Time-Averaged IKE 1/4∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
-plot_and_save_heatmap(interior(EKE[20], :, :, 69), "time_averaged_fourth_EKE", "Time-Averaged EKE 1/4∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
-plot_and_save_heatmap(interior(MKE, :, :, 69), "time_averaged_MKE_fourth", "Mean Kinetic Energy 1/4∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(IKE[20], :, :, 69), "time_averaged_fourth_IKE", "Time-Averaged IKE 1/4∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(EKE[20], :, :, 69), "time_averaged_fourth_EKE", "Time-Averaged EKE 1/4∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
+#plot_and_save_heatmap(interior(MKE, :, :, 69), "time_averaged_MKE_fourth", "Mean Kinetic Energy 1/4∘", "longitude [∘]", "latitude [∘]", colorrange = (0, 0.02))
 
 #plot_and_save_heatmap(interior(b, :, :, 69), "time_averaged_fourth_stratification", "Stratification 1/4∘", "latitude [∘]", "depth [m]", colorrange = (-0.04, 0.04))
 
@@ -110,27 +110,35 @@ plot_and_save_heatmap(interior(MKE, :, :, 69), "time_averaged_MKE_fourth", "Mean
 #plot_and_save_heatmap(interior(w′b′, :, :, 69), "w_prime_times_b_prime", "w' times b'", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(w_avg, :, :, 69), "time_averaged_w", "Time-Averaged w", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 
-extrema(interior(vbᵢ_avg,1, :, :))
+#extrema(interior(vbᵢ_avg,1, :, :))
 
 
 
 using GLMakie
 using JLD2, Oceananigans, Statistics      
 
-# Load the data for the half-degree resolution
 @info "Loading data..."
 local_path = pwd()
 
-hfile_1 = jldopen("/storage2/WenoNeverworldData/weno_fourth_checkpoint_iteration5570411.jld2", "r")
+hfile_1 = jldopen("/storage2/WenoNeverworldData/weno_fourth_checkpoint_iteration3124341.jld2", "r")
 oceangrid_1 = hfile_1["grid"]
 halo = 7
 z = oceangrid_1.underlying_grid.zᵃᵃᶜ[1:end-halo]
 lat = collect(oceangrid_1.underlying_grid.φᵃᶜᵃ[1:end-halo])
+
+b_r = mean(interior(b), dims = 4)[:,:,:,1] * 100
+blims = (quantile(b_r[:], 0.2), maximum(b_r[:]))
+#blims = (7.5e-5, 3.6e-5) 
+Λ = log(blims[1]/blims[2])
+#contours_log = blims[2] * exp.(Λ .*  range(0, 1, 11) )
+contours_log = [0.5, 1, 1.5, 2, 3, 4, 5]
+
 lon_index = round(Int, size(b)[1]/2)
-fig = Figure(resolution=(2000, 1000))
-ax = Axis(fig[1, 1], xlabel="Latitude [∘]", xlabelsize=30, yticks=-4000:1000:0, xticklabelsize=30, ylabel="Depth [m]", ylabelsize=30, xticks=-90:20:1120, yticklabelsize=30, title="Heatmap of Time-Averaged b 1/4", titlesize=50)
-hm = GLMakie.heatmap!(ax, lat, z, interior(b, lon_index, :, :), colormap= :plasma, contours = true, levels =10)  #colorrange = (7.5e-5, 3.6e-5))
-contour!(ax, lat, z, interior(b, lon_index, :, :), color=:black, linewidth=3, levels=10, labels = true,
+fig = Figure(resolution=(1000, 2000))
+ax = Axis(fig[1, 1], xlabel="Latitude [∘]", xlabelsize=30, yticks=-5000:1000:0, xticklabelsize=30, ylabel="Depth [m]", ylabelsize=30, xticks=-90:20:1120, yticklabelsize=30, title="1/4∘", titlesize=50, aspect=2.0)
+
+hm = GLMakie.heatmap!(ax, lat, z, b_r[lon_index, :, :], colormap= :plasma, levels =9)  #colorrange = (7.5e-5, 3.6e-5))
+GLMakie.contour!(ax, lat, z,  b_r[lon_index, :, :], color=:black, linewidth=3, levels=contours_log, labels = false,
 labelsize = 30, labelfont = :bold, labelcolor = :black)
 display(fig)
-save("plotting/moc_quarter_final.png", fig)
+save("plotting/ta_strat_fourth_new1.png", fig)

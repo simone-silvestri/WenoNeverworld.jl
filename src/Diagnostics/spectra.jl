@@ -1,3 +1,4 @@
+using Oceananigans.Grids: λnodes, φnodes
 using FFTW
 
 struct Spectrum{S, F}
@@ -5,19 +6,35 @@ struct Spectrum{S, F}
     freq :: F
 end
 
+import Base
+
+Base.:(+)(s::Spectrum, t::Spectrum) = Spectrum(s.spec .+ t.spec, s.freq)
+Base.:(-)(s::Spectrum, t::Spectrum) = Spectrum(s.spec .- t.spec, s.freq)
+Base.:(*)(s::Spectrum, t::Spectrum) = Spectrum(s.spec .* t.spec, s.freq)
+Base.:(/)(s::Spectrum, t::Int)      = Spectrum(s.spec ./ t, s.freq)
+
+Base.real(s::Spectrum) = Spectrum(real.(s.spec), s.freq)
+Base.abs(s::Spectrum)  = Spectrum( abs.(s.spec), s.freq)
+
+
 @inline onefunc(args...)  = 1.0
 @inline hann_window(n, N) = sin(π * n / N)^2 
 
-function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 69, spectra = power_spectrum_1d_x, windowing = onefunc)
+@inline instantiate(T::DataType) = T()
 
-    xdomain = xnodes(var[1])[xlim]
-    ydomain = ynodes(var[1])[ylim]
+function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 69, spectra = power_spectrum_1d_x, windowing = hann_window)
+
+    grid = var.grid
+    loc  = location(var)
+    xdomain = grid.λᶜᵃᵃ[xlim]
+    ydomain = grid.φᵃᶜᵃ[ylim]
 
     Nt = length(var.times)
 
     spec = spectra(interior(var[1], xlim, ylim, k), xdomain, ydomain; windowing) 
 
     for i in 2:Nt
+        @info "spectra $i of $Nt"
         spec.spec .+= spectra(interior(var[i], xlim, ylim, k), xdomain, ydomain).spec 
     end
 

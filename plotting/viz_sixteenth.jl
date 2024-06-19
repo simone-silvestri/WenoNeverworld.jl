@@ -1,4 +1,5 @@
 using GLMakie, JLD2, Oceananigans, Statistics
+using LaTeXStrings
 
 # Load the data
 @info "Loading data..."
@@ -20,6 +21,7 @@ u = hfile["u"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v = hfile["v"]["data"][halo+1:end-halo, halo+1:end-halo, halo+1:end-halo]
 v = 0.5 * (v[:, 1:end-1, :] + v[:, 2:end, :])
 
+
 #buoyancy
 blims = (quantile(b[:], 0.2), maximum(b[:]))
 Λ = log(blims[1]/blims[2])
@@ -31,8 +33,8 @@ for (i,lon_index) in enumerate(longitudes)
     heatmap!(ax, lat, z, b[lon_index, :, :], colormap= :plasma,  colorrange = blims)
     contour!(ax, lat, z, b[lon_index, :, :], color=:black, linewidth=3, levels=contours, labels = true,
     labelsize = 30, labelfont = :bold, labelcolor = :black)
-    display(fig)
-    save("plotting/weno_sixteen_b_" * string(i) * ".png", fig)
+    #display(fig)
+    #save("plotting/weno_sixteen_b_" * string(i) * ".png", fig)
 end
 
 
@@ -49,13 +51,14 @@ fig = Figure(resolution = (1000, 4000))
 ax = Axis(fig[1, 1], xlabel="longitude [∘]", xlabelsize = 30, xticklabelsize = 30, ylabel="latitude [∘]", ylabelsize = 30,title="TKE ", yticklabelsize = 30, titlesize=50)
 hm = heatmap!(ax, lon, lat, log10.(depth_integrated_tke .+ eps(1000.0)), colorrange = (-1, 3), aspect_ratio = 0.8,colormap = :plasma)
 cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30)
-display(fig)
-save("plotting/weno_sixteen_tke.png", fig)
+#display(fig)
+#save("plotting/weno_sixteen_tke.png", fig)
 ##
 
 #mean(weighted_tke_slice)
 
-##
+
+
 #One slice of KE
 m, n, ℓ = size(u)
 Δz = reshape(Δz,  (1,1,ℓ))
@@ -70,10 +73,10 @@ weighted_tke_slice = (u_slice .^ 2 + v_slice .^ 2)
 
 
 ##
-fig = Figure(resolution = (5000, 5000))
+fig = Figure(resolution = (1000, 2000))
 ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 20, xticklabelsize = 20, ylabel="Latitude [∘]", ylabelsize = 20,title="1/16∘",  yticklabelsize = 20, titlesize=25, aspect=0.5, yticks=-70:10:70)
 hm = heatmap!(ax, lon, lat, log10.(weighted_tke_slice .+ eps(1000.0)), colorrange = (-4, 1), colormap = :plasma)
-cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30)
+cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30, label=L"[m^2/s^2]")
 display(fig)
 save("plotting/tke_slice_sixteen.png", fig)
 ##

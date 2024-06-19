@@ -35,6 +35,7 @@ w_avg = Diagnostics.time_average(w, iterations)
 b̄ = Diagnostics.time_average(b, iterations)
 ψ = Diagnostics.calculate_eulerian_MOC(v̄)
 
+#=
 @compute b̄ᵢ = Field(Average(b̄, dims = 1))
 
 loc = location(u^2 + v^2)
@@ -113,7 +114,7 @@ print("function defined succesfully")
 #plot_and_save_heatmap(interior(v′b′, :, :, 69), "v_prime_times_b_prime", "v' times b'", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(w′b′, :, :, 69), "w_prime_times_b_prime", "w' times b'", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
 #plot_and_save_heatmap(interior(w_avg, :, :, 69), "time_averaged_w", "Time-Averaged w", "latitude [∘]", "depth [m]", colorrange = (0, 0.02))
-
+=#
 using GLMakie
 using JLD2, Oceananigans, Statistics      
 
@@ -135,11 +136,11 @@ blims = (quantile(b_r[:], 0.2), maximum(b_r[:]))
 contours_log = [0.5, 0.75, 1, 1.5, 2, 3, 4, 5]
 
 lon_index = round(Int, size(b)[1]/2)
-fig = Figure(resolution=(5000, 5000))
+fig = Figure(resolution=(1000, 2000))
 ax = Axis(fig[1, 1], xlabel="Latitude [∘]", xlabelsize=30, yticks=-5000:1000:0, xticklabelsize=30, ylabel="Depth [m]", ylabelsize=30, xticks=-90:20:1120, yticklabelsize=30, title="1/8∘", titlesize=50, aspect=2.0)
 
 hm = GLMakie.heatmap!(ax, lat, z, b_r[lon_index, :, :], colormap= :plasma, levels =9)  #colorrange = (7.5e-5, 3.6e-5))
-GLMakie.contour!(ax, lat, z,  b_r[lon_index, :, :], color=:black, linewidth=3, levels=contours_log, labels = true,
+GLMakie.contour!(ax, lat, z,  b_r[lon_index, :, :], color=:black, linewidth=3, levels=contours_log, labels = false,
 labelsize = 30, labelfont = :bold, labelcolor = :black)
 display(fig)
-save("plotting/ta_strat_eighth.png", fig)
+save("plotting/ta_strat_eighth_new.png", fig)

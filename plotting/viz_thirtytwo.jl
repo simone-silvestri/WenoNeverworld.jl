@@ -5,7 +5,7 @@ using GLMakie, JLD2, Oceananigans, Statistics
 # Load the data
 @info "Loading data..."
 path = pwd()
-hfile = jldopen("/storage4/WenoNeverworldData/weno_thirtytwo_compressed_iteration245338.jld2", "r")
+hfile = jldopen("/storage4/WenoNeverworldData/weno_thirtytwo_compressed_iteration_new75647.jld2", "r")
 keys(hfile)
 
 resolution = 1/32
@@ -40,11 +40,15 @@ weighted_tke_slice = (u_slice .^ 2 + v_slice .^ 2)
 #weighted_tke_slice = (u_slice .^ 2 + v_slice .^ 2) .* Δz[:, :, z_index]
 
 ##
-fig = Figure(resolution = (10000, 10000))
-ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 20, xticklabelsize = 20, ylabel="Latitude [∘]", ylabelsize = 20,title="1/32∘",  yticklabelsize = 20, titlesize=25, aspect=0.5, yticks=-70:10:70)
+fig = Figure(resolution = (1000, 2000))
+ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 40, xticklabelsize = 40, ylabel="Latitude [∘]", ylabelsize = 40,title="1/32∘", yticklabelsize = 40, titlesize=45, aspect=0.5, yticks=-70:10:70, yticksize = 15, xticksize = 15)
 hm = heatmap!(ax, lon, lat, log10.(weighted_tke_slice .+ eps(1000.0)), colorrange = (-4, 1), colormap = :plasma)
-cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30)
+#cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30, label=L"[m$^2$/s$^2$]", labelsize = 20, ticklabelsize = 20)
 display(fig)
-save("plotting/tke_slice_thirtytwo.png", fig)
+#save("plotting/tke_slice_thirtytwo.png", fig)
 ##
+using CairoMakie
+CairoMakie.activate!()
+CairoMakie.save("KE_thirtytwo_new.png", fig, px_per_unit = 5)
+
 quantile(log10.(weighted_tke_slice .+ eps(1000.0))[:], 0.999)

@@ -1,3 +1,5 @@
+using WenoNeverworld
+
 """returns a nametuple of (u, v, w, b) from the data in file"""
 function checkpoint_fields(file)
     file = jldopen(file)
@@ -30,7 +32,7 @@ remove_last_character(s) = s[1:end-1]
 returns a dictionary containing a `FieldTimeSeries` for each variable in `variables`.
 If `checkpointer == true` it loads the data from all the checkpoint files contained in the directory `dir`
 """
-function all_fieldtimeseries(filename, dir = nothing; 
+function all_fieldtimeseries(filename, dir = "./"; 
                              variables = ("u", "v", "w", "b"), 
                              checkpointer = false,
                              number_files = nothing)
@@ -55,13 +57,33 @@ function all_fieldtimeseries(filename, dir = nothing;
             numbers = numbers[end-number_files:end]
             myfiles = myfiles[end-number_files:end]
         end
+#=
+        @info "loading iterations" numbers
+        grid = try
+	        jldopen(dir * myfiles[1] * "2")["grid"]
+	           catch
+	        NeverworldGrid(jldopen(dir * myfiles[1] * "2")["resolution"])
+        end
+        for var in variables
+            field = FieldTimeSeries{assumed_location(var)...}(grid, numbers)
+            for (idx, file) in enumerate(myfiles)
+                @info "index $idx" file
+                concrete_var = jldopen(dir * file * "2")[var * "/data"]
+                field.times[idx] = jldopen(dir * file * "2")["clock"].time
+                interior(field[idx]) .= concrete_var
+	    end
 
+            fields[Symbol(var)] = field
+        end
+    end
+=#
         @info "loading iterations" numbers
         grid = try
             jldopen(dir * myfiles[1] * "2")["grid"] 
-        catch
+                catch
             NeverworldGrid(jldopen(dir * myfiles[1] * "2")["resolution"])
         end
+        Ny = grid.Ny
         for var in variables
             field = FieldTimeSeries{assumed_location(var)...}(grid, numbers)
             for (idx, file) in enumerate(myfiles)
@@ -74,7 +96,12 @@ function all_fieldtimeseries(filename, dir = nothing;
                 #end
                 #set!(field[idx], concrete_var)
                 field.times[idx] = jldopen(dir * file * "2")["clock"].time
-                set!(field[idx], concrete_var)
+                if Ny > 4000
+                    interior(field[idx]) .= concrete_var
+                else 
+                    set!(field[idx], concrete_var)
+                end
+
 
             end
 
@@ -147,6 +174,7 @@ function add_kinetic_energy_and_vorticity_to_timeseries!(fields::Dict)
     for t in 1:length(E.times)
         set!(ζ[t], VerticalVorticityField(fields, t))
         set!(E[t], KineticEnergyField(fields, t))
+        set!(E[t], PotentialEnergyField(fields, t))
     end
 
     fields[:E] = E
