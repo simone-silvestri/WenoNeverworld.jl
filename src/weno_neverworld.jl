@@ -126,8 +126,8 @@ function weno_neverworld_simulation(grid;
     boundary_conditions = neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_relaxation, tracers, tracer_boundary_conditions)
 
     if μ_drag > 0
-        Fu = Forcing(u_immersed_bottom_drag, discrete_form=true, parameters=bottom_drag_coefficient)
-        Fv = Forcing(v_immersed_bottom_drag, discrete_form=true, parameters=bottom_drag_coefficient)
+        Fu = Forcing(u_immersed_bottom_drag, discrete_form=true, parameters=μ_drag)
+        Fv = Forcing(v_immersed_bottom_drag, discrete_form=true, parameters=μ_drag)
         forcing = (; u = Fu, v = Fv)
     else
         forcing = NamedTuple()
