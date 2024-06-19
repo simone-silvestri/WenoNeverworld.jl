@@ -12,6 +12,33 @@ function integral_kinetic_energy(u::FieldTimeSeries, v::FieldTimeSeries; stride 
     return energy
 end
 
+function integral_available_potential_energy(b::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
+    energy = Float64[]
+    vol = VolumeField(u.grid)
+
+    for i in start_time:stride:end_time
+        @info "integrating index $i of $end_time"
+        αe = compute_ape_density(b[i])
+        push!(energy, sum(compute!(Field(αe * vol))))
+    end
+
+    return energy
+end
+
+function compute_ape_density(b::Field)
+    ze = calculate_z★_diagnostics(b)
+
+    αe = Field{Center, Center, Center}(ze.grid)
+
+    zfield = HeightField(ze.grid)
+
+    @info "computing resting and available potential energy density..."
+    ρ = DensityOperation(b)
+    set!(αe, (zfield - ze) * ρ)
+
+    return αe
+end
+
 function ACC_transport(u::FieldTimeSeries; stride = 1, start_time = 1, end_time = length(u.times))
 
     transport = Float64[]
@@ -78,15 +105,9 @@ end
 function calculate_fluctuations!(fields::Dict, variables)
 
     for var in variables
-
         field_avg  = time_average(fields[var])
-        field_fluc = FieldTimeSeries{location(fields[var])...}(fields[var].grid, fields[var].times)
-
-        for t in 1:length(fields[var].times)
-            fluc = compute!(Field(fields[var][t] - field_avg))
-            set!(field_fluc[t], fluc)
-        end
-
+        func       = (f, g) -> f - g
+        field_fluc = propagate(fields, field_avg; func)
         fields[Symbol(var, :fluc)] = field_fluc
     end
 

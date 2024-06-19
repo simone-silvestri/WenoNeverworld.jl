@@ -22,9 +22,7 @@ using Oceananigans.ImmersedBoundaries
 
 const years = 365days
 
-# Correcting bugs in Oceananigans
 include("correct_oceananigans.jl")
-
 include("weno_neverworld_utils.jl")
 include("neverworld_bathymetry.jl")
 include("neverworld_grid.jl")
