@@ -18,6 +18,7 @@ using Oceananigans.Grids
 using Oceananigans.Architectures: arch_array, architecture
 using Oceananigans.Grids: on_architecture
 using Oceananigans.ImmersedBoundaries
+using Revise
 
 const years = 365days
 
