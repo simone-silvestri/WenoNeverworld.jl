@@ -49,7 +49,7 @@ include("tracer_boundary_conditions.jl")
 @inline u_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, k] * is_immersed_drag_u(i, j, k, grid) * speedᶠᶜᶜ(i, j, k, grid, fields) / Δzᶠᶜᶜ(i, j, k, grid)
 @inline v_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, k] * is_immersed_drag_v(i, j, k, grid) * speedᶜᶠᶜ(i, j, k, grid, fields) / Δzᶜᶠᶜ(i, j, k, grid)
 
-function neverworld_boundary_conditions(grid, wind_stress, buoyancy_boundary_condition, tracers, tracer_boundary_conditions)
+function neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_boundary_condition, tracers, tracer_boundary_conditions)
     
     # Velocity boundary conditions
     wind_stress       = regularize_boundary_condition(wind_stress, grid)

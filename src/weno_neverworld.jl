@@ -123,7 +123,7 @@ function weno_neverworld_simulation(grid;
 
     # Initializing boundary conditions    
     @info "specifying boundary conditions..."
-    boundary_conditions = neverworld_boundary_conditions(grid, wind_stress, buoyancy_relaxation, tracers, tracer_boundary_conditions)
+    boundary_conditions = neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_relaxation, tracers, tracer_boundary_conditions)
 
     if μ_drag > 0
         Fu = Forcing(u_immersed_bottom_drag, discrete_form=true, parameters=bottom_drag_coefficient)
