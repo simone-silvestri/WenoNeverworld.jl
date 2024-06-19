@@ -42,10 +42,14 @@ include("tracer_boundary_conditions.jl")
 @inline u_bottom_drag(i, j, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, 1] * speedᶠᶜᶜ(i, j, 1, grid, fields)
 @inline v_bottom_drag(i, j, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, 1] * speedᶜᶠᶜ(i, j, 1, grid, fields)
 
-@inline u_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, k] * speedᶠᶜᶜ(i, j, k, grid, fields) 
-@inline v_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, k] * speedᶜᶠᶜ(i, j, k, grid, fields) 
+@inline is_immersed_drag_u(i, j, k, grid) = Int(immersed_peripheral_node(i, j, k-1, grid, Face(), Center(), Center()) & !inactive_node(i, j, k, grid, Face(), Center(), Center()))
+@inline is_immersed_drag_v(i, j, k, grid) = Int(immersed_peripheral_node(i, j, k-1, grid, Center(), Face(), Center()) & !inactive_node(i, j, k, grid, Center(), Face(), Center()))
 
-function neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_boundary_condition, tracers, tracer_boundary_conditions)
+# Keep a constant linear drag parameter independent on vertical level
+@inline u_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, k] * is_immersed_drag_u(i, j, k, grid) * speedᶠᶜᶜ(i, j, k, grid, fields) / Δzᶠᶜᶜ(i, j, k, grid)
+@inline v_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, k] * is_immersed_drag_v(i, j, k, grid) * speedᶜᶠᶜ(i, j, k, grid, fields) / Δzᶜᶠᶜ(i, j, k, grid)
+
+function neverworld_boundary_conditions(grid, wind_stress, buoyancy_boundary_condition, tracers, tracer_boundary_conditions)
     
     # Velocity boundary conditions
     wind_stress       = regularize_boundary_condition(wind_stress, grid)
@@ -53,17 +57,11 @@ function neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_bou
 
     if μ_drag > 0
         # Quadratic bottom drag
-        drag_u = FluxBoundaryCondition(u_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
-        drag_v = FluxBoundaryCondition(v_immersed_bottom_drag, discrete_form=true, parameters = μ_drag)
-
-        u_immersed_bc = ImmersedBoundaryCondition(bottom = drag_u)
-        v_immersed_bc = ImmersedBoundaryCondition(bottom = drag_v)
-
         u_bottom_drag_bc = FluxBoundaryCondition(u_bottom_drag, discrete_form = true, parameters = μ_drag)
         v_bottom_drag_bc = FluxBoundaryCondition(v_bottom_drag, discrete_form = true, parameters = μ_drag)
         
-        u_bcs = FieldBoundaryConditions(bottom = u_bottom_drag_bc, immersed = u_immersed_bc, top = u_wind_stress_bc)
-        v_bcs = FieldBoundaryConditions(bottom = v_bottom_drag_bc, immersed = v_immersed_bc)
+        u_bcs = FieldBoundaryConditions(bottom = u_bottom_drag_bc, top = u_wind_stress_bc)
+        v_bcs = FieldBoundaryConditions(bottom = v_bottom_drag_bc)
     else
         u_bcs = FieldBoundaryConditions(top = u_wind_stress_bc)
         v_bcs = FieldBoundaryConditions(top = FluxBoundaryCondition(nothing))

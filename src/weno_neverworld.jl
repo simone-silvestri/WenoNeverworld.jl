@@ -9,6 +9,7 @@ using Oceananigans.Models.HydrostaticFreeSurfaceModels: ZStar
 using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
 
 using WenoNeverworld.Auxiliaries
+using WenoNeverworld.NeverworldBoundaries: u_immersed_bottom_drag, v_immersed_bottom_drag
 
 #####
 ##### Default parameterizations for the Neverworld simulation
@@ -107,14 +108,14 @@ function weno_neverworld_simulation(grid;
                                     coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving()),
                                     free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
                                     momentum_advection = default_momentum_advection(grid.underlying_grid),
-				    tracer_advection   = WENO(grid.underlying_grid), 
+				                    tracer_advection   = WENO(grid.underlying_grid), 
                                     interp_init = false,
                                     init_file = nothing,
                                     Δt = 5minutes,
                                     stop_time = 10years,
                                     stop_iteration = Inf,
                                     initial_buoyancy = initial_buoyancy_parabola,
-				    wind_stress                = WindStressBoundaryCondition(),
+				                    wind_stress                = WindStressBoundaryCondition(),
                                     buoyancy_relaxation        = BuoyancyRelaxationBoundaryCondition(),
                                     tracer_boundary_conditions = NamedTuple(),
                                     tracers = :b
@@ -122,7 +123,15 @@ function weno_neverworld_simulation(grid;
 
     # Initializing boundary conditions    
     @info "specifying boundary conditions..."
-    boundary_conditions = neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_relaxation, tracers, tracer_boundary_conditions)
+    boundary_conditions = neverworld_boundary_conditions(grid, wind_stress, buoyancy_relaxation, tracers, tracer_boundary_conditions)
+
+    if μ_drag > 0
+        Fu = Forcing(u_immersed_bottom_drag, discrete_form=true, parameters=bottom_drag_coefficient)
+        Fv = Forcing(v_immersed_bottom_drag, discrete_form=true, parameters=bottom_drag_coefficient)
+        forcing = (; u = Fu, v = Fv)
+    else
+        forcing = NamedTuple()
+    end
 
     #####
     ##### Closures
@@ -143,6 +152,7 @@ function weno_neverworld_simulation(grid;
                                           generalized_vertical_coordinate,
                                           momentum_advection, 
                                           tracer_advection, 
+                                          forcing,
                                           boundary_conditions, 
                                           buoyancy = BuoyancyTracer())
 
