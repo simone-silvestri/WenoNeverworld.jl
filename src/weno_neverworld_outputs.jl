@@ -61,6 +61,13 @@ function standard_outputs!(simulation, output_prefix; overwrite_existing = true,
 
     averaged_fields = (; u, v, w, b, ζ, ζ2, u2, v2, w2, b2, ub, vb, wb)
 
+    if grid isa ZStarSpacingGrid
+        ∂s = grid.Δzᵃᵃᶠ.∂s_∂t        
+        sⁿ = grid.Δzᵃᵃᶠ.sⁿ
+        averaged_fields = merge(averaged_fields, (; ∂s, sⁿ))
+        output_fields   = merge(output_fields, (; ∂s, sⁿ))
+    end
+
     simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields;
                                                                   schedule = TimeInterval(snapshot_time),
                                                                   filename = output_prefix * "_snapshots",
