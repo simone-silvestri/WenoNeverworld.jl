@@ -44,7 +44,6 @@ DiffusivityFields(grid, tracer_names, bcs, ::NNSubgridSaleForcing) =
                 (; Su  = XFaceField(grid),
                    Sv  = YFaceField(grid))
 
-
 """
     compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; parameters = :xyz)
 
