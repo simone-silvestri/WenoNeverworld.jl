@@ -48,7 +48,7 @@ import Oceananigans.TurbulenceClosures:
 using Oceananigans.Utils: launch!
 using Oceananigans.Coriolis: fᶠᶠᵃ
 using Oceananigans.Operators
-using Oceananigans.BoundaryConditions
+using Oceananigans.BoundaryConditions: fill_halo_regions!
 using Oceananigans.BuoyancyModels: ∂x_b, ∂y_b, ∂z_b 
 
 using Oceananigans.Operators: ℑxyzᶜᶜᶠ, ℑyzᵃᶜᶠ, ℑxzᶜᵃᶠ, Δxᶜᶜᶜ, Δyᶜᶜᶜ
