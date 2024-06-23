@@ -114,7 +114,7 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
     grid = u.grid
     arch = architecture(grid)
 
-    launch!(arch, grid, :xyz, _scaled_center_velocities!, uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v, u★, v★)
+    launch!(arch, grid, parameters, _scaled_center_velocities!, uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v, u★, v★)
 
     #(w, h, 2, k) - Here we consider depth layers as batch as they are processed independently
     # Here we are allocating!!! (better to do inplace substitution if possible)
