@@ -13,6 +13,7 @@ struct NNbackscatteringClosure{NN, FT} <: AbstractTurbulenceClosure{ExplicitTime
     v★  :: FT # scaling constant for the meridional velocity
     Su★ :: FT # scaling constant for the zonal subgrid scale forcing
     Sv★ :: FT # scaling constant for the meridional subgrid scale forcing
+    min_value :: FT # Value to add to the activated elements (default: 0.0015).
     sampling :: Int
 end
 
@@ -49,6 +50,7 @@ function NNbackscatteringClosure(FT::DataType = Float64;
                                  v_scale = 10,
                                  Su_scale = 1e-7, 
                                  Sv_scale = 1e-7, 
+                                 min_value = 0.0015,
                                  sampling = true)
 
     nn = getmodel(weight_path; architecture)
@@ -57,9 +59,10 @@ function NNbackscatteringClosure(FT::DataType = Float64;
     v_scale  = convert(FT, v_scale)
     Su_scale = convert(FT, Su_scale)
     Sv_scale = convert(FT, Sv_scale)
+    min_value = convert(FT, min_value)
 
     return NNbackscatteringClosure(nn, u_scale,  v_scale, 
-                                   Su_scale, Sv_scale, Int(sampling))
+                                   Su_scale, Sv_scale, min_value, Int(sampling))
 end
 
 function DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure)
@@ -76,7 +79,9 @@ function DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure)
     Nx, Ny, Nz = size(uᶜᶜᶜ.data.parent)
     ox, oy, oz = uᶜᶜᶜ.data.offsets
 
-    # Work array (4 channels)
+    # Work array -- 4 channels, where x, y, and z dimensions
+    # are offset like the u and v fields, while the channel \
+    # dimension is indexed from 1
     wrk = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, 0, oz)
     wrk = on_architecture(arch, wrk)
 
@@ -122,8 +127,11 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
 
     #(w, h, 2, k) - Here we consider depth layers as batch as they are processed independently
     # Here we are allocating!!! (better to do inplace substitution if possible)
+    # This step needs to be GPU-compatible, it's the last step we need to figure out
     out.parent .= closure.nn(stack([uᶜᶜᶜ.data, vᶜᶜᶜ.data], dims=3)) 
-    out.parent .= activation(out.parent)
+
+    # Apply the activation (the softplus function) pointwise
+    lauch!(arch, grid, parameters, _activation!, out, closure.min_value)
 
     # Sample the outputs on the correct device
     launch!(arch, grid, parameters, _sample_output!, Su, Sv, out, grid, Su★, Sv★, sampling)
@@ -184,8 +192,11 @@ Applies the softplus activation function to the specified indices of the input t
 # Returns
 - A new tensor with the activation applied to the specified indices.
 """
-activation(x; precision_indices=3:4, min_value=0.0015) = 
-    view(x, :, :, precision_indices, :) .= softplus.(view(x, :, :, precision_indices, :)) .+ min_value
+@kernel function _activation!(x, min_value) 
+    i, j, k = @index(Global, NTuple)
+    @inbounds x[i, j, 3, k] = softplus(x[i, j, 3, k]) + min_value
+    @inbounds x[i, j, 4, k] = softplus(x[i, j, 4, k]) + min_value
+end
 
 """
     getmodel(weight_path=nothing)
