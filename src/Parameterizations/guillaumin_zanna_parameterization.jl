@@ -77,7 +77,7 @@ function DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure)
     ox, oy, oz = uᶜᶜᶜ.data.offsets
 
     # Work array (4 channels)
-    wrk = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, oz)
+    wrk = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, 0, oz)
     wrk = on_architecture(arch, wrk)
 
     return (; uᶜᶜᶜ, vᶜᶜᶜ, Su, Sv, wrk)
@@ -184,11 +184,8 @@ Applies the softplus activation function to the specified indices of the input t
 # Returns
 - A new tensor with the activation applied to the specified indices.
 """
-function activation(x; precision_indices=3:4, min_value=0.0015)
-    out = copy(x) # If we want to avoid inplace modification
-    view(out, :, :, precision_indices, :) .= softplus.(view(x, :, :, precision_indices, :)) .+ min_value
-    return out
-end
+activation(x; precision_indices=3:4, min_value=0.0015) = 
+    view(x, :, :, precision_indices, :) .= softplus.(view(x, :, :, precision_indices, :)) .+ min_value
 
 """
     getmodel(weight_path=nothing)
