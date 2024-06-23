@@ -1,6 +1,6 @@
 module Parameterizations
 
-export QGLeith, EnergyBackScattering, NNSubgridSaleForcing
+export QGLeith, EnergyBackScattering, NNbackscatteringClosure
 
 using Oceananigans
 using KernelAbstractions: @index, @kernel

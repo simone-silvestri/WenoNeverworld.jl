@@ -33,8 +33,8 @@ wind_stress = WindStressBoundaryCondition(; φs, τs)
 # the restoring time is λ = 7days
 buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days)
 
-# Here we use test `NNSubgridSaleForcing` closure
-horizontal_closure = NNSubgridSaleForcing(eltype(grid); 
+# Here we use test `NNbackscatteringClosure` closure
+horizontal_closure = NNbackscatteringClosure(eltype(grid); 
                                           architecture = arch, 
                                           weight_path = "model_weights.jld2")
 
