@@ -7,6 +7,9 @@ using OffsetArrays
 using Oceananigans: architecture
 import Oceananigans: on_architecture
 
+@inline flux_architecture(::GPU) = Flux.gpu
+@inline flux_architecture(::CPU) = Flux.cpu
+
 struct NNbackscatteringClosure{NN, FT} <: AbstractTurbulenceClosure{ExplicitTimeDiscretization, 2}
     nn  :: NN # the convolutional neural network that computes `nn(u, v) -> (Su, Sv)`
     u★  :: FT # scaling constant for the zonal velocity
@@ -233,30 +236,7 @@ function getmodel(weight_path=nothing; architecture = CPU())
         model_state = JLD2.load(weight_path, "model_state");
         Flux.loadmodel!(model, model_state);
     end
-    return on_architecture(architecture, model)
-end
+    flux_arch = flux_architecture(architecture)
 
-# Make the `Chain` structure GPU-compatible by converting all the
-# concrete arrays and data structures to their GPU-compatible counterparts
-# In this case, we only need to convert the `weight`s and the `bias`es
-# TODO: make sure there is no better way to do this step already implemented in `Flux`
-function on_architecture(arch, nn :: Chain)
-    new_layers = []
-
-    for layer in nn.layers
-        if layer isa Function 
-            push!(new_layers, layer)
-        else
-            weight = on_architecture(arch, layer.weight)
-            bias   = on_architecture(arch, layer.bias)
-
-            new_layer = Conv(weight, bias, layer.σ; stride = layer.stride, 
-                                                       pad = layer.pad, 
-                                                  dilation = layer.dilation)
-
-            push!(new_layers, new_layer)
-        end
-    end
-
-    return Chain(tuple(new_layers...))
+    return model |> flux_arch
 end
