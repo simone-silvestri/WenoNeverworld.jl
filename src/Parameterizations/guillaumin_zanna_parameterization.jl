@@ -14,14 +14,40 @@ import Oceananigans.TurbulenceClosures:
 import Oceananigans.TurbulenceClosures: compute_diffusivities!, DiffusivityFields
 
 struct NNSubgridSaleForcing{NN, FT} <: AbstractTurbulenceClosure{ExplicitTimeDiscretization, 2}
-    nn :: NN
-    u_scale  :: FT
-    v_scale  :: FT
-    Su_scale :: FT
-    Sv_scale :: FT
+    nn :: NN       # the convolutional neural network that computes `nn(u, v) -> (Su, Sv)`
+    u_scale  :: FT # scaling constant for the zonal velocity
+    v_scale  :: FT # scaling constant for the meridional velocity
+    Su_scale :: FT # scaling constant for the zonal subgrid scale forcing
+    Sv_scale :: FT # scaling constant for the meridional subgrid scale forcing
     sampling :: Int
 end
 
+"""
+    NNSubgridSaleForcing(FT::DataType = Float64; 
+                        weight_path = nothing,
+                        u_scale = 10,
+                        v_scale = 10,
+                        Su_scale = 1e-7, 
+                        Sv_scale = 1e-7, 
+                        sampling = true)
+
+Constructs a subgrid-scale closure implemented as a neural network. This closure computes the 
+subgrid-scale forcing in the `compute_diffusivities!` step and then applies them to the `u-momentum` 
+and `v-momentum` equations extending the flux divergence functions `∂ⱼ_τ₁ⱼ` and `∂ⱼ_τ₂ⱼ`
+
+# Arguments
+============
+- `FT::DataType`: The data type to use for the model parameters. Defaults to `Float64`.
+
+# Keyword Arguments
+===================
+- `weight_path`: The path to the pre-trained weights of the neural network model. Defaults to `nothing`.
+- `u_scale`: The scaling factor for the u-component of the velocity field. Defaults to `10`.
+- `v_scale`: The scaling factor for the v-component of the velocity field. Defaults to `10`.
+- `Su_scale`: The scaling factor for the subgrid-scale u-component forcing. Defaults to `1e-7`.
+- `Sv_scale`: The scaling factor for the subgrid-scale v-component forcing. Defaults to `1e-7`.
+- `sampling`: A boolean indicating whether to use sampling during the forward pass of the neural network. Defaults to `true`.
+"""
 function NNSubgridSaleForcing(FT::DataType = Float64; 
                               weight_path = nothing,
                               u_scale = 10,
@@ -76,6 +102,7 @@ function compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; paramet
     v_scale  = closure.v_scale
     Su_scale = closure.Su_scale
     Sv_scale = closure.Sv_scale
+    sampling = closure.sampling
 
     #(w, h, 2, k) - Here we consider depth layers as batch as they are processed independently
     # Here we are allocating!!! (better to do inplace substitution if possible)
@@ -83,11 +110,12 @@ function compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; paramet
     out = activation(out)
     
     # Sample the outputs on the correct device
-    launch!(arch, grid, parameters, _sample_output!, Su, Sv, out, Su_scale, Sv_scale, sampling)
+    launch!(arch, grid, parameters, _sample_output!, Su, Sv, out, grid, Su_scale, Sv_scale, sampling)
 
     return nothing
 end
 
+# Interpolate velocities from staggered locations to centered locations
 @kernel function _center_velocities!(uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v)
     i, j, k = @index(Global, NTuple)
     @inbounds uᶜᶜᶜ[i, j, k] = ℑxᶜᵃᵃ(i, j, k, grid, u)
@@ -97,16 +125,18 @@ end
 @inline function sample_output_uᶜᶜᶜ(i, j, k, grid, out, Su_scale, sampling)
     @inbounds Su  = out[i, j, 1, k]
     @inbounds Spu = out[i, j, 3, k]
-    return Su_scale * (Su + sqrt(1 / Spu) * randn(Spu) * sampling)
+    return Su_scale * (Su + sqrt(1 / Spu) * randn() * sampling)
 end
 
 @inline function sample_output_vᶜᶜᶜ(i, j, k, grid, out, Sv_scale, sampling)
     @inbounds Sv  = out[i, j, 2, k]
     @inbounds Spv = out[i, j, 4, k]
-    return Sv_scale * (Sv + sqrt(1 / Spv) * randn(Spv) * sampling)
+    return Sv_scale * (Sv + sqrt(1 / Spv) * randn() * sampling)
 end
 
-@kernel function _sample_output!(Su, Sv, out, Su_scale, Sv_scale, sampling)
+# Compute the sampling output on centers and interpolate them onto the 
+# staggered C-grid
+@kernel function _sample_output!(Su, Sv, out, grid, Su_scale, Sv_scale, sampling)
     i, j, k = @index(Global, NTuple)
 
     @inbounds Su[i, j, k] = ℑxᶠᵃᵃ(i, j, k, grid, sample_output_uᶜᶜᶜ, out, Su_scale, sampling)
