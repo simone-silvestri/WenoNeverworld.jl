@@ -48,5 +48,6 @@ using Oceananigans.Operators: ℑxyzᶜᶜᶠ, ℑyzᵃᶜᶠ, ℑxzᶜᵃᶠ, �
 
 include("quasi_geostrophic_leith.jl")
 include("energy_backscattering.jl")
+include("guillaumin_zanna_parameterization.jl")
 
 end
