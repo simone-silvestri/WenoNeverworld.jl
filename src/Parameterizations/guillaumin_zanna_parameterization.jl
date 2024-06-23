@@ -81,7 +81,7 @@ function compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; paramet
     return nothing
 end
 
-@kenrel function _sample_output!(Su, Sv, out, Su_scale, Sv_scale, sampling)
+@kernel function _sample_output!(Su, Sv, out, Su_scale, Sv_scale, sampling)
     i, j, k = @index(Global, NTuple)
 
     @inbounds begin
