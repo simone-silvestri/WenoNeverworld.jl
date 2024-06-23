@@ -14,7 +14,7 @@ import Oceananigans.TurbulenceClosures:
 
 import Oceananigans.TurbulenceClosures: compute_diffusivities!, DiffusivityFields
 
-struct NNSubgridSaleForcing{NN, FT} <: AbstractTurbulenceClosure{ExplicitTimeDiscretization, 2}
+struct NNbackscatteringClosure{NN, FT} <: AbstractTurbulenceClosure{ExplicitTimeDiscretization, 2}
     nn :: NN       # the convolutional neural network that computes `nn(u, v) -> (Su, Sv)`
     u_scale  :: FT # scaling constant for the zonal velocity
     v_scale  :: FT # scaling constant for the meridional velocity
@@ -24,7 +24,7 @@ struct NNSubgridSaleForcing{NN, FT} <: AbstractTurbulenceClosure{ExplicitTimeDis
 end
 
 """
-    NNSubgridSaleForcing(FT::DataType = Float64; 
+    NNbackscatteringClosure(FT::DataType = Float64; 
                         weight_path = nothing,
                         u_scale = 10,
                         v_scale = 10,
@@ -49,7 +49,7 @@ and `v-momentum` equations extending the flux divergence functions `∂ⱼ_τ₁
 - `Sv_scale`: The scaling factor for the subgrid-scale v-component forcing. Defaults to `1e-7`.
 - `sampling`: A boolean indicating whether to use sampling during the forward pass of the neural network. Defaults to `true`.
 """
-function NNSubgridSaleForcing(FT::DataType = Float64; 
+function NNbackscatteringClosure(FT::DataType = Float64; 
                               architecture = CPU(),
                               weight_path = nothing,
                               u_scale = 10,
@@ -65,12 +65,12 @@ function NNSubgridSaleForcing(FT::DataType = Float64;
     Su_scale = convert(FT, Su_scale)
     Sv_scale = convert(FT, Sv_scale)
 
-    return NNSubgridSaleForcing(nn, 
+    return NNbackscatteringClosure(nn, 
                                 u_scale,  v_scale, 
                                 Su_scale, Sv_scale, Int(sampling))
 end
 
-DiffusivityFields(grid, tracer_names, bcs, ::NNSubgridSaleForcing) = 
+DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure) = 
                 (; Su = XFaceField(grid),
                    Sv = YFaceField(grid),
                    uᶜᶜᶜ = CenterField(grid),
@@ -81,13 +81,13 @@ DiffusivityFields(grid, tracer_names, bcs, ::NNSubgridSaleForcing) =
 #####
 
 """
-    compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; parameters = :xyz)
+    compute_diffusivities!(K, closure::NNbackscatteringClosure, model; parameters = :xyz)
 
 Computes the subgrid forcing for zonal and meridional velocities using a neural network model.
 Values from scale : https://github.com/chzhangudel/Forpy_CNN_GZ21/blob/smartsim/testNN.py
 """
 # Calculate forcing terms during the `compute_diffusivities!` step (before calculating tendencies)
-function compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; parameters = :xyz)
+function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; parameters = :xyz)
     arch = model.architecture
     grid = model.grid
     u, v, _ = model.velocities
@@ -150,12 +150,12 @@ end
 end
 
 # Forcing in the u- and v- equations
-@inline ∂ⱼ_τ₁ⱼ(i, j, k, grid, closure::NNSubgridSaleForcing, K, args...) = @inbounds K.Su[i, j, k]
-@inline ∂ⱼ_τ₂ⱼ(i, j, k, grid, closure::NNSubgridSaleForcing, K, args...) = @inbounds K.Sv[i, j, k]
+@inline ∂ⱼ_τ₁ⱼ(i, j, k, grid, closure::NNbackscatteringClosure, K, args...) = @inbounds K.Su[i, j, k]
+@inline ∂ⱼ_τ₂ⱼ(i, j, k, grid, closure::NNbackscatteringClosure, K, args...) = @inbounds K.Sv[i, j, k]
     
 # No forcing term in the w-equation or in the tracer equations!
-@inline ∂ⱼ_τ₃ⱼ(i, j, k, grid, closure::NNSubgridSaleForcing, args...)   = zero(grid)
-@inline ∇_dot_qᶜ(i, j, k, grid, closure::NNSubgridSaleForcing, args...) = zero(grid)
+@inline ∂ⱼ_τ₃ⱼ(i, j, k, grid, closure::NNbackscatteringClosure, args...)   = zero(grid)
+@inline ∇_dot_qᶜ(i, j, k, grid, closure::NNbackscatteringClosure, args...) = zero(grid)
 
 #####
 ##### NN-specific functions
