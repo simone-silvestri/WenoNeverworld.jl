@@ -3,6 +3,8 @@ using Flux: Conv, relu, Chain
 using Flux.Optimise: softplus
 using JLD2 
 
+using Oceananigans: architecture
+
 import Oceananigans.TurbulenceClosures: 
                         ∂ⱼ_τ₁ⱼ, 
                         ∂ⱼ_τ₂ⱼ, 
@@ -41,8 +43,10 @@ function NNSubgridSaleForcing(FT::DataType = Float64;
 end
 
 DiffusivityFields(grid, tracer_names, bcs, ::NNSubgridSaleForcing) = 
-                (; Su  = XFaceField(grid),
-                   Sv  = YFaceField(grid))
+                (; Su = XFaceField(grid),
+                   Sv = YFaceField(grid),
+                   uᶜᶜᶜ = CenterField(grid),
+                   vᶜᶜᶜ = CenterField(grid))
 
 """
     compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; parameters = :xyz)
@@ -56,12 +60,16 @@ function compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; paramet
     grid = model.grid
     u, v, _ = model.velocities
 
-    grid = u.grid
-    arch = architecture(grid)
-
     # Forcing fields
     Su = K.Su
     Sv = K.Sv
+    uᶜᶜᶜ = K.uᶜᶜᶜ
+    vᶜᶜᶜ = K.vᶜᶜᶜ
+
+    grid = u.grid
+    arch = architecture(grid)
+
+    launch!(arch, grid, :xyz, _center_velocities!, uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v)
 
     # Scaling parameters
     u_scale  = closure.u_scale
@@ -71,7 +79,7 @@ function compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; paramet
 
     #(w, h, 2, k) - Here we consider depth layers as batch as they are processed independently
     # Here we are allocating!!! (better to do inplace substitution if possible)
-    out = closure.nn(stack([u .* u_scale, v .* v_scale], dims=3)) 
+    out = closure.nn(stack([uᶜᶜᶜ.data .* u_scale, vᶜᶜᶜ.data .* v_scale], dims=3)) 
     out = activation(out)
     
     # Sample the outputs on the correct device
@@ -80,19 +88,29 @@ function compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; paramet
     return nothing
 end
 
+@kernel function _center_velocities!(uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v)
+    i, j, k = @index(Global, NTuple)
+    @inbounds uᶜᶜᶜ[i, j, k] = ℑxᶜᵃᵃ(i, j, k, grid, u)
+    @inbounds vᶜᶜᶜ[i, j, k] = ℑyᵃᶜᵃ(i, j, k, grid, v)
+end
+
+@inline function sample_output_uᶜᶜᶜ(i, j, k, grid, out, Su_scale, sampling)
+    @inbounds Su  = out[i, j, 1, k]
+    @inbounds Spu = out[i, j, 3, k]
+    return Su_scale * (Su + sqrt(1 / Spu) * randn(Spu) * sampling)
+end
+
+@inline function sample_output_vᶜᶜᶜ(i, j, k, grid, out, Sv_scale, sampling)
+    @inbounds Sv  = out[i, j, 2, k]
+    @inbounds Spv = out[i, j, 4, k]
+    return Sv_scale * (Sv + sqrt(1 / Spv) * randn(Spv) * sampling)
+end
+
 @kernel function _sample_output!(Su, Sv, out, Su_scale, Sv_scale, sampling)
     i, j, k = @index(Global, NTuple)
 
-    @inbounds begin
-        Su[i, j, k] = out[i, j, 1, k]
-        Sv[i, j, k] = out[i, j, 2, k]
-        
-        Spu = out[i, j, 3, k]
-        Spv = out[i, j, 4, k]
-
-        Su[i, j, k] = Su_scale * (Su[i, j, k] + sqrt(1 / Spu) * randn(Spu) * sampling)
-        Sv[i, j, k] = Sv_scale * (Sv[i, j, k] + sqrt(1 / Spv) * randn(Spv) * sampling)
-    end
+    @inbounds Su[i, j, k] = ℑxᶠᵃᵃ(i, j, k, grid, sample_output_uᶜᶜᶜ, out, Su_scale, sampling)
+    @inbounds Sv[i, j, k] = ℑyᵃᶠᵃ(i, j, k, grid, sample_output_vᶜᶜᶜ, out, Sv_scale, sampling)
 end
 
 # Forcing in the u- and v- equations
