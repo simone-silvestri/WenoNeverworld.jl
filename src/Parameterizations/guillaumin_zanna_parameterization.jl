@@ -4,6 +4,7 @@ using Flux.Optimise: softplus
 using JLD2 
 
 using Oceananigans: architecture
+import Oceananigans: on_architecture
 
 import Oceananigans.TurbulenceClosures: 
                         ∂ⱼ_τ₁ⱼ, 
@@ -167,7 +168,7 @@ Applies the softplus activation function to the specified indices of the input t
 """
 function activation(x; precision_indices=3:4, min_value=0.0015)
     out = copy(x) # If we want to avoid inplace modification
-    out[:, :, precision_indices, :] .= softplus.(x[:, :, precision_indices, :]) .+ min_value
+    view(out, :, :, precision_indices, :) .= softplus.(view(x, :, :, precision_indices, :)) .+ min_value
     return out
 end
 
@@ -206,5 +207,29 @@ function getmodel(weight_path=nothing; architecture = CPU())
         model_state = JLD2.load(weight_path, "model_state");
         Flux.loadmodel!(model, model_state);
     end
-    return model
+    return on_architecture(architecture, model)
+end
+
+# Make the `Chain` structure GPU-compatible by converting all the
+# concrete arrays and data structures to their GPU-compatible counterparts
+# In this case, we only need to convert the `weight`s and the `bias`es
+function on_architecture(arch, nn :: Chain)
+    new_layers = []
+
+    for layer in nn.layers
+        if layer isa Function 
+            push!(new_layers, layer)
+        else
+            weight = on_architecture(arch, layer.weight)
+            bias   = on_architecture(arch, layer.bias)
+
+            new_layer = Conv(weight, bias, layer.σ; stride = layer.stride, 
+                                                       pad = layer.pad, 
+                                                  dilation = layer.dilation)
+
+            push!(new_layers, new_layer)
+        end
+    end
+
+    return Chain(tuple(new_layers...))
 end
