@@ -49,6 +49,7 @@ and `v-momentum` equations extending the flux divergence functions `∂ⱼ_τ₁
 - `sampling`: A boolean indicating whether to use sampling during the forward pass of the neural network. Defaults to `true`.
 """
 function NNSubgridSaleForcing(FT::DataType = Float64; 
+                              architecture = CPU(),
                               weight_path = nothing,
                               u_scale = 10,
                               v_scale = 10,
@@ -56,7 +57,7 @@ function NNSubgridSaleForcing(FT::DataType = Float64;
                               Sv_scale = 1e-7, 
                               sampling = true)
 
-    nn = getmodel(weight_path)
+    nn = getmodel(weight_path; architecture)
     
     u_scale  = convert(FT, u_scale)
     v_scale  = convert(FT, v_scale)
@@ -179,12 +180,17 @@ Defines and optionally loads the weights for network from
     https://github.com/chzhangudel/Forpy_CNN_GZ21
 
 # Arguments
+============
 - `weight_path`: Path to the file containing the model weights (default: nothing).
+
+# Keyword Arguments
+===================
+- `architecture`: the architecture on which the model runs: either `CPU()` or `GPU()`
 
 # Returns
 - The constructed model, with weights loaded if `weight_path` is provided.
 """
-function getmodel(weight_path=nothing) 
+function getmodel(weight_path=nothing; architecture = CPU()) 
     # Define the network structure
     model = Chain(
         Conv((5, 5), 2   => 128, pad = (2, 2)), relu,

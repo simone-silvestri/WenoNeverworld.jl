@@ -6,10 +6,10 @@ using Oceananigans.Units
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
 
-arch = GPU()
+arch = CPU()
 
 # The resolution in degrees
-degree_resolution = 1/4
+degree_resolution = 1
 
 grid = NeverworldGrid(degree_resolution; arch)
 
@@ -34,7 +34,9 @@ wind_stress = WindStressBoundaryCondition(; φs, τs)
 buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days)
 
 # Here we use test `NNSubgridSaleForcing` closure
-horizontal_closure = NNSubgridSaleForcing(eltype(grid); weight_path = "model_weights.jld2")
+horizontal_closure = NNSubgridSaleForcing(eltype(grid); 
+                                          architecture = arch, 
+                                          weight_path = "model_weights.jld2")
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time,
