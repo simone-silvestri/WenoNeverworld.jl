@@ -131,7 +131,7 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
     out.parent .= closure.nn(stack([uᶜᶜᶜ.data, vᶜᶜᶜ.data], dims=3)) 
 
     # Apply the activation (the softplus function) pointwise
-    lauch!(arch, grid, parameters, _activation!, out, closure.min_value)
+    launch!(arch, grid, parameters, _activation!, out, closure.min_value)
 
     # Sample the outputs on the correct device
     launch!(arch, grid, parameters, _sample_output!, Su, Sv, out, grid, Su★, Sv★, sampling)

@@ -35,8 +35,8 @@ buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days
 
 # Here we use test `NNbackscatteringClosure` closure
 horizontal_closure = NNbackscatteringClosure(eltype(grid); 
-                                          architecture = arch, 
-                                          weight_path = "model_weights.jld2")
+                                             architecture = arch, 
+                                             weight_path = "model_weights.jld2")
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time,

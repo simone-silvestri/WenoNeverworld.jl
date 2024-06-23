@@ -26,6 +26,7 @@ using Oceananigans.TurbulenceClosures:
         VerticallyImplicitTimeDiscretization,
         ExplicitTimeDiscretization,
         FluxTapering,
+        getclosure,
         isopycnal_rotation_tensor_xz_ccf,
         isopycnal_rotation_tensor_yz_ccf,
         isopycnal_rotation_tensor_zz_ccf
@@ -37,7 +38,8 @@ import Oceananigans.TurbulenceClosures:
         diffusivity,
         diffusive_flux_x,
         diffusive_flux_y, 
-        diffusive_flux_z
+        diffusive_flux_z,
+        top_buoyancy_flux
 
 import Oceananigans.TurbulenceClosures: 
         ∂ⱼ_τ₁ⱼ, 
