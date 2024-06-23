@@ -76,6 +76,10 @@ DiffusivityFields(grid, tracer_names, bcs, ::NNSubgridSaleForcing) =
                    uᶜᶜᶜ = CenterField(grid),
                    vᶜᶜᶜ = CenterField(grid))
 
+#####
+##### Forcing-specific functions 
+#####
+
 """
     compute_diffusivities!(K, closure::NNSubgridSaleForcing, model; parameters = :xyz)
 
@@ -152,6 +156,10 @@ end
 # No forcing term in the w-equation or in the tracer equations!
 @inline ∂ⱼ_τ₃ⱼ(i, j, k, grid, closure::NNSubgridSaleForcing, args...)   = zero(grid)
 @inline ∇_dot_qᶜ(i, j, k, grid, closure::NNSubgridSaleForcing, args...) = zero(grid)
+
+#####
+##### NN-specific functions
+#####
 
 """
     activation(x; precision_indices=3:4, min_value=0.0015)
