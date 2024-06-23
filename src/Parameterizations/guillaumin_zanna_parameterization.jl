@@ -151,7 +151,6 @@ end
 @inline ∂ⱼ_τ₃ⱼ(i, j, k, grid, closure::NNSubgridSaleForcing, args...)   = zero(grid)
 @inline ∇_dot_qᶜ(i, j, k, grid, closure::NNSubgridSaleForcing, args...) = zero(grid)
 
-
 """
     activation(x; precision_indices=3:4, min_value=0.0015)
 
