@@ -2,6 +2,7 @@ using Flux
 using Flux: Conv, relu, Chain
 using Flux.Optimise: softplus
 using JLD2 
+using OffsetArrays
 
 using Oceananigans: architecture
 import Oceananigans: on_architecture
@@ -72,12 +73,14 @@ function DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure)
     Su  = XFaceField(grid)
     Sv  = YFaceField(grid)
 
-    # # Work array (4 channels)
-    # Nx, Ny, Nz = size(grid)
-    # wrk = zeros(Nx, Ny, 4, Nz)
-    # wrk = on_architecture(arch, wrk)
+    Nx, Ny, Nz = size(uᶜᶜᶜ.data.parent)
+    ox, oy, oz = uᶜᶜᶜ.data.offsets
 
-    return (; uᶜᶜᶜ, vᶜᶜᶜ, Su, Sv) #, wrk)
+    # Work array (4 channels)
+    wrk = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, oz)
+    wrk = on_architecture(arch, wrk)
+
+    return (; uᶜᶜᶜ, vᶜᶜᶜ, Su, Sv, wrk)
 end
 
 #####
@@ -97,8 +100,9 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
     u, v, _ = model.velocities
 
     # NN outputs
-    Su = K.Su
-    Sv = K.Sv
+    Su  = K.Su
+    Sv  = K.Sv
+    out = K.wrk
 
     # NN inputs
     uᶜᶜᶜ = K.uᶜᶜᶜ
@@ -118,9 +122,9 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
 
     #(w, h, 2, k) - Here we consider depth layers as batch as they are processed independently
     # Here we are allocating!!! (better to do inplace substitution if possible)
-    out = closure.nn(stack([interior(uᶜᶜᶜ), interior(vᶜᶜᶜ)], dims=3)) 
-    out = activation(out)
-    
+    out.parent .= closure.nn(stack([uᶜᶜᶜ.data, vᶜᶜᶜ.data], dims=3)) 
+    out.parent .= activation(out.parent)
+
     # Sample the outputs on the correct device
     launch!(arch, grid, parameters, _sample_output!, Su, Sv, out, grid, Su★, Sv★, sampling)
 
