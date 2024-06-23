@@ -10,42 +10,13 @@ using Adapt
 using KernelAbstractions: @index, @kernel
 using KernelAbstractions.Extras.LoopInfo: @unroll
 
-using Oceananigans.TurbulenceClosures:
-        tapering_factorᶠᶜᶜ,
-        tapering_factorᶜᶠᶜ,
-        tapering_factorᶜᶜᶠ,
-        tapering_factor,
-        SmallSlopeIsopycnalTensor,
-        AbstractScalarDiffusivity,
-        ExplicitTimeDiscretization,
-        FluxTapering,
-        isopycnal_rotation_tensor_xz_ccf,
-        isopycnal_rotation_tensor_yz_ccf,
-        isopycnal_rotation_tensor_zz_ccf
-
-import Oceananigans.TurbulenceClosures:
-        compute_diffusivities!,
-        DiffusivityFields,
-        viscosity, 
-        diffusivity,
-        getclosure,
-        top_buoyancy_flux,
-        diffusive_flux_x,
-        diffusive_flux_y, 
-        diffusive_flux_z,
-        viscous_flux_ux,
-        viscous_flux_vx,
-        viscous_flux_uy,
-        viscous_flux_vy
-
 using Oceananigans.Utils: launch!
 using Oceananigans.Coriolis: fᶠᶠᵃ
 using Oceananigans.Operators
 using Oceananigans.BuoyancyModels: ∂x_b, ∂y_b, ∂z_b 
 
 using Oceananigans.TurbulenceClosures
-using Oceananigans.TurbulenceClosures: HorizontalFormulation, VerticalFormulation, AbstractScalarDiffusivity
-using Oceananigans.TurbulenceClosures: AbstractScalarBiharmonicDiffusivity
+using Oceananigans.TurbulenceClosures: VerticalFormulation, AbstractScalarDiffusivity
 using Oceananigans.Operators
 using Oceananigans.Operators: Δxᶜᶜᶜ, Δyᶜᶜᶜ, ℑxyᶜᶜᵃ, ζ₃ᶠᶠᶜ, div_xyᶜᶜᶜ
 using Oceananigans.Operators: Δx, Δy
@@ -71,24 +42,24 @@ function XinKaiVerticalDiffusivity{TD}(ν₀  :: FT,
                                        Cᵉⁿ :: FT,
                                        Prₜ :: FT,
                                        Riᶜ :: FT,
-				       δRi :: FT,
+				                       δRi :: FT,
                                        Q₀  :: FT,
-	         		       δQ  :: FT) where {TD, FT}
+	         		                   δQ  :: FT) where {TD, FT}
                                        
     return XinKaiVerticalDiffusivity{TD, FT}(ν₀, νˢʰ, νᶜⁿ, Cᵉⁿ, Prₜ, Riᶜ, δRi, Q₀, δQ)
 end
 
 function XinKaiVerticalDiffusivity(time_discretization = VerticallyImplicitTimeDiscretization(),
                                     FT  = Float64;
-				    ν₀  = 1e-5, 
+				                    ν₀  = 1e-5, 
                                     νˢʰ = 0.0885,
                                     νᶜⁿ = 4.3668,
                                     Cᵉⁿ = 0.2071,
                                     Prₜ = 1.207,
                                     Riᶜ = - 0.21982,
-				    δRi = 8.342e-4,
+				                    δRi = 8.342e-4,
                                     Q₀  = 0.08116,
-	         		    δQ  = 0.02622) 
+	         		                δQ  = 0.02622) 
 
     TD = typeof(time_discretization)
 
@@ -98,9 +69,9 @@ function XinKaiVerticalDiffusivity(time_discretization = VerticallyImplicitTimeD
                                          convert(FT, Cᵉⁿ),
                                          convert(FT, Prₜ),
                                          convert(FT, Riᶜ),
-					 convert(FT, δRi),
-					 convert(FT, Q₀),
-					 convert(FT, δQ))
+					                     convert(FT, δRi),
+					                     convert(FT, Q₀),
+					                     convert(FT, δQ))
 end
 
 XinKaiVerticalDiffusivity(FT::DataType; kw...) =
