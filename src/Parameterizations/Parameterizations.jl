@@ -48,9 +48,12 @@ import Oceananigans.TurbulenceClosures:
 using Oceananigans.Utils: launch!
 using Oceananigans.Coriolis: fᶠᶠᵃ
 using Oceananigans.Operators
+using Oceananigans.BoundaryConditions
 using Oceananigans.BuoyancyModels: ∂x_b, ∂y_b, ∂z_b 
 
 using Oceananigans.Operators: ℑxyzᶜᶜᶠ, ℑyzᵃᶜᶠ, ℑxzᶜᵃᶠ, Δxᶜᶜᶜ, Δyᶜᶜᶜ
+
+using Adapt
 
 "Return the filter width for an Horizontal closure on a general grid."
 @inline Δ²ᶜᶜᶜ(i, j, k, grid) =  2 * (1 / (1 / Δxᶜᶜᶜ(i, j, k, grid)^2 + 1 / Δyᶜᶜᶜ(i, j, k, grid)^2))

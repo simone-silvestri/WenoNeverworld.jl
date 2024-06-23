@@ -1,23 +1,14 @@
-using Oceananigans
 using Oceananigans.Architectures: architecture
 using Oceananigans.BuoyancyModels: ∂z_b
-using Oceananigans.Operators
 using Oceananigans.Grids: inactive_node
 using Oceananigans.Operators: ℑzᵃᵃᶜ, ℑxyᶠᶠᵃ, ℑxyᶜᶜᵃ
-
-using Adapt
-
-using KernelAbstractions: @index, @kernel
-using KernelAbstractions.Extras.LoopInfo: @unroll
 
 using Oceananigans.Utils: launch!
 using Oceananigans.Coriolis: fᶠᶠᵃ
 using Oceananigans.Operators
 using Oceananigans.BuoyancyModels: ∂x_b, ∂y_b, ∂z_b 
 
-using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: VerticalFormulation, AbstractScalarDiffusivity
-using Oceananigans.Operators
 using Oceananigans.Operators: Δxᶜᶜᶜ, Δyᶜᶜᶜ, ℑxyᶜᶜᵃ, ζ₃ᶠᶠᶜ, div_xyᶜᶜᶜ
 using Oceananigans.Operators: Δx, Δy
 using Oceananigans.Operators: ℑxyz
