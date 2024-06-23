@@ -15,11 +15,11 @@ import Oceananigans.TurbulenceClosures:
 import Oceananigans.TurbulenceClosures: compute_diffusivities!, DiffusivityFields
 
 struct NNbackscatteringClosure{NN, FT} <: AbstractTurbulenceClosure{ExplicitTimeDiscretization, 2}
-    nn :: NN       # the convolutional neural network that computes `nn(u, v) -> (Su, Sv)`
-    u_scale  :: FT # scaling constant for the zonal velocity
-    v_scale  :: FT # scaling constant for the meridional velocity
-    Su_scale :: FT # scaling constant for the zonal subgrid scale forcing
-    Sv_scale :: FT # scaling constant for the meridional subgrid scale forcing
+    nn  :: NN # the convolutional neural network that computes `nn(u, v) -> (Su, Sv)`
+    u★  :: FT # scaling constant for the zonal velocity
+    v★  :: FT # scaling constant for the meridional velocity
+    Su★ :: FT # scaling constant for the zonal subgrid scale forcing
+    Sv★ :: FT # scaling constant for the meridional subgrid scale forcing
     sampling :: Int
 end
 
@@ -50,13 +50,13 @@ and `v-momentum` equations extending the flux divergence functions `∂ⱼ_τ₁
 - `sampling`: A boolean indicating whether to use sampling during the forward pass of the neural network. Defaults to `true`.
 """
 function NNbackscatteringClosure(FT::DataType = Float64; 
-                              architecture = CPU(),
-                              weight_path = nothing,
-                              u_scale = 10,
-                              v_scale = 10,
-                              Su_scale = 1e-7, 
-                              Sv_scale = 1e-7, 
-                              sampling = true)
+                                 architecture = CPU(),
+                                 weight_path = nothing,
+                                 u_scale = 10,
+                                 v_scale = 10,
+                                 Su_scale = 1e-7, 
+                                 Sv_scale = 1e-7, 
+                                 sampling = true)
 
     nn = getmodel(weight_path; architecture)
     
@@ -65,16 +65,28 @@ function NNbackscatteringClosure(FT::DataType = Float64;
     Su_scale = convert(FT, Su_scale)
     Sv_scale = convert(FT, Sv_scale)
 
-    return NNbackscatteringClosure(nn, 
-                                u_scale,  v_scale, 
-                                Su_scale, Sv_scale, Int(sampling))
+    return NNbackscatteringClosure(nn, u_scale,  v_scale, 
+                                   Su_scale, Sv_scale, Int(sampling))
 end
 
-DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure) = 
-                (; Su = XFaceField(grid),
-                   Sv = YFaceField(grid),
-                   uᶜᶜᶜ = CenterField(grid),
-                   vᶜᶜᶜ = CenterField(grid))
+function DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure)
+    arch = architecture(grid)
+
+    # Inputs to the NN    
+    uᶜᶜᶜ = CenterField(grid)
+    vᶜᶜᶜ = CenterField(grid)
+
+    # Outputs of the NN
+    Su  = XFaceField(grid)
+    Sv  = YFaceField(grid)
+
+    # # Work array (4 channels)
+    # Nx, Ny, Nz = size(grid)
+    # wrk = zeros(Nx, Ny, 4, Nz)
+    # wrk = on_architecture(arch, wrk)
+
+    return (; uᶜᶜᶜ, vᶜᶜᶜ, Su, Sv) #, wrk)
+end
 
 #####
 ##### Forcing-specific functions 
@@ -92,61 +104,63 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
     grid = model.grid
     u, v, _ = model.velocities
 
-    # Forcing fields
+    # NN outputs
     Su = K.Su
     Sv = K.Sv
+
+    # NN inputs
     uᶜᶜᶜ = K.uᶜᶜᶜ
     vᶜᶜᶜ = K.vᶜᶜᶜ
+
+    # Scaling parameters
+    u★  = closure.u★
+    v★  = closure.v★
+    Su★ = closure.Su★
+    Sv★ = closure.Sv★
+    sampling = closure.sampling
 
     grid = u.grid
     arch = architecture(grid)
 
-    launch!(arch, grid, :xyz, _center_velocities!, uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v)
-
-    # Scaling parameters
-    u_scale  = closure.u_scale
-    v_scale  = closure.v_scale
-    Su_scale = closure.Su_scale
-    Sv_scale = closure.Sv_scale
-    sampling = closure.sampling
+    launch!(arch, grid, :xyz, _scaled_center_velocities!, uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v, u★, v★)
 
     #(w, h, 2, k) - Here we consider depth layers as batch as they are processed independently
     # Here we are allocating!!! (better to do inplace substitution if possible)
-    out = closure.nn(stack([uᶜᶜᶜ.data .* u_scale, vᶜᶜᶜ.data .* v_scale], dims=3)) 
+    out = closure.nn(stack([interior(uᶜᶜᶜ), interior(vᶜᶜᶜ)], dims=3)) 
     out = activation(out)
     
     # Sample the outputs on the correct device
-    launch!(arch, grid, parameters, _sample_output!, Su, Sv, out, grid, Su_scale, Sv_scale, sampling)
+    launch!(arch, grid, parameters, _sample_output!, Su, Sv, out, grid, Su★, Sv★, sampling)
 
     return nothing
 end
 
 # Interpolate velocities from staggered locations to centered locations
-@kernel function _center_velocities!(uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v)
+@kernel function _scaled_center_velocities!(uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v, u★, v★)
     i, j, k = @index(Global, NTuple)
-    @inbounds uᶜᶜᶜ[i, j, k] = ℑxᶜᵃᵃ(i, j, k, grid, u)
-    @inbounds vᶜᶜᶜ[i, j, k] = ℑyᵃᶜᵃ(i, j, k, grid, v)
+    @inbounds uᶜᶜᶜ[i, j, k] = ℑxᶜᵃᵃ(i, j, k, grid, u) * u★
+    @inbounds vᶜᶜᶜ[i, j, k] = ℑyᵃᶜᵃ(i, j, k, grid, v) * v★
 end
 
-@inline function sample_output_uᶜᶜᶜ(i, j, k, grid, out, Su_scale, sampling)
+@inline function sample_output_uᶜᶜᶜ(i, j, k, grid, out, Su★, sampling)
     @inbounds Su  = out[i, j, 1, k]
     @inbounds Spu = out[i, j, 3, k]
-    return Su_scale * (Su + sqrt(1 / Spu) * randn() * sampling)
+    return Su★ * (Su + sqrt(1 / Spu) * randn() * sampling)
 end
 
-@inline function sample_output_vᶜᶜᶜ(i, j, k, grid, out, Sv_scale, sampling)
+@inline function sample_output_vᶜᶜᶜ(i, j, k, grid, out, Sv★, sampling)
     @inbounds Sv  = out[i, j, 2, k]
     @inbounds Spv = out[i, j, 4, k]
-    return Sv_scale * (Sv + sqrt(1 / Spv) * randn() * sampling)
+    return Sv★ * (Sv + sqrt(1 / Spv) * randn() * sampling)
 end
 
 # Compute the sampling output on centers and interpolate them onto the 
 # staggered C-grid
-@kernel function _sample_output!(Su, Sv, out, grid, Su_scale, Sv_scale, sampling)
+@kernel function _sample_output!(Su, Sv, out, grid, Su★, Sv★, sampling)
     i, j, k = @index(Global, NTuple)
 
-    @inbounds Su[i, j, k] = ℑxᶠᵃᵃ(i, j, k, grid, sample_output_uᶜᶜᶜ, out, Su_scale, sampling)
-    @inbounds Sv[i, j, k] = ℑyᵃᶠᵃ(i, j, k, grid, sample_output_vᶜᶜᶜ, out, Sv_scale, sampling)
+    @inbounds Su[i, j, k] = ℑxᶠᵃᵃ(i, j, k, grid, sample_output_uᶜᶜᶜ, out, Su★, sampling)
+    @inbounds Sv[i, j, k] = ℑyᵃᶠᵃ(i, j, k, grid, sample_output_vᶜᶜᶜ, out, Sv★, sampling)
 end
 
 # Forcing in the u- and v- equations
@@ -221,6 +235,7 @@ end
 # Make the `Chain` structure GPU-compatible by converting all the
 # concrete arrays and data structures to their GPU-compatible counterparts
 # In this case, we only need to convert the `weight`s and the `bias`es
+# TODO: make sure there is no better way to do this step already implemented in `Flux`
 function on_architecture(arch, nn :: Chain)
     new_layers = []
 
