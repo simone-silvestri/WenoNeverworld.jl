@@ -6,14 +6,6 @@ using JLD2
 using Oceananigans: architecture
 import Oceananigans: on_architecture
 
-import Oceananigans.TurbulenceClosures: 
-                        ∂ⱼ_τ₁ⱼ, 
-                        ∂ⱼ_τ₂ⱼ, 
-                        ∂ⱼ_τ₃ⱼ,
-                        ∇_dot_qᶜ
-
-import Oceananigans.TurbulenceClosures: compute_diffusivities!, DiffusivityFields
-
 struct NNbackscatteringClosure{NN, FT} <: AbstractTurbulenceClosure{ExplicitTimeDiscretization, 2}
     nn  :: NN # the convolutional neural network that computes `nn(u, v) -> (Su, Sv)`
     u★  :: FT # scaling constant for the zonal velocity

@@ -1,6 +1,9 @@
 module Parameterizations
 
-export QGLeith, EnergyBackScattering, NNbackscatteringClosure
+export QGLeith, 
+       EnergyBackScattering, 
+       NNbackscatteringClosure,
+       XinKaiVerticalDiffusivity
 
 using Oceananigans
 using KernelAbstractions: @index, @kernel
@@ -36,6 +39,12 @@ import Oceananigans.TurbulenceClosures:
         diffusive_flux_y, 
         diffusive_flux_z
 
+import Oceananigans.TurbulenceClosures: 
+        ∂ⱼ_τ₁ⱼ, 
+        ∂ⱼ_τ₂ⱼ, 
+        ∂ⱼ_τ₃ⱼ,
+        ∇_dot_qᶜ
+
 using Oceananigans.Utils: launch!
 using Oceananigans.Coriolis: fᶠᶠᵃ
 using Oceananigans.Operators
@@ -48,6 +57,7 @@ using Oceananigans.Operators: ℑxyzᶜᶜᶠ, ℑyzᵃᶜᶠ, ℑxzᶜᵃᶠ, �
 
 include("quasi_geostrophic_leith.jl")
 include("energy_backscattering.jl")
+include("xin_kai_vertical_diffusivity.jl")
 include("guillaumin_zanna_parameterization.jl")
 
 end
