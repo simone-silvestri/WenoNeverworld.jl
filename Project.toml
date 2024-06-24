@@ -15,19 +15,20 @@ MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 MPIPreferences = "3da0fdf6-3ccc-4f1b-acd9-58baa6c99267"
 Oceananigans = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+SeawaterPolynomials = "d496a93d-167e-4197-9f49-d3af4ff8fe40"
 
 [compat]
 Adapt = "^3"
+CUDA = "4, 5"
 Documenter = "1"
 DocumenterTools = "0.1"
 FFTW = "^1"
 JLD2 = "0.4"
+KernelAbstractions = "^0.9"
 MPI = "0.20"
 MPIPreferences = "0.1"
-CUDA = "4, 5"
-Printf = "1.9"
-KernelAbstractions = "^0.9"
 Oceananigans = "^0.90"
+Printf = "1.9"
 julia = "1.9"
 
 [extras]

@@ -27,7 +27,7 @@ Base.@kwdef struct ScotiaArcParameters
     depth::Float64              = 2000
 end
 
-Base.@kwdef struct NeverWorldBathymetryParameters
+Base.@kwdef struct NeverworldBathymetry
     shelves                     = ShelfParameters()
     scotia_arc                  = ScotiaArcParameters()
     channel_south_edge::Float64 = - 59
@@ -155,8 +155,7 @@ function scotia_arc(x, y, params, bottom)
 end
 
 # Full bathymetry!
-function neverworld_bathymetry(x, y, params::NeverWorldBathymetryParameters; 
-                               longitudinal_extent = 60, latitude = (-70, 70)) 
+function (params::NeverworldBathymetry)(x, y, longitudinal_extent, latitude) 
     
     channel_south = params.channel_south_edge
     channel_north = params.channel_north_edge

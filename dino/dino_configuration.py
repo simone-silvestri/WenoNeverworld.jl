@@ -80,7 +80,7 @@ class DinoConfiguration:
         self.lon_mesh_f, self.lat_mesh_f = np.meshgrid(self.lon_u, self.lat_v)
 
         # set bathymetry:
-        self.bathymetry         = self.get_bathymetry()
+        self.bathymetry = self.get_bathymetry()
 
         # add sill in drake-passage
         self.bathymetry = self.add_gauss_ring() 
@@ -412,7 +412,7 @@ class DinoConfiguration:
         a0 = (dz_min - (bathy - h_co) / (K - 1 - k_const)) / (
             np.tanh((1 - k_th) / a_cr) -
             a_cr / (K - 1 - k_const) * (np.log(np.cosh((K - k_const - k_th) / a_cr)) -
-                                      np.log(np.cosh((1 - k_th) / a_cr)))
+                                        np.log(np.cosh((1 - k_th) / a_cr)))
         )
 
         a1 = dz_min - a0 * np.tanh((1 - k_th) / a_cr)

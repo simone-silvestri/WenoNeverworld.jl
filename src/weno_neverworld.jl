@@ -20,13 +20,13 @@ default_momentum_advection(grid) = VectorInvariant(vorticity_scheme = WENO(order
                                                     vertical_scheme = WENO(grid))
 
 """
-    function initialize_model!(model, Val(interpolate), initial_buoyancy, grid, previous_grid, init_file, buoyancymodel)
+    function initialize_model!(model, Val(interpolate), initial_conditions, grid, previous_grid, init_file, buoyancymodel)
 
 initializes the model according to interpolate or not on a finer/coarser grid `Val(interpolate)`
 """
-@inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, previous_grid, init_file) = set!(model, b = initial_buoyancy)
+@inline initialize_model!(model, ::Val{false}, initial_conditions, grid, previous_grid, init_file) = set!(model; initial_conditions...)
 
-@inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, previous_grid, init_file)
+@inline function initialize_model!(model, ::Val{true}, initial_conditions, grid, previous_grid, init_file)
     Hx, Hy, Hz = halo_size(previous_grid)
 
     b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
@@ -59,7 +59,7 @@ end
                                         Δt = 5minutes,
                                         stop_time = 10years,
                                         stop_iteration = Inf,
-                                        initial_buoyancy = initial_buoyancy_parabola,
+                                        initial_conditions = (; b = initial_conditions_parabola),
                                         wind_stress               = WindStressBoundaryCondition(),
                                         buoyancy_relaxation       = BuoyancyRelaxationBoundaryCondition(),
                                         tracer_boundary_condition = NamedTuple(),
@@ -90,7 +90,7 @@ Keyword arguments:
 - `Δt`: the time step, default: `5minutes`
 - `stop_time`: the time at which to stop the simulation, default: `10years`
 - `stop_iteration`: the iteration at which to stop the simulation, default: Inf
-- `initial_buoyancy`: the initial buoyancy field in case of `init_file = nothing`, function of `(x, y, z)` default: `initial_buoyancy_parabola`
+- `initial_conditions`: the initial conditions in case of `init_file = nothing`, NamedTuple containing functions of `(x, y, z)` default: `(; b = initial_conditions_parabola)`
 - `wind_stress`: the wind stress boundary condition, default: `WindStressBoundaryCondition()` (see `src/neverworld_initial_and_boundary_conditions.jl`)
 - `buoyancy_relaxation`: the buoyancy relaxation boundary condition, default: `BuoyancyRelaxationBoundaryCondition()` (see `src/neverworld_initial_and_boundary_conditions.jl`)
 - `tracer_boundary_condition`: boundary conditions for tracers outside `:b`, default: nothing
@@ -98,29 +98,33 @@ Keyword arguments:
 """
 function weno_neverworld_simulation(grid; 
                                     previous_grid = grid,
+                                    # Parameterizations
                                     μ_drag = 0.001,  
                                     convective_adjustment = default_convective_adjustment,
                                     vertical_diffusivity  = default_vertical_diffusivity,
                                     horizontal_closure    = nothing,
+                                    # Physics and numerics
+                                    buoyancy = BuoyancyTracer(),
                                     coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving()),
-                                    free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
+                                    free_surface = SplitExplicitFreeSurface(grid; cfl = 0.75),
                                     momentum_advection = default_momentum_advection(grid.underlying_grid),
 				                    tracer_advection   = WENO(grid.underlying_grid), 
+                                    # Simulation details
                                     interp_init = false,
                                     init_file = nothing,
                                     Δt = 5minutes,
                                     stop_time = 10years,
                                     stop_iteration = Inf,
-                                    initial_buoyancy = initial_buoyancy_parabola,
+                                    # Initial and boundary conditions
+                                    initial_conditions = (; b  = initial_buoyancy_parabola),
 				                    wind_stress                = WindStressBoundaryCondition(),
-                                    buoyancy_relaxation        = BuoyancyRelaxationBoundaryCondition(),
-                                    tracer_boundary_conditions = NamedTuple(),
+                                    tracer_boundary_conditions = (; b = BuoyancyRelaxationBoundaryCondition()),
                                     tracers = :b
                                     )
 
     # Initializing boundary conditions    
     @info "specifying boundary conditions..."
-    boundary_conditions = neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_relaxation, tracers, tracer_boundary_conditions)
+    boundary_conditions = neverworld_boundary_conditions(grid, μ_drag, wind_stress, tracers, tracer_boundary_conditions)
 
     #####
     ##### Closures
@@ -141,14 +145,14 @@ function weno_neverworld_simulation(grid;
                                           momentum_advection, 
                                           tracer_advection, 
                                           boundary_conditions, 
-                                          buoyancy = BuoyancyTracer())
+                                          buoyancy)
 
     #####
     ##### Model initialization
     #####
 
     @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
-    initialize_model!(model, Val(interp_init), initial_buoyancy, grid, previous_grid, init_file)
+    initialize_model!(model, Val(interp_init), initial_conditions, grid, previous_grid, init_file)
 
     simulation = Simulation(model; Δt, stop_time, stop_iteration)
 
