@@ -9,8 +9,6 @@ using Base
 struct Buoyancy end
 struct Temperature end
 struct Salinity end
-struct UVelocity end
-struct VVelocity end
 
 @inline zerofunc(args...) = 0
 

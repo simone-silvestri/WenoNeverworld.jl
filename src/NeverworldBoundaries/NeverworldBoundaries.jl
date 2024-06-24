@@ -5,7 +5,7 @@ export BuoyancyRelaxationBoundaryCondition
 export WindStressBoundaryCondition
 export HaneyBoundaryCondition
 export initial_buoyancy_parabola
-export Temperature, Salinity, Buoyancy, UVelocity, VVelocity
+export Temperature, Salinity, Buoyancy
 
 using WenoNeverworld
 using WenoNeverworld.Auxiliaries
