@@ -136,7 +136,7 @@ function three_dimensional_regrid!(a, b)
 end
 
 """	
-    function regridded_field(old_vector, old_grid, new_grid, loc)	
+    function regrid_field(old_vector, old_grid, new_grid, loc)	
 
 interpolate `old_vector` (living on `loc`) from `old_grid` to `new_grid` 	
 """

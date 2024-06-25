@@ -33,18 +33,25 @@ initializes the model according to interpolate or not on a finer/coarser grid `V
 @inline function initialize_model!(model, ::Val{true}, initial_conditions, grid, previous_grid, init_file)
     Hx, Hy, Hz = halo_size(previous_grid)
 
-    b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    # Extract and regrid velocity fields
     u_init = jldopen(init_file)["u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     v_init = jldopen(init_file)["v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     w_init = jldopen(init_file)["w/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     
-    @info "interpolating fields"
-    b_init = regridded_field(b_init, previous_grid, grid, (Center, Center, Center))
-    u_init = regridded_field(u_init, previous_grid, grid, (Face, Center, Center))
-    v_init = regridded_field(v_init, previous_grid, grid, (Center, Face, Center))
-    w_init = regridded_field(w_init, previous_grid, grid, (Center, Center, Face))
+    u_init = regrid_field(u_init, previous_grid, grid, (Face, Center, Center))
+    v_init = regrid_field(v_init, previous_grid, grid, (Center, Face, Center))
+    w_init = regrid_field(w_init, previous_grid, grid, (Center, Center, Face))
 
-    set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
+    tracer_init = NamedTuple()
+
+    # Extract and regrid the tracers
+    for tracer_name in propertynames(model.tracers)
+        init = jldopen(init_file)[string(tracer_name) * "/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+        init = regrid_field(init, previous_grid, grid, (Center, Center, Center))
+        tracer_init = merge(tracer_init, (; tracer_name => init))
+    end
+
+    set!(model; u=u_init, v=v_init, w=w_init, tracer_init...) 
 end
 
 """
