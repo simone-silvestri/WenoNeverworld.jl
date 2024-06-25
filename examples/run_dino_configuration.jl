@@ -24,7 +24,7 @@ stop_time = 200years
 # Equation of state: we use the TEOS10 equation of state
 equation_of_state = TEOS10EquationOfState()
 buoyancy = SeawaterBuoyancy(; equation_of_state)
-ρTOES10  = equation_of_state.reference_density
+ρTEOS10  = equation_of_state.reference_density
 cTEOS10  = SeawaterPolynomials.TEOS10.teos10_reference_heat_capacity
 
 # Latitudinal wind stress acting on the zonal velocity
