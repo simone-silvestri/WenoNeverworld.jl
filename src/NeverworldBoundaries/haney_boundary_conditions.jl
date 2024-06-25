@@ -45,15 +45,13 @@ end
 Constructs a HaneyBoundaryCondition object, which includes a prescribed `flux`
 and a restoring to a `restoring_profile` with a `pumping_velocity`
 
-## Arguments
-- `flux`: The flux function.
+# Keyword Arguments
+===================
+- `flux`: The prescribed flux. Can be a function of `(x, y, z, t, p)`, and array, or a number
 - `pumping_velocity`: The pumping velocity.
-- `restoring_profile`: The restoring profile function.
-- `varname`: The variable name.
-- `parameters`: Additional parameters.
-
-## Returns
-A HaneyBoundaryCondition object.
+- `restoring_profile`: The restoring profile. Can be a function of `(x, y, z, t, p)`, and array, or a number
+- `varname`: The variable name, `Temperature()`, `Salinity()` or `Buoyancy()`
+- `parameters`: Additional parameters that enter in the function signature.
 """
 function HaneyBoundaryCondition(; flux = zerofunc,
                                   pumping_velocity = 0.0,
@@ -85,4 +83,4 @@ Adapt.adapt_structure(to, b::HaneyBoundaryCondition) =
                            Adapt.adapt(to, b.pumping_velocity),
                            Adapt.adapt(to, b.restoring_profile),
                            Adapt.adapt(to, b.varname),
-                           Adapt.adapt(to, b.params))
+                           Adapt.adapt(to, b.parameters))
