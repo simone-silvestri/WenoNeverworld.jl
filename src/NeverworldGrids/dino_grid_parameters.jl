@@ -1,15 +1,25 @@
+#####
+##### Functions that build a grid equivalent to the one used in the DINO simulation
+#####
 
-function dino_parameters(resolution)
-    latitude = dino_latitude(resolution)
-    bathymetry = DinoBathymetry()
-    longitude = dino_longitude
-    z_faces = dino_vertical_coordinate()
+# Code reference: https://github.com/vopikamm/DINO
+
+# Convenience function to pass DINO parameters to the 
+# grid constructor as `NeverworldGrid(res; dino_parameters(res)...)`
+function dino_parameters(resolution; longitude = (0, 50))
+    latitude   = dino_latitude(resolution)
+    z_faces    = dino_vertical_coordinate()
+    bathymetry = DinoBathymetry(; resolution)
 
     return (; longitude, latitude, z_faces, bathymetry)
 end
 
-dino_longitude = (0, 50)
+"""
+    dino_latitude(resolution; φ_max = 70)
 
+a stretched latitudinal coordinate, following the mercator projections,
+with smaller Δφ at the poles
+"""
 function dino_latitude(resolution; φ_max = 70) 
     Δλ = resolution
 
@@ -24,15 +34,15 @@ function dino_latitude(resolution; φ_max = 70)
     end
 
     φ₋ = - reverse(φ₊)
-
-    φ = vcat(φ₋, eltype(Δλ)(0), φ₊)
+    φ  = vcat(φ₋, zero(Δλ), φ₊)
 
     return φ
 end
        
-function dino_vertical_coordinate(; Nz     = 36, 
-                                    Lz     = 4000.0,
-                                    kᵗʰ    = 35,
+# A stretched vertical coordinate. See https://github.com/vopikamm/DINO
+function dino_vertical_coordinate(; Nz     = 36,     # number of vertical layers
+                                    Lz     = 4000.0, # depth of the domain
+                                    kᵗʰ    = 35,     
                                     aᶜʳ    = 10.5,
                                     Δz_min = 10)
 
@@ -61,11 +71,14 @@ Base.@kwdef struct DinoBathymetry
     λ_maximum :: Float64       = 50
     φ_minimum :: Float64       = -70
     φ_maximum :: Float64       = 70
+    resolution :: Float64      = 1/4
     φ_channel_min :: Float64   = -65   # Minimum channel latitude on tracer-point (approx.)     
     φ_channel_max :: Float64   = -45   # Maximum channel latitude on tracer-point (approx.)
-    slope :: Float64           = 3     # slope
+    slope :: Float64           = 3     # slope around the vertical walls
+    slope_sill :: Float64      = 4     # slope around the Scotia arc
     H_max :: Float64           = 4000  # Maximum depth of the bathymetry on w-velocity-point
     H_min :: Float64           = 2000  # Minimum depth of the bathymetry on w-velocity-point (approx.)
+    H_sill ::Float64           = 2500  # Depth of the Scotia arc sill [meters]
 end
 
 function (params::DinoBathymetry)(λ, φ, args...)
@@ -77,46 +90,81 @@ function (params::DinoBathymetry)(λ, φ, args...)
     φᶜ⁺ = params.φ_channel_max 
     H⁺  = params.H_max
     H⁻  = params.H_min
+    Hs  = params.H_sill
     𝒮   = params.slope
+    𝒮s  = params.slope_sill
+    Δλ  = params.resolution
 
     Δλᵂ = abs(λ⁺ - λ⁻)
     Δφᶜ = abs(φᶜ⁺ - φᶜ⁻)
-    
-    zy_cha = exp_bathymetry(φ, φᶜ⁻, φᶜ⁺, Δλᵂ, 𝒮, Δφᶜ / 2)
-    zx_raw = exp_bathymetry(λ, λ⁻,  λ⁺,  Δλᵂ, 𝒮, Δφᶜ / 2)
 
-    zx = zx_raw * (1 - zy_cha) + zy_cha
+    # Start by applying the slopes around the channel 
+    # and around the solid walls
+    channel   = (1 - exp_bathymetry(φ, φᶜ⁻, φᶜ⁺, Δλᵂ, 𝒮, Δφᶜ / 2))
+    xboundary = (1 - exp_bathymetry(λ, λ⁻,  λ⁺,  Δλᵂ, 𝒮, Δφᶜ / 2))
+    outside_channel = (φ ≤ φᶜ⁻) | (φ ≥ φᶜ⁺)
+    zx = 1 - (xboundary * channel + outside_channel * xboundary)
 
     𝒮l = cos(π * φ⁺ /180) * 𝒮
     
     zy = exp_bathymetry(φ, φ⁻, φ⁺, Δλᵂ, 𝒮l, Δφᶜ / 2)
-    depth =  - zx * zy * (H⁺ - H⁻) - H⁻
+    bathymetry = zx * zy * (H⁺ - H⁻) + H⁻
 
-    return depth
+    # Add the gaussian ring that represents the Scotia Arch
+    φ₀ = (φᶜ⁺ + φᶜ⁻) / 2
+    radius = abs(φᶜ⁺ - φᶜ⁻) / 2
+
+    # taper the gaussian ring eastward 
+    taper = smooth_step(λ, λ⁻, λ⁻ + 𝒮s)
+    
+    # shift grid
+    zx = λ - λ⁻
+    zy = φ - φ₀
+
+    # Calculate the exponent part of the Gaussian function
+    exp_arg = (- zx^2 - zy^2 + 2 * radius * sqrt(zx^2 + zy^2) - radius^2) / 𝒮s^2
+
+    # Calculate the resulting bathymetry depth
+    gauss_ring = ifelse(bathymetry ≥ Hs, 
+                        (Hs - bathymetry) * exp(exp_arg) + bathymetry, 
+                        bathymetry)
+    
+    # update bathymetry
+    bathymetry = taper * gauss_ring + (1 - taper) * bathymetry
+
+    # Leave space for a channel but fill in all at least one longitude point with a vertical wall
+    inside_wall = ((λ ≤ λ⁻ + Δλ / 2) | (λ ≥ λ⁺ - Δλ / 2)) & ((φ < φᶜ⁻) | (φ > φᶜ⁺))
+    bathymetry  = ifelse(inside_wall, zero(λ), bathymetry)
+
+    # Convert to a depth (negative values)
+    return - bathymetry
 end
 
-function exp_bathymetry(m, mᴸ, mᴿ, Δλ, 𝒮, Δm)
-
-    n = 1 + exp(- Δλ / 𝒮)
-
-    taper_left  = (m ≥ mᴸ) & (m ≤ mᴸ + Δm)
-    taper_right = (m ≥ mᴿ) & (m ≤ mᴿ + Δm)
-
-    step_left  =     smooth_step(m, mᴸ, mᴸ + Δm)
-    step_right = 1 - smooth_step(m, mᴿ - Δm, mᴿ)
-
-    bat_left  = (1 - exp(-(m  - mᴸ) / 𝒮) / n) * (1 - step_left)  + step_left
-    bat_right = (1 - exp(-(mᴿ - m)  / 𝒮) / n) * (1 - step_right) + step_right
-
-    bat = ifelse(taper_right, bat_right, 
-          ifelse(taper_left,  bat_left, one(n)))
-
-    return bat
-end
-
+# A smoothing function that transitions between
+# 0 where m < mᴸ to 1 where m > mᴿ
 function smooth_step(m, mᴸ, mᴿ)
     x    = (m - mᴸ) / (mᴿ - mᴸ)
     step = 6 * x^5 - 15 * x^4 + 10 * x^3 
     return ifelse(m < mᴸ, zero(m),
            ifelse(m > mᴿ, one(m), step))
+end
+
+# Exponential function to calculate smooth slopes around vertical walls.
+function exp_bathymetry(m, mᴸ, mᴿ, Δλ, 𝒮, Δm)
+
+    n = 1 + exp(- Δλ / 𝒮)
+
+    taper_left  = (m ≥ mᴸ)      & (m ≤ mᴸ + Δm)
+    taper_right = (m ≥ mᴿ - Δm) & (m ≤ mᴿ)
+
+    step_left  =     smooth_step(m, mᴸ, mᴸ + Δm)
+    step_right = 1 - smooth_step(m, mᴿ - Δm, mᴿ)
+
+    bat_left  = (1 - exp(-(m - mᴸ) / 𝒮) / n) * (1 - step_left)  + step_left
+    bat_right = (1 - exp( (m - mᴿ) / 𝒮) / n) * (1 - step_right) + step_right
+
+    bat = ifelse(taper_right, bat_right, 
+          ifelse(taper_left,  bat_left, one(n)))
+    
+    return bat
 end

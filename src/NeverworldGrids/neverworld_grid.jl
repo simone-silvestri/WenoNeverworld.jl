@@ -69,7 +69,7 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
 
     bathymetry_function(λ, φ) = bathymetry(λ, φ, longitudinal_extent, latitude)
 
-    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry_function))
+    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry_function); active_cells_map = true)
 end
 
 getlatitudesize(φ::Tuple, Δ)         = ceil(Int, (φ[2] - φ[1]) / Δ)
