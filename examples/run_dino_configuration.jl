@@ -3,6 +3,7 @@ using WenoNeverworld.NeverworldBoundaries
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
+using SeawaterPolynomials
 using SeawaterPolynomials.TEOS10: TEOS10EquationOfState
 
 output_dir    = joinpath(@__DIR__, "./")
