@@ -3,7 +3,7 @@ using Flux: Conv, relu, Chain
 using Flux.Optimise: softplus
 using JLD2 
 using OffsetArrays
-using CUDA: cat
+using Adapt
 
 using Oceananigans: architecture
 import Oceananigans: on_architecture
@@ -20,6 +20,11 @@ struct NNbackscatteringClosure{NN, FT} <: AbstractTurbulenceClosure{ExplicitTime
     min_value :: FT # Value to add to the activated elements (default: 0.0015).
     sampling :: Int
 end
+
+# On the GPU we throw away the NN since it is not intended to 
+# be adapted for use inside kernels (and we do not need it inside kernels)
+Adapt.adapt_structure(to, clo::NNbackscatteringClosure) = 
+    NNbackscatteringClosure(nothing, clo.u★, clo.v★, clo.Su★, clo.Sv★, clo.min_value, clo.sampling)
 
 """
     NNbackscatteringClosure(FT::DataType = Float64; 
