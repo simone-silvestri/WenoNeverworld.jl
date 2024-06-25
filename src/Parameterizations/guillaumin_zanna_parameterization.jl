@@ -3,6 +3,7 @@ using Flux: Conv, relu, Chain
 using Flux.Optimise: softplus
 using JLD2 
 using OffsetArrays
+using CUDA: cat
 
 using Oceananigans: architecture
 import Oceananigans: on_architecture
@@ -72,8 +73,7 @@ function DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure)
     arch = architecture(grid)
 
     # Inputs to the NN    
-    uᶜᶜᶜ = CenterField(grid)
-    vᶜᶜᶜ = CenterField(grid)
+    utmp = CenterField(grid)
 
     # Outputs of the NN
     Su  = XFaceField(grid)
@@ -82,13 +82,19 @@ function DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure)
     Nx, Ny, Nz = size(uᶜᶜᶜ.data.parent)
     ox, oy, oz = uᶜᶜᶜ.data.offsets
 
-    # Work array -- 4 channels, where x, y, and z dimensions
+    # Inpur work array -- 2 channels, where x, y, and z dimensions
     # are offset like the u and v fields, while the channel \
     # dimension is indexed from 1
-    wrk = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, 0, oz)
-    wrk = on_architecture(arch, wrk)
+    wrk_in = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, 0, oz)
+    wrk_in = on_architecture(arch, wrk)
 
-    return (; uᶜᶜᶜ, vᶜᶜᶜ, Su, Sv, wrk)
+    # Output work array -- 4 channels, where x, y, and z dimensions
+    # are offset like the u and v fields, while the channel \
+    # dimension is indexed from 1
+    wrk_out = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, 0, oz)
+    wrk_out = on_architecture(arch, wrk)
+
+    return (; Su, Sv, wrk_in, wrk_out)
 end
 
 #####
@@ -108,13 +114,12 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
     u, v, _ = model.velocities
 
     # NN outputs
-    Su  = K.Su
-    Sv  = K.Sv
-    out = K.wrk
+    Su     = K.Su
+    Sv     = K.Sv
+    output = K.wrk
 
     # NN inputs
-    uᶜᶜᶜ = K.uᶜᶜᶜ
-    vᶜᶜᶜ = K.vᶜᶜᶜ
+    input = K.wrk_in
 
     # Scaling parameters
     u★  = closure.u★
@@ -126,48 +131,48 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
     grid = u.grid
     arch = architecture(grid)
 
-    launch!(arch, grid, parameters, _scaled_center_velocities!, uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v, u★, v★)
+    launch!(arch, grid, parameters, _populate_input!, input, grid, u, v, u★, v★)
 
     #(w, h, 2, k) - Here we consider depth layers as batch as they are processed independently
     # Here we are allocating!!! (better to do inplace substitution if possible)
     # This step needs to be GPU-compatible, it's the last step we need to figure out
-    out.parent .= closure.nn(stack([uᶜᶜᶜ.data, vᶜᶜᶜ.data], dims=3)) 
+    output.parent .= closure.nn(input.parent) 
 
     # Apply the activation (the softplus function) pointwise
-    launch!(arch, grid, parameters, _activation!, out, closure.min_value)
+    launch!(arch, grid, parameters, _activation!, output, closure.min_value)
 
     # Sample the outputs on the correct device
-    launch!(arch, grid, parameters, _sample_output!, Su, Sv, out, grid, Su★, Sv★, sampling)
+    launch!(arch, grid, parameters, _sample_output!, Su, Sv, output, grid, Su★, Sv★, sampling)
 
     return nothing
 end
 
 # Interpolate velocities from staggered locations to centered locations
-@kernel function _scaled_center_velocities!(uᶜᶜᶜ, vᶜᶜᶜ, grid, u, v, u★, v★)
+@kernel function _populate_input!(input, grid, u, v, u★, v★)
     i, j, k = @index(Global, NTuple)
-    @inbounds uᶜᶜᶜ[i, j, k] = ℑxᶜᵃᵃ(i, j, k, grid, u) * u★
-    @inbounds vᶜᶜᶜ[i, j, k] = ℑyᵃᶜᵃ(i, j, k, grid, v) * v★
+    @inbounds input[i, j, 1, k] = ℑxᶜᵃᵃ(i, j, k, grid, u) * u★
+    @inbounds input[i, j, 2, k] = ℑyᵃᶜᵃ(i, j, k, grid, v) * v★
 end
 
-@inline function sample_output_uᶜᶜᶜ(i, j, k, grid, out, Su★, sampling)
-    @inbounds Su  = out[i, j, 1, k]
-    @inbounds Spu = out[i, j, 3, k]
+@inline function sample_output_uᶜᶜᶜ(i, j, k, grid, output, Su★, sampling)
+    @inbounds Su  = output[i, j, 1, k]
+    @inbounds Spu = output[i, j, 3, k]
     return Su★ * (Su + sqrt(1 / Spu) * randn() * sampling)
 end
 
-@inline function sample_output_vᶜᶜᶜ(i, j, k, grid, out, Sv★, sampling)
-    @inbounds Sv  = out[i, j, 2, k]
-    @inbounds Spv = out[i, j, 4, k]
+@inline function sample_output_vᶜᶜᶜ(i, j, k, grid, output, Sv★, sampling)
+    @inbounds Sv  = output[i, j, 2, k]
+    @inbounds Spv = output[i, j, 4, k]
     return Sv★ * (Sv + sqrt(1 / Spv) * randn() * sampling)
 end
 
 # Compute the sampling output on centers and interpolate them onto the 
 # staggered C-grid
-@kernel function _sample_output!(Su, Sv, out, grid, Su★, Sv★, sampling)
+@kernel function _sample_output!(Su, Sv, output, grid, Su★, Sv★, sampling)
     i, j, k = @index(Global, NTuple)
 
-    @inbounds Su[i, j, k] = ℑxᶠᵃᵃ(i, j, k, grid, sample_output_uᶜᶜᶜ, out, Su★, sampling)
-    @inbounds Sv[i, j, k] = ℑyᵃᶠᵃ(i, j, k, grid, sample_output_vᶜᶜᶜ, out, Sv★, sampling)
+    @inbounds Su[i, j, k] = ℑxᶠᵃᵃ(i, j, k, grid, sample_output_uᶜᶜᶜ, output, Su★, sampling)
+    @inbounds Sv[i, j, k] = ℑyᵃᶠᵃ(i, j, k, grid, sample_output_vᶜᶜᶜ, output, Sv★, sampling)
 end
 
 # Forcing in the u- and v- equations

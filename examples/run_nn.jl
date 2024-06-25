@@ -6,10 +6,10 @@ using Oceananigans.Units
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
 
-arch = CPU()
+arch = GPU()
 
 # The resolution in degrees
-degree_resolution = 1
+degree_resolution = 1/4
 
 grid = NeverworldGrid(degree_resolution; arch)
 
