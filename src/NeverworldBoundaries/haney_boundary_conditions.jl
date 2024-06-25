@@ -63,7 +63,7 @@ function HaneyBoundaryCondition(; flux = zerofunc,
 end
 
 # The function called by `apply_bc!`
-function (bc::HaneyBoundaryCondition)(i, j, grid, clock, fields)
+@inline function (bc::HaneyBoundaryCondition)(i, j, grid, clock, fields)
 
     kᴺ = grid.Nz
 
