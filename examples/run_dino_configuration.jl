@@ -1,5 +1,6 @@
 using WenoNeverworld
 using WenoNeverworld.NeverworldBoundaries
+using WenoNeverworld.NeverworldGrids: dino_parameters
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
@@ -12,9 +13,9 @@ output_dir    = joinpath(@__DIR__, "./")
 arch = CPU()
 
 # The resolution in degrees
-degree_resolution = 1/4
+resolution = 1/4
 
-grid = NeverworldGrid(degree_resolution; arch)
+grid = NeverworldGrid(degree_resolution; arch, dino_parameters(resolution)...)
 
 # Simulation parameters
 Δt        = 10minutes
