@@ -40,7 +40,7 @@ function dino_latitude(resolution; φ_max = 70)
 end
        
 # A stretched vertical coordinate. See https://github.com/vopikamm/DINO
-function dino_vertical_coordinate(; Nz     = 36,     # number of vertical layers
+function dino_vertical_coordinate(; Nz     = 35,     # number of vertical layers
                                     Lz     = 4000.0, # depth of the domain
                                     kᵗʰ    = 35,     
                                     aᶜʳ    = 10.5,
