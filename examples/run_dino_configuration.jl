@@ -15,7 +15,7 @@ arch = GPU()
 # The resolution in degrees
 resolution = 1/4
 
-grid = NeverworldGrid(degree_resolution; arch, dino_parameters(resolution)...)
+grid = NeverworldGrid(resolution; arch, dino_parameters(resolution)...)
 
 # Simulation parameters
 Δt        = 10minutes
