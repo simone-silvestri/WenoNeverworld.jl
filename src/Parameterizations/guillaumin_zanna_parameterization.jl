@@ -79,20 +79,20 @@ function DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure)
     Su  = XFaceField(grid)
     Sv  = YFaceField(grid)
 
-    Nx, Ny, Nz = size(uᶜᶜᶜ.data.parent)
-    ox, oy, oz = uᶜᶜᶜ.data.offsets
+    Nx, Ny, Nz = size(utmp.data.parent)
+    ox, oy, oz = utmp.data.offsets
 
     # Inpur work array -- 2 channels, where x, y, and z dimensions
     # are offset like the u and v fields, while the channel \
     # dimension is indexed from 1
     wrk_in = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, 0, oz)
-    wrk_in = on_architecture(arch, wrk)
+    wrk_in = on_architecture(arch, wrk_in)
 
     # Output work array -- 4 channels, where x, y, and z dimensions
     # are offset like the u and v fields, while the channel \
     # dimension is indexed from 1
     wrk_out = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, 0, oz)
-    wrk_out = on_architecture(arch, wrk)
+    wrk_out = on_architecture(arch, wrk_out)
 
     return (; Su, Sv, wrk_in, wrk_out)
 end
@@ -176,12 +176,12 @@ end
 end
 
 # Forcing in the u- and v- equations
-@inline ∂ⱼ_τ₁ⱼ(i, j, k, grid, closure::NNbackscatteringClosure, K, args...) = @inbounds K.Su[i, j, k]
-@inline ∂ⱼ_τ₂ⱼ(i, j, k, grid, closure::NNbackscatteringClosure, K, args...) = @inbounds K.Sv[i, j, k]
+@inline ∂ⱼ_τ₁ⱼ(i, j, k, grid, ::NNbackscatteringClosure, K, args...) = @inbounds K.Su[i, j, k]
+@inline ∂ⱼ_τ₂ⱼ(i, j, k, grid, ::NNbackscatteringClosure, K, args...) = @inbounds K.Sv[i, j, k]
     
 # No forcing term in the w-equation or in the tracer equations!
-@inline ∂ⱼ_τ₃ⱼ(i, j, k, grid, closure::NNbackscatteringClosure, args...)   = zero(grid)
-@inline ∇_dot_qᶜ(i, j, k, grid, closure::NNbackscatteringClosure, args...) = zero(grid)
+@inline ∂ⱼ_τ₃ⱼ(i, j, k, grid, ::NNbackscatteringClosure, args...)   = zero(grid)
+@inline ∇_dot_qᶜ(i, j, k, grid, ::NNbackscatteringClosure, args...) = zero(grid)
 
 #####
 ##### NN-specific functions
