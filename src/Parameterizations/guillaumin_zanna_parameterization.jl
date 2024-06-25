@@ -85,7 +85,7 @@ function DiffusivityFields(grid, tracer_names, bcs, ::NNbackscatteringClosure)
     # Inpur work array -- 2 channels, where x, y, and z dimensions
     # are offset like the u and v fields, while the channel \
     # dimension is indexed from 1
-    wrk_in = OffsetArray(zeros(Nx, Ny, 4, Nz), ox, oy, 0, oz)
+    wrk_in = OffsetArray(zeros(Nx, Ny, 2, Nz), ox, oy, 0, oz)
     wrk_in = on_architecture(arch, wrk_in)
 
     # Output work array -- 4 channels, where x, y, and z dimensions
@@ -116,7 +116,7 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
     # NN outputs
     Su     = K.Su
     Sv     = K.Sv
-    output = K.wrk
+    output = K.wrk_out
 
     # NN inputs
     input = K.wrk_in
