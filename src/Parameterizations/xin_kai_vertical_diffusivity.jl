@@ -20,7 +20,8 @@ struct XinKaiVerticalDiffusivity{TD, FT} <: AbstractScalarDiffusivity{TD, Vertic
     νˢʰ :: FT
     νᶜⁿ :: FT
     Cᵉⁿ :: FT
-    Prₜ :: FT
+    Pr_convₜ :: FT
+    Pr_shearₜ :: FT
     Riᶜ :: FT
     δRi :: FT
     Q₀  :: FT
@@ -31,34 +32,37 @@ function XinKaiVerticalDiffusivity{TD}(ν₀  :: FT,
                                        νˢʰ :: FT,
                                        νᶜⁿ :: FT,
                                        Cᵉⁿ :: FT,
-                                       Prₜ :: FT,
+                                       Pr_convₜ :: FT,
+                                       Pr_shearₜ :: FT,
                                        Riᶜ :: FT,
 				                       δRi :: FT,
                                        Q₀  :: FT,
 	         		                   δQ  :: FT) where {TD, FT}
                                        
-    return XinKaiVerticalDiffusivity{TD, FT}(ν₀, νˢʰ, νᶜⁿ, Cᵉⁿ, Prₜ, Riᶜ, δRi, Q₀, δQ)
+    return XinKaiVerticalDiffusivity{TD, FT}(ν₀, νˢʰ, νᶜⁿ, Cᵉⁿ, Pr_convₜ, Pr_shearₜ, Riᶜ, δRi, Q₀, δQ)
 end
 
 function XinKaiVerticalDiffusivity(time_discretization = VerticallyImplicitTimeDiscretization(),
                                     FT  = Float64;
 				                    ν₀  = 1e-5, 
-                                    νˢʰ = 0.0885,
-                                    νᶜⁿ = 4.3668,
-                                    Cᵉⁿ = 0.2071,
-                                    Prₜ = 1.207,
-                                    Riᶜ = - 0.21982,
-				                    δRi = 8.342e-4,
-                                    Q₀  = 0.08116,
-	         		                δQ  = 0.02622) 
+                                    νˢʰ = 0.07738088203341657,
+                                    νᶜⁿ = 0.533741914196933,
+                                    Cᵉⁿ = 0.5196272898085122,
+                                    Pr_convₜ = 0.01632117727992826,
+                                    Pr_shearₜ = 1.8499159986192901,
+                                    Riᶜ = 0.4923581673007292,
+				                    δRi = 0.00012455519496760374,
+                                    Q₀  = 0.048232078296680234,
+	         		                δQ  = 0.01884938627051353) 
 
     TD = typeof(time_discretization)
 
     return XinKaiVerticalDiffusivity{TD}(convert(FT, ν₀),
                                          convert(FT, νˢʰ),
+                                         convert(FT, νᶜⁿ),
                                          convert(FT, Cᵉⁿ),
-                                         convert(FT, Cᵉⁿ),
-                                         convert(FT, Prₜ),
+                                         convert(FT, Pr_convₜ),
+                                         convert(FT, Pr_shearₜ),
                                          convert(FT, Riᶜ),
 					                     convert(FT, δRi),
 					                     convert(FT, Q₀),
@@ -69,7 +73,7 @@ XinKaiVerticalDiffusivity(FT::DataType; kw...) =
     XinKaiVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), FT; kw...)
 
 Adapt.adapt_structure(to, clo::XinKaiVerticalDiffusivity{TD, FT}) where {TD, FT} = 
-    XinKaiVerticalDiffusivity{TD, FT}(clo.ν₀, clo.νˢʰ, clo.νᶜⁿ, clo.Cᵉⁿ, clo.Prₜ, clo.Riᶜ, clo.δRi, clo.Q₀, clo.δQ)   	
+    XinKaiVerticalDiffusivity{TD, FT}(clo.ν₀, clo.νˢʰ, clo.νᶜⁿ, clo.Cᵉⁿ, clo.Pr_convₜ, clo.Pr_shearₜ, clo.Riᶜ, clo.δRi, clo.Q₀, clo.δQ)   	
                                          
 #####                                    
 ##### Diffusivity field utilities        
@@ -179,7 +183,8 @@ end
     νˢʰ = closure_ij.νˢʰ
     νᶜⁿ = closure_ij.νᶜⁿ
     Cᵉⁿ = closure_ij.Cᵉⁿ
-    Prₜ = closure_ij.Prₜ
+    Pr_convₜ = closure_ij.Pr_convₜ
+    Pr_shearₜ = closure_ij.Pr_shearₜ
     Riᶜ = closure_ij.Riᶜ
     δRi = closure_ij.δRi
     Q₀  = closure_ij.Q₀ 
@@ -199,16 +204,15 @@ end
     Ri = ℑxyᶜᶜᵃ(i, j, k, grid, ℑxyᶠᶠᵃ, diffusivities.Ri)
 
     # Convective adjustment diffusivity
-    ν_local = ifelse(convecting, - (νᶜⁿ - νˢʰ) / 2 * tanh(Ri / δRi) + νˢʰ, clamp(Riᶜ * Ri + νˢʰ + ν₀, ν₀, νˢʰ))
+    ν_local = ifelse(convecting, (νˢʰ - νᶜⁿ) * tanh(Ri / δRi) + νˢʰ, clamp((ν₀ - νˢʰ) * Ri / Riᶜ + νˢʰ, ν₀, νˢʰ))
 
     # Entrainment diffusivity
-    νᵉⁿ = ifelse(entraining, Cᵉⁿ * Qᵇ / N², zero(grid))
-    x = Qᵇ / (N² + 1e-11)
-    ν_nonlocal = ifelse(entraining,  Cᵉⁿ * νᶜⁿ * 0.5 * (tanh((x - Q₀) / δQ) + 1), 0)
+    q = Qᵇ / (N² + 1e-11)
+    ν_nonlocal = ifelse(entraining,  Cᵉⁿ * νᶜⁿ * 0.5 * (tanh((q - Q₀) / δQ) + 1), 0)
 
     # Update by averaging in time
-    @inbounds diffusivities.κᵘ[i, j, k] =  ν_local + ν_nonlocal 
-    @inbounds diffusivities.κᶜ[i, j, k] = (ν_local + ν_nonlocal) / Prₜ 
+    @inbounds diffusivities.κᵘ[i, j, k] =  ν_local + ν_nonlocal
+    @inbounds diffusivities.κᶜ[i, j, k] = ifelse(convecting, (ν_local + ν_nonlocal) / Pr_convₜ, (ν_local + ν_nonlocal) / Pr_shearₜ)
 
     return nothing
 end
