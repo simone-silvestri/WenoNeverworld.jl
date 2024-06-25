@@ -1,5 +1,6 @@
 using WenoNeverworld
 using WenoNeverworld.Parameterizations
+using WenoNeverworld.Auxiliaries
 using Oceananigans
 using Oceananigans.Units
 
@@ -48,6 +49,14 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
 checkpoint_outputs!(simulation, output_prefix)
+
+# Initialize with a small time step and increase it after the 
+# inital spin up has completed
+increase_simulation_Δt!(simulation; cutoff_time = 20days,  new_Δt =  2minutes)
+increase_simulation_Δt!(simulation; cutoff_time = 50days,  new_Δt =  4minutes)
+increase_simulation_Δt!(simulation; cutoff_time = 100days, new_Δt =  6minutes)
+increase_simulation_Δt!(simulation; cutoff_time = 150days, new_Δt =  8minutes)
+increase_simulation_Δt!(simulation; cutoff_time = 200days, new_Δt = 10minutes)
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"
