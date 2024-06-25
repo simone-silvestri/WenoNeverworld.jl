@@ -10,7 +10,7 @@ using SeawaterPolynomials.TEOS10: TEOS10EquationOfState
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
 
-arch = CPU()
+arch = GPU()
 
 # The resolution in degrees
 resolution = 1/4
