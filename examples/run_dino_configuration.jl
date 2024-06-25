@@ -18,9 +18,10 @@ resolution = 1/4
 
 grid = NeverworldGrid(resolution; arch, dino_parameters(resolution)...)
 
-# Simulation parameters
-Δt        = 10minutes
-stop_time = 200years
+# Simulation parameters (we start with 1 minute timestep and
+# increase it as the simulation equilibrates)
+starting_Δt = 1minutes
+stop_time   = 200years
 
 # Equation of state: we use the TEOS10 equation of state
 equation_of_state = TEOS10EquationOfState()
@@ -110,7 +111,7 @@ initial_conditions = (T = initial_temperature,
                       S = initial_salinity)
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(grid; Δt, stop_time,
+simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
                                               wind_stress,
                                               buoyancy,
                                               tracers = (:T, :S),
