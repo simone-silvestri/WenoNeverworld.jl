@@ -101,9 +101,8 @@ tracer_boundary_conditions = (; T = temperature_bc,
 # Define the initial conditions, we start with a constant salinity and
 # a linear stratification in temperature going from 10 to the maximum
 # temperature (27ᵒ C). 
-# TODO: David, if you have already evolved initial conditions, please use them
-# so we don't have to run for 2000 years to equilibrate! You can provide them as
-# arrays of size (Nx, Ny, Nz) (the size of the grid)
+# TODO: Provide equilibrated initial conditions as arrays of size (Nx, Ny, Nz) 
+# (the size of the grid) to avoid long initializations
 @inline initial_salinity(λ, φ, z)    = 35
 @inline initial_temperature(λ, φ, z) = (grid.Lz + z) / grid.Lz * (27 - 10) + 10 # Remember! z is negative - Lz : 0
 

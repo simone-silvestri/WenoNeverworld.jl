@@ -72,8 +72,8 @@ Base.@kwdef struct DinoBathymetry
     φ_minimum :: Float64       = -70
     φ_maximum :: Float64       = 70
     resolution :: Float64      = 1/4
-    φ_channel_min :: Float64   = -65   # Minimum channel latitude on tracer-point (approx.)     
-    φ_channel_max :: Float64   = -45   # Maximum channel latitude on tracer-point (approx.)
+    φ_channel_min :: Float64   = - 65  # Minimum channel latitude on tracer-point (approx.)     
+    φ_channel_max :: Float64   = - 45  # Maximum channel latitude on tracer-point (approx.)
     slope :: Float64           = 3     # slope around the vertical walls
     slope_sill :: Float64      = 4     # slope around the Scotia arc
     H_max :: Float64           = 4000  # Maximum depth of the bathymetry on w-velocity-point
