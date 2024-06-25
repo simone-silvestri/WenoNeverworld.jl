@@ -4,6 +4,7 @@ using Oceananigans.TurbulenceClosures: FluxTapering
 using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
 using Oceananigans.Operators: Δx, Δy, Az 
 using Oceananigans.TurbulenceClosures
+using Oceananigans.Advection: TracerAdvection
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
 
@@ -17,7 +18,10 @@ default_convective_adjustment = RiBasedVerticalDiffusivity()
 default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=3e-5)
 
 default_momentum_advection(grid) = VectorInvariant(vorticity_scheme = WENO(order = 9), 
-                                                    vertical_scheme = WENO(grid))
+                                                  divergence_scheme = WENO(order = 5),
+                                                    vertical_scheme = Centered())
+
+default_tracer_advection(grid) = TracerAdvection(WENO(order = 7), WENO(order = 7), Centered())
 
 """
     function initialize_model!(model, Val(interpolate), initial_conditions, grid, previous_grid, init_file, buoyancymodel)
@@ -108,7 +112,7 @@ function weno_neverworld_simulation(grid;
                                     coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving()),
                                     free_surface = SplitExplicitFreeSurface(grid; cfl = 0.75),
                                     momentum_advection = default_momentum_advection(grid.underlying_grid),
-				                    tracer_advection   = WENO(grid.underlying_grid), 
+				                    tracer_advection   = default_tracer_advection(grid.underlying_grid), 
                                     # Simulation details
                                     interp_init = false,
                                     init_file = nothing,
