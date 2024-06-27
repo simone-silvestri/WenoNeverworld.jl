@@ -7,6 +7,7 @@ using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 using SeawaterPolynomials
 using SeawaterPolynomials.TEOS10: TEOS10EquationOfState
+using NCDatasets
 
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
@@ -98,16 +99,39 @@ salinity_bc = HaneyBoundaryCondition(; restoring_profile = salinity_profile,
 tracer_boundary_conditions = (; T = temperature_bc,
                                 S = salinity_bc)
 
-# Define the initial conditions, we start with a constant salinity and
-# a linear stratification in temperature going from 10 to the maximum
-# temperature (27ᵒ C). 
-# TODO: Provide equilibrated initial conditions as arrays of size (Nx, Ny, Nz) 
-# (the size of the grid) to avoid long initializations
-@inline initial_salinity(λ, φ, z)    = 35
-@inline initial_temperature(λ, φ, z) = (grid.Lz + z) / grid.Lz * (27 - 10) + 10 # Remember! z is negative - Lz : 0
+# Define the initial conditions
 
+# Analytical initial conditions
+# @inline function initial_temperature_profile(z)
+#     T₁ = 16.0 - 12.0 * tanh((-z - 400.0) / 700.0)
+#     T₂ = (-tanh((500.0 + z) / 150.0) + 1.0) / 2.0
+#     T₃ = 15.0 * (1.0 - tanh((- z - 50.0) / 1500.0)) - 1.4 * tanh((- z - 100.0) / 100.0) + 7.0 * (1500.0 + z) / 1500.0
+#     T₄ = (-tanh(( - z - 500.0) / 150.0) + 1.0) / 2.0
+
+#     return T₁ + T₂ + T₃ + T₄
+# end
+
+# @inline function initial_salinity_profile(z)
+#     S₁ = 36.25 - 1.13 * tanh((- z - 305.0) / 460.0)
+#     S₂ = (-tanh((500.0 + z) / 150.0) + 1.0) / 2.0
+#     S₃ = 35.55 + 1.25 * (5000.0 + z) / 5000.0 - 1.62 * tanh((-z - 60.0) / 650.0) + 0.2 * tanh((- z - 35.0) / 100.0) + 0.2 * tanh((- z - 1000.0) / 5000.0)
+#     S₄ = (-tanh(( - z - 500.0) / 150.0) + 1.0) / 2.0
+
+#     return S₁ + S₂ + S₃ + S₄
+# end
+
+# reading initial T/S from equilibrated Nemo run
+initial_data = Dataset(joinpath(@__DIR__, "./TS_init_1_4degree.nc"))
+
+initial_salinity    = reverse(PermutedDimsArray(initial_data["soce"][:,:,:], (3, 2, 1)), dims = 3)
+initial_temperature = reverse(PermutedDimsArray(initial_data["toce"][:,:,:], (3, 2, 1)), dims = 3)
+
+close(initial_data)
+
+# set initial conditions
 initial_conditions = (T = initial_temperature,
                       S = initial_salinity)
+
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
