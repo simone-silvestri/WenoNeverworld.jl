@@ -18,9 +18,10 @@ using Oceananigans.ImmersedBoundaries
 
 export NeverworldGrid
 export exponential_z_faces
-export NeverWorldBathymetryParameters, neverworld_bathymetry
+export NeverworldBathymetry
 
 include("neverworld_bathymetry.jl")
+include("dino_grid_parameters.jl")
 include("neverworld_grid.jl")
 
 end

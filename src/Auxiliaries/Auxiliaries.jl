@@ -59,7 +59,7 @@ function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2m
 
     @eval begin
         $increase_Δt!(simulation) = simulation.Δt = $new_Δt
-        callback = Callback($increase_Δt!, SpecifiedTimes(cutoff_time))
+        callback = Callback($increase_Δt!, SpecifiedTimes($cutoff_time))
     end
 
     simulation.callbacks[increase_Δt!] = callback
