@@ -6,7 +6,7 @@ using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/storage4/"
-@show output_prefix = output_dir * "WenoNeverworldData/half_degree/weno_half_warm" 
+@show output_prefix = output_dir * "WenoNeverworldData/half_degree/weno_half_original" 
 
 arch = GPU()
 
@@ -21,11 +21,11 @@ previous_grid = NeverworldGrid(old_degree; arch)
 
 # Extend the vertical advection scheme
 interp_init = false # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-init_file = "/storage4/WenoNeverworldData/half_degree/weno_half_warm_checkpoint_iteration16336506.jld2" # To restart from a file: `init_file = /path/to/restart`
+init_file = "/storage4/WenoNeverworldData/half_degree/weno_half_original_checkpoint_iteration38590804.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 25minutes
-stop_time = 2000years
+stop_time = 3000years
 
 # Latitudinal wind stress acting on the zonal velocity
 # a piecewise-cubic profile interpolated between

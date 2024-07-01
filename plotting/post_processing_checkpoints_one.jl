@@ -149,7 +149,7 @@ hm = GLMakie.heatmap!(ax, lat, z, interior(b, lon_index, :, :), colormap= :plasm
 contour!(ax, lat, z, interior(b, lon_index, :, :), color=:black, linewidth=3, levels=10, labels = true,
 labelsize = 30, labelfont = :bold, labelcolor = :black)
 display(fig)
-save("plotting/moc_one_final.png", fig)
+save("plotting/moc_one_final.png", fig) #mislabeled as "moc" need to correct this fig name in post_processing files.
 
 
 
