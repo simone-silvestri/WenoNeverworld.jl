@@ -36,5 +36,5 @@ Adapt.adapt_structure(to, ws::WindStressBoundaryCondition) = WindStressBoundaryC
         stress[j] = cubic_interpolate(φ, x₁ = φ₁, x₂ = φ₂, y₁ = τ₁, y₂ = τ₂) / 1000.0
     end
 
-    return WindStressBoundaryCondition(bc.φs, bc.τs, arch_array(arch, - stress))
+    return WindStressBoundaryCondition(bc.φs, bc.τs, on_architecture(arch, - stress))
 end

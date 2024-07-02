@@ -9,7 +9,7 @@ using Oceananigans
 using Oceananigans.Utils
 using Oceananigans.Fields: interpolate
 using Oceananigans.Grids: λnode, φnode, halo_size, on_architecture
-using Oceananigans.Architectures: arch_array, architecture
+using Oceananigans.Architectures: on_architecture, architecture
 using Oceananigans.Utils: instantiate
 using Oceananigans.BoundaryConditions
 using JLD2

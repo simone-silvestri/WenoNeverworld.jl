@@ -1,8 +1,8 @@
 using WenoNeverworld
+using WenoNeverworld.Parameterizations
+using WenoNeverworld.Auxiliaries
 using Oceananigans
 using Oceananigans.Units
-using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
-using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalDiffusivity, MixingLength
 
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
@@ -19,7 +19,7 @@ interp_init = false # If interpolating from a different grid: `interp_init = tru
 init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 10minutes
+Δt        = 1minutes
 stop_time = 200years
 
 # Latitudinal wind stress acting on the zonal velocity
@@ -34,26 +34,29 @@ wind_stress = WindStressBoundaryCondition(; φs, τs)
 # the restoring time is λ = 7days
 buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days)
 
-# Wanna use a different profile? Try this:
-# @inline seasonal_cosine_scaling(y, t) = cos(π * y / 70) * sin(2π * t / 1year)
-# buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(seasonal_cosine_scaling; ΔB = 0.06, λ = 7days)    
-
-mixing_length = MixingLength(; Cᵇ = 0.01)
-vertical_diffusivity = CATKEVerticalDiffusivity(; mixing_length)
+# Here we use test `NNbackscatteringClosure` closure
+horizontal_closure = NNbackscatteringClosure(eltype(grid); 
+                                             architecture = arch, 
+                                             weight_path = "model_weights.jld2")
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               wind_stress,
                                               buoyancy_relaxation,
                                               interp_init,
-                                              vertical_diffusivity,
-                                              init_file,
-                                              tracers = (:b, :e))
+                                              horizontal_closure,
+                                              init_file)
                                               
-model = simulation.model
-
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
 checkpoint_outputs!(simulation, output_prefix)
+
+# Initialize with a small time step and increase it after the 
+# inital spin up has completed
+increase_simulation_Δt!(simulation; cutoff_time = 20days,  new_Δt =  2minutes)
+increase_simulation_Δt!(simulation; cutoff_time = 50days,  new_Δt =  4minutes)
+increase_simulation_Δt!(simulation; cutoff_time = 100days, new_Δt =  6minutes)
+increase_simulation_Δt!(simulation; cutoff_time = 150days, new_Δt =  8minutes)
+increase_simulation_Δt!(simulation; cutoff_time = 200days, new_Δt = 10minutes)
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"

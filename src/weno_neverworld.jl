@@ -8,13 +8,13 @@ using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, Exp
 using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
 
 using WenoNeverworld.Auxiliaries
+using WenoNeverworld.Parameterizations
 
 #####
 ##### Default parameterizations for the Neverworld simulation
 #####
 
-default_convective_adjustment = RiBasedVerticalDiffusivity()
-default_vertical_diffusivity  = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=3e-5)
+default_vertical_diffusivity = XinKaiVerticalDiffusivity()
 
 default_momentum_advection(grid) = VectorInvariant(vorticity_scheme = WENO(order = 9), 
                                                     vertical_scheme = WENO(grid))
@@ -99,11 +99,10 @@ Keyword arguments:
 function weno_neverworld_simulation(grid; 
                                     previous_grid = grid,
                                     μ_drag = 0.001,  
-                                    convective_adjustment = default_convective_adjustment,
                                     vertical_diffusivity  = default_vertical_diffusivity,
                                     horizontal_closure    = nothing,
                                     coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving()),
-                                    free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
+                                    free_surface = SplitExplicitFreeSurface(grid; cfl = 0.75),
                                     momentum_advection = default_momentum_advection(grid.underlying_grid),
 				                    tracer_advection   = WENO(grid.underlying_grid), 
                                     interp_init = false,
@@ -127,7 +126,7 @@ function weno_neverworld_simulation(grid;
     #####
 
     @info "specifying closures..."
-    closure = (vertical_diffusivity, horizontal_closure, convective_adjustment)
+    closure = (vertical_diffusivity, horizontal_closure)
 
     #####
     ##### Model setup

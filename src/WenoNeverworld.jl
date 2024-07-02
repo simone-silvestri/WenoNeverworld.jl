@@ -15,13 +15,12 @@ using Oceananigans.Operators
 using Oceananigans.BoundaryConditions
 using Oceananigans.Units
 using Oceananigans.Grids
-using Oceananigans.Architectures: arch_array, architecture
+using Oceananigans.Architectures: on_architecture, architecture
 using Oceananigans.Grids: on_architecture
 using Oceananigans.ImmersedBoundaries
 
 const years = 365days
 
-include("correct_oceananigans.jl")
 include("Constants.jl")
 include("Auxiliaries/Auxiliaries.jl")
 include("NeverworldGrids/NeverworldGrids.jl")
