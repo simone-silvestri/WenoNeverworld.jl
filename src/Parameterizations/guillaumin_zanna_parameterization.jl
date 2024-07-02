@@ -230,17 +230,31 @@ Defines and optionally loads the weights for network from
 # Returns
 - The constructed model, with weights loaded if `weight_path` is provided.
 """
-function getmodel(weight_path=nothing; architecture = CPU()) 
+function getmodel(weight_path=nothing; architecture = CPU(), padding="init_zeros") 
     # Define the network structure
+
+    if padding == "same"
+        p5 = 2
+        p3 = 1
+        p_init = p5
+    elseif padding == "init_zeros" 
+        p5 = 0
+        p3 = 0 
+        p_init = 10
+    else
+        error("padding option $padding unknown")
+    end
+
+
     model = Chain(
-        Conv((5, 5), 2   => 128, pad = (2, 2)), relu,
-        Conv((5, 5), 128 => 64,  pad = (2, 2)), relu,
-        Conv((3, 3), 64  => 32,  pad = (1, 1)), relu,
-        Conv((3, 3), 32  => 32,  pad = (1, 1)), relu,
-        Conv((3, 3), 32  => 32,  pad = (1, 1)), relu,
-        Conv((3, 3), 32  => 32,  pad = (1, 1)), relu,
-        Conv((3, 3), 32  => 32,  pad = (1, 1)), relu,
-        Conv((3, 3), 32  => 4,   pad = (1, 1)))
+        Conv((5, 5), 2   => 128, pad = (p_init, p_init)), relu,
+        Conv((5, 5), 128 => 64,  pad = (p5, p5)), relu,
+        Conv((3, 3), 64  => 32,  pad = (p3, p3)), relu,
+        Conv((3, 3), 32  => 32,  pad = (p3, p3)), relu,
+        Conv((3, 3), 32  => 32,  pad = (p3, p3)), relu,
+        Conv((3, 3), 32  => 32,  pad = (p3, p3)), relu,
+        Conv((3, 3), 32  => 32,  pad = (p3, p3)), relu,
+        Conv((3, 3), 32  => 4,   pad = (p3, p3)))
     if !isnothing(weight_path) 
         @info "Loading model : ", weight_path
         model_state = JLD2.load(weight_path, "model_state");
