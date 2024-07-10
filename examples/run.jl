@@ -2,12 +2,12 @@ using WenoNeverworld
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
-using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities: CATKEVerticalDiffusivity, MixingLength
+using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities: CATKEVerticalDiffusivity, CATKEMixingLength
 
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
 
-arch = GPU()
+arch = CPU()
 
 # The resolution in degrees
 degree_resolution = 1/4
@@ -34,11 +34,10 @@ wind_stress = WindStressBoundaryCondition(; φs, τs)
 # the restoring time is λ = 7days
 buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days)
 
-# Wanna use a different profile? Try this:
-# @inline seasonal_cosine_scaling(y, t) = cos(π * y / 70) * sin(2π * t / 1year)
-# buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(seasonal_cosine_scaling; ΔB = 0.06, λ = 7days)    
+tracer_boundary_conditions = (; b = buoyancy_relaxation)
 
-mixing_length = MixingLength(; Cᵇ = 0.01)
+
+mixing_length = CATKEMixingLength(; Cᵇ = 0.01)
 vertical_diffusivity = CATKEVerticalDiffusivity(; mixing_length)
 
 # Construct the neverworld simulation
@@ -48,7 +47,8 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               interp_init,
                                               vertical_diffusivity,
                                               init_file,
-                                              tracers = (:b, :e))
+                                              tracers = (:b, :e),
+                                              tracer_boundary_conditions)
                                               
 model = simulation.model
 

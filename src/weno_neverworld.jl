@@ -4,6 +4,7 @@ using Oceananigans.TurbulenceClosures: FluxTapering
 using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
 using Oceananigans.Operators: Δx, Δy, Az 
 using Oceananigans.TurbulenceClosures
+using Oceananigans.Advection: TracerAdvection
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
 
@@ -17,30 +18,40 @@ using WenoNeverworld.Parameterizations
 default_vertical_diffusivity = XinKaiVerticalDiffusivity()
 
 default_momentum_advection(grid) = VectorInvariant(vorticity_scheme = WENO(order = 9), 
-                                                    vertical_scheme = WENO(grid))
+                                                  divergence_scheme = WENO(order = 5),
+                                                    vertical_scheme = Centered())
+
+default_tracer_advection(grid) = TracerAdvection(WENO(order = 7), WENO(order = 7), Centered())
 
 """
-    function initialize_model!(model, Val(interpolate), initial_buoyancy, grid, previous_grid, init_file, buoyancymodel)
+    function initialize_model!(model, Val(interpolate), initial_conditions, grid, previous_grid, init_file, buoyancymodel)
 
 initializes the model according to interpolate or not on a finer/coarser grid `Val(interpolate)`
 """
-@inline initialize_model!(model, ::Val{false}, initial_buoyancy, grid, previous_grid, init_file) = set!(model, b = initial_buoyancy)
+@inline initialize_model!(model, ::Val{false}, initial_conditions, grid, previous_grid, init_file) = set!(model; initial_conditions...)
 
-@inline function initialize_model!(model, ::Val{true}, initial_buoyancy, grid, previous_grid, init_file)
+@inline function initialize_model!(model, ::Val{true}, initial_conditions, grid, previous_grid, init_file)
     Hx, Hy, Hz = halo_size(previous_grid)
 
-    b_init = jldopen(init_file)["b/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+    # Extract and regrid velocity fields
     u_init = jldopen(init_file)["u/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     v_init = jldopen(init_file)["v/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     w_init = jldopen(init_file)["w/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
     
-    @info "interpolating fields"
-    b_init = regridded_field(b_init, previous_grid, grid, (Center, Center, Center))
-    u_init = regridded_field(u_init, previous_grid, grid, (Face, Center, Center))
-    v_init = regridded_field(v_init, previous_grid, grid, (Center, Face, Center))
-    w_init = regridded_field(w_init, previous_grid, grid, (Center, Center, Face))
+    u_init = regrid_field(u_init, previous_grid, grid, (Face, Center, Center))
+    v_init = regrid_field(v_init, previous_grid, grid, (Center, Face, Center))
+    w_init = regrid_field(w_init, previous_grid, grid, (Center, Center, Face))
 
-    set!(model, b=b_init, u=u_init, v=v_init, w=w_init) 
+    tracer_init = NamedTuple()
+
+    # Extract and regrid the tracers
+    for tracer_name in propertynames(model.tracers)
+        init = jldopen(init_file)[string(tracer_name) * "/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+        init = regrid_field(init, previous_grid, grid, (Center, Center, Center))
+        tracer_init = merge(tracer_init, (; tracer_name => init))
+    end
+
+    set!(model; u=u_init, v=v_init, w=w_init, tracer_init...) 
 end
 
 """
@@ -59,7 +70,7 @@ end
                                         Δt = 5minutes,
                                         stop_time = 10years,
                                         stop_iteration = Inf,
-                                        initial_buoyancy = initial_buoyancy_parabola,
+                                        initial_conditions = (; b = initial_conditions_parabola),
                                         wind_stress               = WindStressBoundaryCondition(),
                                         buoyancy_relaxation       = BuoyancyRelaxationBoundaryCondition(),
                                         tracer_boundary_condition = NamedTuple(),
@@ -90,7 +101,7 @@ Keyword arguments:
 - `Δt`: the time step, default: `5minutes`
 - `stop_time`: the time at which to stop the simulation, default: `10years`
 - `stop_iteration`: the iteration at which to stop the simulation, default: Inf
-- `initial_buoyancy`: the initial buoyancy field in case of `init_file = nothing`, function of `(x, y, z)` default: `initial_buoyancy_parabola`
+- `initial_conditions`: the initial conditions in case of `init_file = nothing`, NamedTuple containing functions of `(x, y, z)` default: `(; b = initial_conditions_parabola)`
 - `wind_stress`: the wind stress boundary condition, default: `WindStressBoundaryCondition()` (see `src/neverworld_initial_and_boundary_conditions.jl`)
 - `buoyancy_relaxation`: the buoyancy relaxation boundary condition, default: `BuoyancyRelaxationBoundaryCondition()` (see `src/neverworld_initial_and_boundary_conditions.jl`)
 - `tracer_boundary_condition`: boundary conditions for tracers outside `:b`, default: nothing
@@ -98,28 +109,32 @@ Keyword arguments:
 """
 function weno_neverworld_simulation(grid; 
                                     previous_grid = grid,
+                                    # Parameterizations
                                     μ_drag = 0.001,  
                                     vertical_diffusivity  = default_vertical_diffusivity,
                                     horizontal_closure    = nothing,
+                                    # Physics and numerics
+                                    buoyancy = BuoyancyTracer(),
                                     coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving()),
                                     free_surface = SplitExplicitFreeSurface(grid; cfl = 0.75),
                                     momentum_advection = default_momentum_advection(grid.underlying_grid),
-				                    tracer_advection   = WENO(grid.underlying_grid), 
+				                    tracer_advection   = default_tracer_advection(grid.underlying_grid), 
+                                    # Simulation details
                                     interp_init = false,
                                     init_file = nothing,
                                     Δt = 5minutes,
                                     stop_time = 10years,
                                     stop_iteration = Inf,
-                                    initial_buoyancy = initial_buoyancy_parabola,
+                                    # Initial and boundary conditions
+                                    initial_conditions = (; b  = initial_buoyancy_parabola),
 				                    wind_stress                = WindStressBoundaryCondition(),
-                                    buoyancy_relaxation        = BuoyancyRelaxationBoundaryCondition(),
-                                    tracer_boundary_conditions = NamedTuple(),
+                                    tracer_boundary_conditions = (; b = BuoyancyRelaxationBoundaryCondition()),
                                     tracers = :b
                                     )
 
     # Initializing boundary conditions    
     @info "specifying boundary conditions..."
-    boundary_conditions = neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_relaxation, tracers, tracer_boundary_conditions)
+    boundary_conditions = neverworld_boundary_conditions(grid, μ_drag, wind_stress, tracers, tracer_boundary_conditions)
 
     #####
     ##### Closures
@@ -140,14 +155,14 @@ function weno_neverworld_simulation(grid;
                                           momentum_advection, 
                                           tracer_advection, 
                                           boundary_conditions, 
-                                          buoyancy = BuoyancyTracer())
+                                          buoyancy)
 
     #####
     ##### Model initialization
     #####
 
     @info "initializing prognostic variables from $(interp_init ? init_file : "scratch")"
-    initialize_model!(model, Val(interp_init), initial_buoyancy, grid, previous_grid, init_file)
+    initialize_model!(model, Val(interp_init), initial_conditions, grid, previous_grid, init_file)
 
     simulation = Simulation(model; Δt, stop_time, stop_iteration)
 

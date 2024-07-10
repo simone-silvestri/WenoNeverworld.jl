@@ -24,7 +24,7 @@ Adapt.adapt_structure(to, ws::WindStressBoundaryCondition) = WindStressBoundaryC
     Ny   = size(grid, 2)
     arch = architecture(grid)
     
-    φ_grid = grid.φᵃᶜᵃ[1:Ny]
+    φ_grid = on_architecture(CPU(), grid.φᵃᶜᵃ)[1:Ny]
 
     stress = zeros(Ny)
     for (j, φ) in enumerate(φ_grid)    

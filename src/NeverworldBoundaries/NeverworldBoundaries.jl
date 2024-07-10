@@ -3,7 +3,9 @@ module NeverworldBoundaries
 export neverworld_boundary_conditions
 export BuoyancyRelaxationBoundaryCondition
 export WindStressBoundaryCondition
+export HaneyBoundaryCondition
 export initial_buoyancy_parabola
+export Temperature, Salinity, Buoyancy
 
 using WenoNeverworld
 using WenoNeverworld.Auxiliaries
@@ -24,6 +26,8 @@ using Oceananigans.ImmersedBoundaries: ImmersedBoundaryCondition
 using KernelAbstractions: @kernel, @index
 using KernelAbstractions.Extras.LoopInfo: @unroll
 
+using Base: @propagate_inbounds
+
 using Adapt
 
 # Fallback!
@@ -33,6 +37,7 @@ using Adapt
 include("buoyancy_relaxation_bc.jl")
 include("wind_stress_bc.jl")
 include("tracer_boundary_conditions.jl")
+include("haney_boundary_conditions.jl")
 
 @inline ϕ²(i, j, k, grid, ϕ) = ϕ[i, j, k]^2
 
@@ -45,7 +50,7 @@ include("tracer_boundary_conditions.jl")
 @inline u_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.u[i, j, k] * speedᶠᶜᶜ(i, j, k, grid, fields) 
 @inline v_immersed_bottom_drag(i, j, k, grid, clock, fields, μ) = @inbounds - μ * fields.v[i, j, k] * speedᶜᶠᶜ(i, j, k, grid, fields) 
 
-function neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_boundary_condition, tracers, tracer_boundary_conditions)
+function neverworld_boundary_conditions(grid, μ_drag, wind_stress, tracers, tracer_boundary_conditions)
     
     # Velocity boundary conditions
     wind_stress       = regularize_boundary_condition(wind_stress, grid)
@@ -68,19 +73,13 @@ function neverworld_boundary_conditions(grid, μ_drag, wind_stress, buoyancy_bou
         u_bcs = FieldBoundaryConditions(top = u_wind_stress_bc)
         v_bcs = FieldBoundaryConditions(top = FluxBoundaryCondition(nothing))
     end
-    
-    # Buoyancy boundary conditions
-    buoyancy_boundary_condition = regularize_boundary_condition(buoyancy_boundary_condition, grid)
-    b_relaxation_bc             = FluxBoundaryCondition(buoyancy_boundary_condition, discrete_form=true)
-    b_bcs                       = FieldBoundaryConditions(top = b_relaxation_bc)
 
-    # Additional tracers (outside b)
+    # Tracer boundary conditions
     tracers = tracers isa Symbol ? tuple(tracers) : tracers
-    tracers = filter(tracer -> tracer != :b, tracers)
     tracer_boundary_conditions = validate_tracer_boundary_conditions(tracers, tracer_boundary_conditions)
     tracer_boundary_conditions = materialize_tracer_boundary_conditions(tracers, grid, tracer_boundary_conditions)
 
-    return merge((u = u_bcs, v = v_bcs, b = b_bcs), tracer_boundary_conditions)
+    return merge((u = u_bcs, v = v_bcs), tracer_boundary_conditions)
 end
 
 end

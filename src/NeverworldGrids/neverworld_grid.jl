@@ -25,7 +25,7 @@ function exponential_z_faces(; Nz = 69, Lz = 4000.0, e_folding = 0.0670446342186
 end
 
 """
-    function NeverworldGrid(arch, degree, FT::DataType = Float64; H = 7, longitude = (-2, 62), latitude = (-70, 0), bathymetry_params = NeverWorldBathymetryParameters(), longitudinal_extent = 60) 
+    function NeverworldGrid(arch, degree, FT::DataType = Float64; H = 7, longitude = (-2, 62), latitude = (-70, 0), bathymetry_params = NeverworldBathymetry(), longitudinal_extent = 60) 
 
 builds a `LatitudeLongitudeGrid` with a specified `bathymetry`
 
@@ -53,11 +53,11 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                         longitudinal_extent = 60, 
                         longitude = (-2, 62), 
                         latitude = (-70, 70), 
-                        bathymetry_params = NeverWorldBathymetryParameters(),
+                        bathymetry = NeverworldBathymetry(),
                         z_faces = exponential_z_faces()) 
 
     Nx = ceil(Int, (longitude[2] - longitude[1]) / resolution)
-    Ny = ceil(Int, ( latitude[2] -  latitude[1]) / resolution)
+    Ny = getlatitudesize(latitude, resolution)
     Nz = length(z_faces) - 1
 
     underlying_grid = LatitudeLongitudeGrid(arch, FT; size = (Nx, Ny, Nz),
@@ -67,7 +67,10 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                                             topology = (Periodic, Bounded, Bounded),
                                             z = z_faces)
 
-    bathymetry(λ, φ) = neverworld_bathymetry(λ, φ, bathymetry_params; longitudinal_extent, latitude)
+    bathymetry_function(λ, φ) = bathymetry(λ, φ, longitudinal_extent, latitude)
 
-    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry))
+    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry_function))
 end
+
+getlatitudesize(φ::Tuple, Δ)         = ceil(Int, (φ[2] - φ[1]) / Δ)
+getlatitudesize(φ::AbstractArray, Δ) = length(φ) - 1
