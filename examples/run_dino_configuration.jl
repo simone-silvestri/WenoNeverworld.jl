@@ -11,7 +11,7 @@ using SeawaterPolynomials.TEOS10: TEOS10EquationOfState
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
 
-arch = GPU()
+arch = CPU()
 
 # The resolution in degrees
 resolution = 1/4
@@ -28,13 +28,6 @@ equation_of_state = TEOS10EquationOfState()
 buoyancy = SeawaterBuoyancy(; equation_of_state)
 ρTEOS10  = equation_of_state.reference_density
 cTEOS10  = SeawaterPolynomials.TEOS10.teos10_reference_heat_capacity
-
-# Latitudinal wind stress acting on the zonal velocity
-# a piecewise-cubic profile interpolated between
-# x = φs (latitude) and y = τs (stress)
-φs = (-70.0, -45.0, -15.0,  0.0,  15.0, 45.0, 70.0)
-τs = (  0.0,   0.2,  -0.1, -0.01, -0.1,  0.1,  0.0)
-wind_stress = WindStressBoundaryCondition(; φs, τs)
 
 # Boundary conditions for Salinity and Temperature, a mix of a flux and a restoring,
 # also called Haney boundary conditions...
@@ -111,7 +104,6 @@ initial_conditions = (T = initial_temperature,
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
-                                              wind_stress,
                                               buoyancy,
                                               tracers = (:T, :S),
                                               initial_conditions,
