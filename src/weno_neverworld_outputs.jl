@@ -126,18 +126,14 @@ Outputs attached
 function reduced_outputs!(simulation, output_prefix; overwrite_existing = true, 
                                                      checkpoint_time    = 100days,
                                                      snapshot_time      = 30days,
-                                                     surface_time       = 1days,
-                                                     bottom_time        = 1days)
+                                                     surface_time       = 1days)
 
     output_prefix = maybe_distributed_filename(simulation, output_prefix)
 
     model = simulation.model
     grid  = model.grid
 
-    u, v, w = model.velocities
-    b = model.tracers.b
-
-    output_fields = (; u, v, w, b)
+    output_fields = merge(model.velocities, model.tracers)
 
     simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields;
                                                                 schedule = TimeInterval(snapshot_time),
@@ -150,13 +146,7 @@ function reduced_outputs!(simulation, output_prefix; overwrite_existing = true,
                                                                     filename = output_prefix * "_surface",
                                                                     indices = (:, :, grid.Nz),
                                                                     overwrite_existing)
-                                                                                                                                
-    simulation.output_writers[:bottom_fields] = JLD2OutputWriter(model, output_fields;
-                                                                    schedule = TimeInterval(bottom_time),
-                                                                    filename = output_prefix * "_bottom",
-                                                                    indices = (:, :, 2),
-                                                                    overwrite_existing)
-    
+                                                      
     simulation.output_writers[:checkpointer] = Checkpointer(model;
                                                             schedule = TimeInterval(checkpoint_time),
                                                             prefix = output_prefix * "_checkpoint",

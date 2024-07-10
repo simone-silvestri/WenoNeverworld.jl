@@ -53,6 +53,7 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
                         longitudinal_extent = 60, 
                         longitude = (-2, 62), 
                         latitude = (-70, 70), 
+                        fill_land_in_halos = false,
                         bathymetry = NeverworldBathymetry(),
                         z_faces = exponential_z_faces()) 
 
@@ -69,8 +70,15 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
 
     bathymetry_function(λ, φ) = bathymetry(λ, φ, longitudinal_extent, latitude)
 
-    return ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry_function))
+    immersed_grid = ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry_function))
+    
+    if fill_land_in_halos 
+        fill_inland_halos!(immersed_grid, bathymetry)
+    end
+
+    return immersed_grid
 end
+
 
 getlatitudesize(φ::Tuple, Δ)         = ceil(Int, (φ[2] - φ[1]) / Δ)
 getlatitudesize(φ::AbstractArray, Δ) = length(φ) - 1

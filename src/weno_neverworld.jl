@@ -10,6 +10,7 @@ using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
 
 using WenoNeverworld.Auxiliaries
 using WenoNeverworld.Parameterizations
+using WenoNeverworld.NeverworldBoundaries: u_immersed_bottom_drag, v_immersed_bottom_drag
 
 #####
 ##### Default parameterizations for the Neverworld simulation
@@ -75,6 +76,7 @@ end
                                         buoyancy_relaxation       = BuoyancyRelaxationBoundaryCondition(),
                                         tracer_boundary_condition = NamedTuple(),
                                         tracers = :b
+                                        forcing = NamedTuple()
                                         )
 
 returns a simulation object for the Neverworld simulation.
@@ -125,11 +127,12 @@ function weno_neverworld_simulation(grid;
                                     Δt = 5minutes,
                                     stop_time = 10years,
                                     stop_iteration = Inf,
-                                    # Initial and boundary conditions
+                                    # Initial condition, boundary conditions and forcing
                                     initial_conditions = (; b  = initial_buoyancy_parabola),
 				                    wind_stress                = WindStressBoundaryCondition(),
                                     tracer_boundary_conditions = (; b = BuoyancyRelaxationBoundaryCondition()),
-                                    tracers = :b
+                                    tracers = :b,
+                                    forcing = NamedTuple()
                                     )
 
     # Initializing boundary conditions    
@@ -147,6 +150,13 @@ function weno_neverworld_simulation(grid;
     ##### Model setup
     #####
 
+    if μ_drag > 0
+        u_drag = Forcing(u_immersed_bottom_drag, discrete_form = true, parameters = μ_drag)
+        v_drag = Forcing(v_immersed_bottom_drag, discrete_form = true, parameters = μ_drag)
+
+        forcing = merge(forcing, (; u = u_drag, v = v_drag))
+    end
+
     @info "building model..."            
     model = HydrostaticFreeSurfaceModel(; grid, free_surface, 
                                           coriolis,
@@ -155,6 +165,7 @@ function weno_neverworld_simulation(grid;
                                           momentum_advection, 
                                           tracer_advection, 
                                           boundary_conditions, 
+                                          forcing,
                                           buoyancy)
 
     #####

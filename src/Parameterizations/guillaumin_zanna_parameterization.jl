@@ -136,18 +136,16 @@ function compute_diffusivities!(K, closure::NNbackscatteringClosure, model; para
     grid = u.grid
     arch = architecture(grid)
 
-    launch!(arch, grid, parameters, _populate_input!, input, grid, u, v, u★, v★)
+    kernel_parameters = KernelParameters(size(input.parent), input.offsets...)
+
+    launch!(arch, grid, kernel_parameters, _populate_input!, input, grid, u, v, u★, v★)
 
     #(w, h, 2, k) - Here we consider depth layers as batch as they are processed independently
     # Here we are allocating!!! (better to do inplace substitution if possible)
-    # This step needs to be GPU-compatible, it's the last step we need to figure out
     output.parent .= closure.nn(input.parent) 
 
-    # Apply the activation (the softplus function) pointwise
-    launch!(arch, grid, parameters, _activation!, output, closure.min_value)
-
     # Sample the outputs on the correct device
-    launch!(arch, grid, parameters, _sample_output!, Su, Sv, output, grid, Su★, Sv★, sampling)
+    launch!(arch, grid, parameters, _sample_output!, Su, Sv, output, grid, Su★, Sv★, min_value, sampling)
 
     return nothing
 end
@@ -173,8 +171,11 @@ end
 
 # Compute the sampling output on centers and interpolate them onto the 
 # staggered C-grid
-@kernel function _sample_output!(Su, Sv, output, grid, Su★, Sv★, sampling)
+@kernel function _sample_output!(Su, Sv, output, grid, Su★, Sv★, min_value, sampling)
     i, j, k = @index(Global, NTuple)
+
+    @inbounds output[i, j, 3, k] = softplus(output[i, j, 3, k]) + min_value
+    @inbounds output[i, j, 4, k] = softplus(output[i, j, 4, k]) + min_value
 
     @inbounds Su[i, j, k] = ℑxᶠᵃᵃ(i, j, k, grid, sample_output_uᶜᶜᶜ, output, Su★, sampling)
     @inbounds Sv[i, j, k] = ℑyᵃᶠᵃ(i, j, k, grid, sample_output_vᶜᶜᶜ, output, Sv★, sampling)
@@ -205,11 +206,6 @@ Applies the softplus activation function to the specified indices of the input t
 # Returns
 - A new tensor with the activation applied to the specified indices.
 """
-@kernel function _activation!(x, min_value) 
-    i, j, k = @index(Global, NTuple)
-    @inbounds x[i, j, 3, k] = softplus(x[i, j, 3, k]) + min_value
-    @inbounds x[i, j, 4, k] = softplus(x[i, j, 4, k]) + min_value
-end
 
 """
     getmodel(weight_path=nothing)

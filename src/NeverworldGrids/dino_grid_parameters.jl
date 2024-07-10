@@ -1,3 +1,5 @@
+using Oceananigans.Grids: halo_size
+
 #####
 ##### Functions that build a grid equivalent to the one used in the DINO simulation
 #####
@@ -167,4 +169,36 @@ function exp_bathymetry(m, mᴸ, mᴿ, Δλ, 𝒮, Δm)
           ifelse(taper_left,  bat_left, one(n)))
     
     return bat
+end
+
+function fill_inland_halos!(immersed_grid, bathymetry :: DinoBathymetry)
+
+    bottom_height = immersed_grid.immersed_boundary.bottom_height.data
+
+    Nx, Ny, _ = size(immersed_grid)
+    Hx, Hy, _ = halo_size(immersed_grid)
+
+    # channel indices
+    jᴺ = findfirst(φ -> φ > bathymetry.φ_channel_max, immersed_grid.φᵃᶜᵃ) 
+    jˢ =  findlast(φ -> φ < bathymetry.φ_channel_min, immersed_grid.φᵃᶜᵃ) 
+
+    # North of channel, West
+    view(bottom_height, -Hx+1:0, jᴺ:Ny+Hy, :) .= 0
+    
+    # North of channel, East
+    view(bottom_height, Nx+1:Nx+Hx, jᴺ:Ny+Hy, :) .= 0
+
+    # South of channel, West
+    view(bottom_height, -Hx+1:0, -Hy+1:jˢ, :) .= 0
+
+    # South of channel, East
+    view(bottom_height, Nx+1:Nx+Hx, -Hy+1:jˢ, :) .= 0
+
+    # North
+    view(bottom_height, :, Ny+1:Ny+Hy, :) .= 0
+
+    # South
+    view(bottom_height, :, -Hy+1:0, :) .= 0
+
+    return nothing
 end
