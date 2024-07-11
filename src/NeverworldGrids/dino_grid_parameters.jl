@@ -1,4 +1,4 @@
-using Oceananigans.Grids: halo_size
+using Oceananigans.Grids: halo_size, architecture
 
 #####
 ##### Functions that build a grid equivalent to the one used in the DINO simulation
@@ -177,6 +177,7 @@ function fill_inland_halos!(immersed_grid, bathymetry :: DinoBathymetry)
 
     Nx, Ny, _ = size(immersed_grid)
     Hx, Hy, _ = halo_size(immersed_grid)
+    arch      = architecture(immersed_grid)
 
     cpu_φ = on_architecture(CPU(), immersed_grid.φᵃᶜᵃ)
 
@@ -204,7 +205,7 @@ function fill_inland_halos!(immersed_grid, bathymetry :: DinoBathymetry)
     # South
     view(cpu_bottom_height, :, -Hy+1:0, :) .= 0
 
-    parent(bottom_height) .= parent(cpu_bottom_height)
+    parent(bottom_height) .= on_architecture(arch, parent(cpu_bottom_height))
 
     return nothing
 end
