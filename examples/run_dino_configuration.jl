@@ -138,18 +138,24 @@ initial_temperature = reverse(PermutedDimsArray(initial_conditions_data["toce"][
 
 initial_conditions = (T = initial_temperature,
                       S = initial_salinity)
-
+                      
 # Add parameterizations
 # horizontal_closure = NNbackscatteringClosure(; architecture = arch, weight_path = "....")
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
                                               buoyancy,
-                                              tracers = (:T, :S),
+                                              tracers = (:T, :S, :e),
                                               forcing = (; T = solar_forcing),
                                               initial_conditions,
                                               tracer_boundary_conditions)
                                  
+
+include("examples/propagate_initial_conditions.jl")
+
+propagate_horizontally!(simulation.model.tracers.S)
+propagate_horizontally!(simulation.model.tracers.T)
+
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
 reduced_outputs!(simulation, output_prefix;
                  checkpoint_time = 100days,

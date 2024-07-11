@@ -72,10 +72,9 @@ function NeverworldGrid(resolution, FT::DataType = Float64;
 
     immersed_grid = ImmersedBoundaryGrid(underlying_grid, GridFittedBottom(bathymetry_function))
     
-    if fill_land_in_halos 
+    fill_land_in_halos &&
         fill_inland_halos!(immersed_grid, bathymetry)
-    end
-
+    
     return immersed_grid
 end
 
