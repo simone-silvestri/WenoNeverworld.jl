@@ -184,23 +184,27 @@ function fill_inland_halos!(immersed_grid, bathymetry :: DinoBathymetry)
     jᴺ = findfirst(φ -> φ > bathymetry.φ_channel_max, cpu_φ) 
     jˢ =  findlast(φ -> φ < bathymetry.φ_channel_min, cpu_φ) 
 
+    cpu_bottom_height = on_architecture(CPU(), bottom_height)
+
     # North of channel, West
-    view(bottom_height, -Hx+1:0, jᴺ:Ny+Hy, :) .= 0
+    view(cpu_bottom_height, -Hx+1:0, jᴺ:Ny+Hy, :) .= 0
     
     # North of channel, East
-    view(bottom_height, Nx+1:Nx+Hx, jᴺ:Ny+Hy, :) .= 0
+    view(cpu_bottom_height, Nx+1:Nx+Hx, jᴺ:Ny+Hy, :) .= 0
 
     # South of channel, West
-    view(bottom_height, -Hx+1:0, -Hy+1:jˢ, :) .= 0
+    view(cpu_bottom_height, -Hx+1:0, -Hy+1:jˢ, :) .= 0
 
     # South of channel, East
-    view(bottom_height, Nx+1:Nx+Hx, -Hy+1:jˢ, :) .= 0
+    view(cpu_bottom_height, Nx+1:Nx+Hx, -Hy+1:jˢ, :) .= 0
 
     # North
-    view(bottom_height, :, Ny+1:Ny+Hy, :) .= 0
+    view(cpu_bottom_height, :, Ny+1:Ny+Hy, :) .= 0
 
     # South
-    view(bottom_height, :, -Hy+1:0, :) .= 0
+    view(cpu_bottom_height, :, -Hy+1:0, :) .= 0
+
+    parent(bottom_height) .= parent(cpu_bottom_height)
 
     return nothing
 end
