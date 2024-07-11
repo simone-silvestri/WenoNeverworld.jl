@@ -178,9 +178,11 @@ function fill_inland_halos!(immersed_grid, bathymetry :: DinoBathymetry)
     Nx, Ny, _ = size(immersed_grid)
     Hx, Hy, _ = halo_size(immersed_grid)
 
+    cpu_φ = on_architecture(CPU(), immersed_grid.φᵃᶜᵃ)
+
     # channel indices
-    jᴺ = findfirst(φ -> φ > bathymetry.φ_channel_max, immersed_grid.φᵃᶜᵃ) 
-    jˢ =  findlast(φ -> φ < bathymetry.φ_channel_min, immersed_grid.φᵃᶜᵃ) 
+    jᴺ = findfirst(φ -> φ > bathymetry.φ_channel_max, cpu_φ) 
+    jˢ =  findlast(φ -> φ < bathymetry.φ_channel_min, cpu_φ) 
 
     # North of channel, West
     view(bottom_height, -Hx+1:0, jᴺ:Ny+Hy, :) .= 0
