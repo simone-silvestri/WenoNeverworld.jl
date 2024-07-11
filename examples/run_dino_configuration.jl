@@ -129,7 +129,7 @@ tracer_boundary_conditions = (; T = temperature_bc,
     S⁺ = red_light * exp(z⁺ * p.ξᴿ) + blue_light * exp(z⁺ * p.ξᴮ)
     S⁻ = red_light * exp(z⁻ * p.ξᴿ) + blue_light * exp(z⁻ * p.ξᴮ)
 
-    return  (S⁺ - S⁻) / Δzᶜᶜᶜ(i, j, k, grid) * (p.ρ⁰ * p.cᵖ⁻¹)
+    return  (S⁺ - S⁻) / Δzᶜᶜᶜ(i, j, k, grid) * (p.ρ⁰⁻¹ * p.cᵖ⁻¹)
 end
 
 solar_forcing = Forcing(solar_heating; discrete_form = true, parameters)
