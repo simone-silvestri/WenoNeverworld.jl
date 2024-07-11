@@ -17,7 +17,10 @@ using NCDatasets
 output_dir    = joinpath(@__DIR__, "./")
 @show output_prefix = output_dir * "/neverworld_quarter_resolution"
 
-arch = CPU()
+arch = GPU()
+
+using CUDA
+CUDA.device!(1)
 
 # The resolution in degrees
 resolution = 1/4
