@@ -6,6 +6,9 @@ using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnode, λnode, znode
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
+using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities: 
+                                    CATKEMixingLength, 
+                                    CATKEVerticalDiffusivity
 using Oceananigans.Operators
 using SeawaterPolynomials
 using SeawaterPolynomials.TEOS10: TEOS10EquationOfState
@@ -54,10 +57,10 @@ cTEOS10  = SeawaterPolynomials.TEOS10.teos10_reference_heat_capacity
     T★   = ifelse(φ > 0, T★ⁿ, T★ˢ)
     mask = sin(π * (φ + p.φⁿ) / (p.φⁿ - p.φˢ))
 
-    return T★ + (p.Tᵉ - T★) * mask # Need to add the time-dependent part!
+    return T★ + (p.Tᵉ - T★) * mask 
 end
 
-@inline function seasonal_cycle(day_of_the_year ,lag)
+@inline function seasonal_cycle(day_of_the_year, lag)
     time_max =  5 * 30 + 21 + lag  # 21th june     at 24h in hours
     time_min = 11 * 30 + 21 + lag  # 21th december        in hours
 
@@ -75,23 +78,23 @@ end
 end
 
 # Parameters to use in the boundary conditions
-parameters = (; Tⁿ  = 5.0,     # temperature restoring at northern boundary
-                Tˢ  = - 0.5,   # temperature restoring at southern boundary
-                Tᵉ  = 27.0,    # temperature restoring at equator
-                Tₛⁿ = 3.0,     # seasonal temperature restoring correction north
-                Tₛˢ = 0.5,     # seasonal temperature restoring correction north
-                Sⁿ  = 35.1,    # salinity restoring at northern boundary 
-                Sˢ  = 35.0,    # salinity restoring at southern boundary
-                Sᵉ  = 37.25,   # salinity restoring at equator
-                φˢ  = -70.0,   # southnmost edge
-                φⁿ  = 70.0,    # northernmost edge
-                ρ⁰  = ρTEOS10, # reference density
-                cᵖ  = cTEOS10, # reference heat capacity
-                Q⁰  = 230.0,   # reference solar flux
-                δ   = 23.5,    # declination angle
-                Rᴿ  = 0.58,    # fraction of red light
-                ξᴿ  = 0.2,     # extintion length of red light
-                ξᴮ  = 25)      # extintion length of blue light
+parameters = (; Tⁿ    = 5.0,         # temperature restoring at northern boundary
+                Tˢ    = - 0.5,       # temperature restoring at southern boundary
+                Tᵉ    = 27.0,        # temperature restoring at equator
+                Tₛⁿ   = 3.0,         # seasonal temperature restoring correction north
+                Tₛˢ   = 0.5,         # seasonal temperature restoring correction north
+                Sⁿ    = 35.1,        # salinity restoring at northern boundary 
+                Sˢ    = 35.0,        # salinity restoring at southern boundary
+                Sᵉ    = 37.25,       # salinity restoring at equator
+                φˢ    = -70.0,       # southnmost edge
+                φⁿ    = 70.0,        # northernmost edge
+                ρ⁰⁻¹  = 1 / ρTEOS10, # reciprocal reference density 
+                cᵖ⁻¹  = 1 / cTEOS10, # reciprocal reference heat capacity
+                Q⁰    = 230.0,       # reference solar flux
+                δ     = 23.5,        # declination angle
+                Rᴿ    = 0.58,        # fraction of red light
+                ξᴿ    = 1 / 0.2,     # extintion length of red light m⁻¹
+                ξᴮ    = 1 / 25)      # extintion length of blue light m⁻¹
 
 temperature_bc = HaneyBoundaryCondition(; restoring_profile = temperature_profile, 
                                           varname = Temperature(),
@@ -122,10 +125,11 @@ tracer_boundary_conditions = (; T = temperature_bc,
     z⁺ = znode(k+1, grid.underlying_grid, Face())
     z⁻ = znode(k,   grid.underlying_grid, Face())
 
-    S⁺ = red_light * exp(- z⁺ / p.ξᴿ) + blue_light * exp(- z⁺ / p.ξᴮ)
-    S⁻ = red_light * exp(- z⁻ / p.ξᴿ) + blue_light * exp(- z⁻ / p.ξᴮ)
+    # z⁺ and z⁻ are negative nodes!
+    S⁺ = red_light * exp(z⁺ * p.ξᴿ) + blue_light * exp(z⁺ * p.ξᴮ)
+    S⁻ = red_light * exp(z⁻ * p.ξᴿ) + blue_light * exp(z⁻ * p.ξᴮ)
 
-    return  (S⁺ - S⁻) / Δzᶜᶜᶜ(i, j, k, grid) / p.ρ⁰ / p.cᵖ
+    return  (S⁺ - S⁻) / Δzᶜᶜᶜ(i, j, k, grid) * (p.ρ⁰ * p.cᵖ⁻¹)
 end
 
 solar_forcing = Forcing(solar_heating; discrete_form = true, parameters)
@@ -141,17 +145,19 @@ initial_conditions = (T = initial_temperature,
                       
 # Add parameterizations
 # horizontal_closure = NNbackscatteringClosure(; architecture = arch, weight_path = "....")
+# mixing_length = CATKEMixingLength(; Cᵇ = 0.01)
+# vertical_diffusivity = CATKEVerticalDiffusivity(; mixing_length)
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
                                               buoyancy,
-                                              tracers = (:T, :S, :e),
+                                              tracers = (:T, :S),
                                               forcing = (; T = solar_forcing),
                                               initial_conditions,
                                               tracer_boundary_conditions)
                                  
 
-include("examples/propagate_initial_conditions.jl")
+include("propagate_initial_conditions.jl")
 
 propagate_horizontally!(simulation.model.tracers.S)
 propagate_horizontally!(simulation.model.tracers.T)
@@ -172,5 +178,5 @@ increase_simulation_Δt!(simulation; cutoff_time = 200days, new_Δt = 10minutes)
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"
-run_simulation!(simulation)
+# run_simulation!(simulation)
 
