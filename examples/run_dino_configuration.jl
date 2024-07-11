@@ -137,8 +137,8 @@ solar_forcing = Forcing(solar_heating; discrete_form = true, parameters)
 # Initial conditions
 initial_conditions_data = Dataset(joinpath(@__DIR__, "TS_init_1_4degree.nc"))
 
-initial_salinity    = reverse(PermutedDimsArray(initial_conditions_data["soce"][:, :, :], (3, 2, 1)), dims = 3)
-initial_temperature = reverse(PermutedDimsArray(initial_conditions_data["toce"][:, :, :], (3, 2, 1)), dims = 3)
+initial_salinity    = reverse(PermutedDimsArray(initial_conditions_data["soce"][:, :, :], (3, 2, 1)), dims = 3) |> Array{Float32}
+initial_temperature = reverse(PermutedDimsArray(initial_conditions_data["toce"][:, :, :], (3, 2, 1)), dims = 3) |> Array{Float32}
 
 initial_conditions = (T = initial_temperature,
                       S = initial_salinity)
