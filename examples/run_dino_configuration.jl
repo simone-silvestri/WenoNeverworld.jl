@@ -4,7 +4,7 @@ using WenoNeverworld.NeverworldBoundaries
 using WenoNeverworld.NeverworldGrids: dino_parameters
 using Oceananigans
 using Oceananigans.Units
-using Oceananigans.Grids: φnode, λnode, znode
+using Oceananigans.Grids: φnode, λnode, znode, node
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 using Oceananigans.TurbulenceClosures.TKEBasedVerticalDiffusivities: 
                                     CATKEMixingLength, 
@@ -80,13 +80,12 @@ end
     return S★ + (p.Sᵉ - S★) * mask - 1.25 * exp(- φ^2 / 7.5^2)
 end
 
-@inline function solar_flux(i, j, grid, clock, fields, p)
+@inline function solar_flux(λ, φ, z, t, p)
     # t is in seconds, convention is that 0 is the 1st of January
-    time_in_days = clock.time / 86400
+    time_in_days = t / 86400
     day_of_the_year = mod(time_in_days, 360)
-    latitude = φnode(j, grid.underlying_grid, Center())
 
-    solar_heat_flux = p.Q⁰ * cos(π / 180 * (latitude - p.δ * cos(π * (day_of_the_year + 189) / 180)))
+    solar_heat_flux = p.Q⁰ * cos(π / 180 * (φ - p.δ * cos(π * (day_of_the_year + 189) / 180)))
 
     return solar_heat_flux * (p.ρ⁰⁻¹ * p.cᵖ⁻¹)
 end
@@ -126,7 +125,9 @@ tracer_boundary_conditions = (; T = temperature_bc,
 
 # The heating imposed by penetrative solar radiation 
 @inline function solar_heating(i, j, k, grid, clock, fields, p)
-    S  = solar_flux(i, j, grid, clock, fields, p)
+    λ, φ, z = node(i, j, k, grid.underlying_grid, Center(), Center(), Center())
+    
+    S  = solar_flux(λ, φ, z, clock.time, p)
 
     Sᴿ = S * p.Rᴿ
     Sᴮ = S * (1 - p.Rᴿ)
