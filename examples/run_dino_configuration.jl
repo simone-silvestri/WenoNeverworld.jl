@@ -30,7 +30,7 @@ grid = NeverworldGrid(resolution; arch, H, fill_land_in_halos, dino_parameters(r
 
 # Simulation parameters (we start with 1 minute timestep and
 # increase it as the simulation equilibrates)
-starting_Δt = 1minutes
+starting_Δt = 2minutes
 stop_time   = 200years
 
 # Equation of state: we use the TEOS10 equation of state
@@ -179,11 +179,8 @@ reduced_outputs!(simulation, output_prefix;
 
 # Initialize with a small time step and increase it after the 
 # inital spin up has completed
-increase_simulation_Δt!(simulation; cutoff_time = 20days,  new_Δt =  2minutes)
-increase_simulation_Δt!(simulation; cutoff_time = 50days,  new_Δt =  4minutes)
-increase_simulation_Δt!(simulation; cutoff_time = 100days, new_Δt =  6minutes)
-increase_simulation_Δt!(simulation; cutoff_time = 150days, new_Δt =  8minutes)
-increase_simulation_Δt!(simulation; cutoff_time = 200days, new_Δt = 10minutes)
+wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 15minutes, max_change = 1.1)
+simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(20))
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"
