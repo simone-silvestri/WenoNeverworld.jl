@@ -141,7 +141,7 @@ function compute_diffusivities!(diffusivities, closure::FlavorOfXKVD, model; par
     velocities = model.velocities
     top_tracer_bcs = NamedTuple(c => tracers[c].boundary_conditions.top for c in propertynames(tracers))
 
-    launch!(arch, grid, parameters, compute_ri_number!, diffusivities, grid, closure, velocities)
+    launch!(arch, grid, parameters, compute_ri_number!, diffusivities, grid, closure, velocities, buoyancy, tracers)
 
     # Use `only_local_halos` to ensure that no communication occurs during
     # this call to fill_halo_regions!
@@ -169,23 +169,20 @@ end
     return ∂z_u² + ∂z_v²
 end
 
-@inline function N²ᶜᶜᶠ(i, j, k, grid, buoyancy, tracers)
-    return ∂z_b(i, j, k, grid, buoyancy, tracers)
-end
-
-@inline function Riᶜᶜᶠ(i, j, k, grid, velocities, diffusivities)
+@inline function Riᶜᶜᶠ(i, j, k, grid, velocities, N²)
     S² = shear_squaredᶜᶜᶠ(i, j, k, grid, velocities)
-    N² = diffusivities.N²[i, j, k]
     Ri = N² / S²
 
     # Clip N² and avoid NaN
     return ifelse(N² == 0, zero(grid), Ri)
 end
 
-@kernel function compute_ri_number!(diffusivities, grid, ::FlavorOfXKVD, velocities)
+@kernel function compute_ri_number!(diffusivities, grid, ::FlavorOfXKVD, velocities, buoyancy, tracers)
     i, j, k = @index(Global, NTuple)
-    @inbounds diffusivities.N²[i, j, k] = N²ᶜᶜᶠ(i, j, k, grid, buoyancy, tracers)
-    @inbounds diffusivities.Ri[i, j, k] = Riᶜᶜᶠ(i, j, k, grid, velocities, diffusivities)
+    N² = ∂z_b(i, j, k, grid, buoyancy, tracers)
+
+    @inbounds diffusivities.N²[i, j, k] = N²
+    @inbounds diffusivities.Ri[i, j, k] = Riᶜᶜᶠ(i, j, k, grid, velocities, N²)
 end
 
 @kernel function compute_xinkai_diffusivities!(diffusivities, grid, closure::FlavorOfXKVD,
