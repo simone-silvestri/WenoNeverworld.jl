@@ -80,6 +80,17 @@ end
     return S★ + (p.Sᵉ - S★) * mask - 1.25 * exp(- φ^2 / 7.5^2)
 end
 
+@inline function solar_flux(i, j, grid, clock, fields, p)
+    # t is in seconds, convention is that 0 is the 1st of January
+    time_in_days = clock.time / 86400
+    day_of_the_year = mod(time_in_days, 360)
+    latitude = φnode(j, grid.underlying_grid, Center())
+
+    solar_heat_flux = p.Q⁰ * cos(π / 180 * (latitude - p.δ * cos(π * (day_of_the_year + 189) / 180)))
+
+    return solar_heat_flux * (p.ρ⁰⁻¹ * p.cᵖ⁻¹)
+end
+
 # Parameters to use in the boundary conditions
 parameters = (; Tⁿ    = 5.0,         # temperature restoring at northern boundary
                 Tˢ    = - 0.5,       # temperature restoring at southern boundary
@@ -99,7 +110,8 @@ parameters = (; Tⁿ    = 5.0,         # temperature restoring at northern bound
                 ξᴿ    = 1 / 0.2,     # extintion length of red light m⁻¹
                 ξᴮ    = 1 / 25)      # extintion length of blue light m⁻¹
 
-temperature_bc = HaneyBoundaryCondition(; restoring_profile = temperature_profile, 
+temperature_bc = HaneyBoundaryCondition(; restoring_profile = temperature_profile,
+                                          flux = solar_flux,
                                           varname = Temperature(),
                                           pumping_velocity = 5 / 10days,
                                           parameters)
@@ -114,25 +126,19 @@ tracer_boundary_conditions = (; T = temperature_bc,
 
 # The heating imposed by penetrative solar radiation 
 @inline function solar_heating(i, j, k, grid, clock, fields, p)
-    # t is in seconds, convention is that 0 is the 1st of January
-    time_in_days = clock.time / 86400
-    day_of_the_year = mod(time_in_days, 360)
-    latitude = φnode(j, grid.underlying_grid, Center())
+    S  = solar_flux(i, j, grid, clock, fields, p)
 
-    solar_heat_flux = p.Q⁰ * cos(π / 180 * (latitude - p.δ * cos(π * (day_of_the_year + 189) / 180)))
-
-    # distribute over the column
-    red_light  = solar_heat_flux * p.Rᴿ
-    blue_light = solar_heat_flux * (1 - p.Rᴿ)
+    Sᴿ = S * p.Rᴿ
+    Sᴮ = S * (1 - p.Rᴿ)
 
     z⁺ = znode(k+1, grid.underlying_grid, Face())
     z⁻ = znode(k,   grid.underlying_grid, Face())
 
     # z⁺ and z⁻ are negative nodes!
-    S⁺ = red_light * exp(z⁺ * p.ξᴿ) + blue_light * exp(z⁺ * p.ξᴮ)
-    S⁻ = red_light * exp(z⁻ * p.ξᴿ) + blue_light * exp(z⁻ * p.ξᴮ)
+    S⁺ = Sᴿ * exp(z⁺ * p.ξᴿ) + Sᴮ * exp(z⁺ * p.ξᴮ)
+    S⁻ = Sᴿ * exp(z⁻ * p.ξᴿ) + Sᴮ * exp(z⁻ * p.ξᴮ)
 
-    return  (S⁺ - S⁻) / Δzᶜᶜᶜ(i, j, k, grid) * (p.ρ⁰⁻¹ * p.cᵖ⁻¹)
+    return  (S⁺ - S⁻) / Δzᶜᶜᶜ(i, j, k, grid) 
 end
 
 solar_forcing = Forcing(solar_heating; discrete_form = true, parameters)
@@ -155,7 +161,7 @@ initial_conditions = (T = initial_temperature,
 simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
                                               buoyancy,
                                               tracers = (:T, :S),
-                                              forcing = (; T = solar_forcing),
+                                            #   forcing = (; T = solar_forcing),
                                               initial_conditions,
                                               tracer_boundary_conditions)
                                  

@@ -144,7 +144,7 @@ function weno_neverworld_simulation(grid;
     #####
 
     @info "specifying closures..."
-    closure = (vertical_diffusivity, horizontal_closure)
+    closure = horizontal_closure isa Nothing ? vertical_diffusivity : (vertical_diffusivity, horizontal_closure)
 
     #####
     ##### Model setup

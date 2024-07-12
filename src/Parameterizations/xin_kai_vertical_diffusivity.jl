@@ -1,14 +1,44 @@
+using Oceananigans
 using Oceananigans.Architectures: architecture
 using Oceananigans.BuoyancyModels: ∂z_b
+using Oceananigans.Operators
+using Oceananigans.BoundaryConditions
 using Oceananigans.Grids: inactive_node
 using Oceananigans.Operators: ℑzᵃᵃᶜ, ℑxyᶠᶠᵃ, ℑxyᶜᶜᵃ
+
+using Adapt
+
+using KernelAbstractions: @index, @kernel
+using KernelAbstractions.Extras.LoopInfo: @unroll
+
+using Oceananigans.TurbulenceClosures:
+        AbstractScalarDiffusivity,
+        ExplicitTimeDiscretization
+
+import Oceananigans.TurbulenceClosures:
+        compute_diffusivities!,
+        DiffusivityFields,
+        viscosity, 
+        diffusivity,
+        getclosure,
+        top_buoyancy_flux,
+        diffusive_flux_x,
+        diffusive_flux_y, 
+        diffusive_flux_z,
+        viscous_flux_ux,
+        viscous_flux_vx,
+        viscous_flux_uy,
+        viscous_flux_vy
 
 using Oceananigans.Utils: launch!
 using Oceananigans.Coriolis: fᶠᶠᵃ
 using Oceananigans.Operators
 using Oceananigans.BuoyancyModels: ∂x_b, ∂y_b, ∂z_b 
 
-using Oceananigans.TurbulenceClosures: VerticalFormulation, AbstractScalarDiffusivity
+using Oceananigans.TurbulenceClosures
+using Oceananigans.TurbulenceClosures: HorizontalFormulation, VerticalFormulation
+using Oceananigans.TurbulenceClosures: AbstractScalarBiharmonicDiffusivity
+using Oceananigans.Operators
 using Oceananigans.Operators: Δxᶜᶜᶜ, Δyᶜᶜᶜ, ℑxyᶜᶜᵃ, ζ₃ᶠᶠᶜ, div_xyᶜᶜᶜ
 using Oceananigans.Operators: Δx, Δy
 using Oceananigans.Operators: ℑxyz
@@ -20,7 +50,8 @@ struct XinKaiVerticalDiffusivity{TD, FT} <: AbstractScalarDiffusivity{TD, Vertic
     νˢʰ :: FT
     νᶜⁿ :: FT
     Cᵉⁿ :: FT
-    Prₜ :: FT
+    Pr_convₜ :: FT
+    Pr_shearₜ :: FT
     Riᶜ :: FT
     δRi :: FT
     Q₀  :: FT
@@ -31,26 +62,28 @@ function XinKaiVerticalDiffusivity{TD}(ν₀  :: FT,
                                        νˢʰ :: FT,
                                        νᶜⁿ :: FT,
                                        Cᵉⁿ :: FT,
-                                       Prₜ :: FT,
+                                       Pr_convₜ :: FT,
+                                       Pr_shearₜ :: FT,
                                        Riᶜ :: FT,
 				                       δRi :: FT,
                                        Q₀  :: FT,
 	         		                   δQ  :: FT) where {TD, FT}
                                        
-    return XinKaiVerticalDiffusivity{TD, FT}(ν₀, νˢʰ, νᶜⁿ, Cᵉⁿ, Prₜ, Riᶜ, δRi, Q₀, δQ)
+    return XinKaiVerticalDiffusivity{TD, FT}(ν₀, νˢʰ, νᶜⁿ, Cᵉⁿ, Pr_convₜ, Pr_shearₜ, Riᶜ, δRi, Q₀, δQ)
 end
 
 function XinKaiVerticalDiffusivity(time_discretization = VerticallyImplicitTimeDiscretization(),
                                     FT  = Float64;
 				                    ν₀  = 1e-5, 
-                                    νˢʰ = 0.0885,
-                                    νᶜⁿ = 4.3668,
-                                    Cᵉⁿ = 0.2071,
-                                    Prₜ = 1.207,
-                                    Riᶜ = - 0.21982,
-				                    δRi = 8.342e-4,
-                                    Q₀  = 0.08116,
-	         		                δQ  = 0.02622) 
+                                    νˢʰ = 0.07738088203341657,
+                                    νᶜⁿ = 0.533741914196933,
+                                    Cᵉⁿ = 0.5196272898085122,
+                                    Pr_convₜ = 0.01632117727992826,
+                                    Pr_shearₜ = 1.8499159986192901,
+                                    Riᶜ = 0.4923581673007292,
+				                    δRi = 0.00012455519496760374,
+                                    Q₀  = 0.048232078296680234,
+	         		                δQ  = 0.01884938627051353) 
 
     TD = typeof(time_discretization)
 
@@ -58,7 +91,8 @@ function XinKaiVerticalDiffusivity(time_discretization = VerticallyImplicitTimeD
                                          convert(FT, νˢʰ),
                                          convert(FT, νᶜⁿ),
                                          convert(FT, Cᵉⁿ),
-                                         convert(FT, Prₜ),
+                                         convert(FT, Pr_convₜ),
+                                         convert(FT, Pr_shearₜ),
                                          convert(FT, Riᶜ),
 					                     convert(FT, δRi),
 					                     convert(FT, Q₀),
@@ -69,8 +103,8 @@ XinKaiVerticalDiffusivity(FT::DataType; kw...) =
     XinKaiVerticalDiffusivity(VerticallyImplicitTimeDiscretization(), FT; kw...)
 
 Adapt.adapt_structure(to, clo::XinKaiVerticalDiffusivity{TD, FT}) where {TD, FT} = 
-    XinKaiVerticalDiffusivity{TD, FT}(clo.ν₀, clo.νˢʰ, clo.νᶜⁿ, clo.Cᵉⁿ, clo.Prₜ, clo.Riᶜ, clo.δRi, clo.Q₀, clo.δQ)   	
-                                         
+    XinKaiVerticalDiffusivity{TD, FT}(clo.ν₀, clo.νˢʰ, clo.νᶜⁿ, clo.Cᵉⁿ, clo.Pr_convₜ, clo.Pr_shearₜ, clo.Riᶜ, clo.δRi, clo.Q₀, clo.δQ)   	
+                                       
 #####                                    
 ##### Diffusivity field utilities        
 #####                                    
@@ -93,8 +127,9 @@ with_tracers(tracers, closure::FlavorOfXKVD) = closure
 function DiffusivityFields(grid, tracer_names, bcs, closure::FlavorOfXKVD)
     κᶜ = Field((Center, Center, Face), grid)
     κᵘ = Field((Center, Center, Face), grid)
+    N² = Field((Center, Center, Face), grid)
     Ri = Field((Center, Center, Face), grid)
-    return (; κᶜ, κᵘ, Ri)
+    return (; κᶜ, κᵘ, Ri, N²)
 end
 
 function compute_diffusivities!(diffusivities, closure::FlavorOfXKVD, model; parameters = :xyz)
@@ -106,16 +141,7 @@ function compute_diffusivities!(diffusivities, closure::FlavorOfXKVD, model; par
     velocities = model.velocities
     top_tracer_bcs = NamedTuple(c => tracers[c].boundary_conditions.top for c in propertynames(tracers))
 
-    launch!(arch, grid, parameters,
-            compute_ri_number!,
-            diffusivities,
-            grid,
-            closure,
-            velocities,
-            tracers,
-            buoyancy,
-            top_tracer_bcs,
-            clock)
+    launch!(arch, grid, parameters, compute_ri_number!, diffusivities, grid, closure, velocities)
 
     # Use `only_local_halos` to ensure that no communication occurs during
     # this call to fill_halo_regions!
@@ -143,22 +169,23 @@ end
     return ∂z_u² + ∂z_v²
 end
 
-@inline function Riᶜᶜᶠ(i, j, k, grid, velocities, buoyancy, tracers)
+@inline function N²ᶜᶜᶠ(i, j, k, grid, buoyancy, tracers)
+    return ∂z_b(i, j, k, grid, buoyancy, tracers)
+end
+
+@inline function Riᶜᶜᶠ(i, j, k, grid, velocities, diffusivities)
     S² = shear_squaredᶜᶜᶠ(i, j, k, grid, velocities)
-    N² = ∂z_b(i, j, k, grid, buoyancy, tracers)
+    N² = diffusivities.N²[i, j, k]
     Ri = N² / S²
 
     # Clip N² and avoid NaN
-    return ifelse(N² <= 0, zero(grid), Ri)
+    return ifelse(N² == 0, zero(grid), Ri)
 end
 
-const c = Center()
-const f = Face()
-
-@kernel function compute_ri_number!(diffusivities, grid, closure::FlavorOfXKVD,
-                                    velocities, tracers, buoyancy, tracer_bcs, clock)
+@kernel function compute_ri_number!(diffusivities, grid, ::FlavorOfXKVD, velocities)
     i, j, k = @index(Global, NTuple)
-    @inbounds diffusivities.Ri[i, j, k] = Riᶜᶜᶠ(i, j, k, grid, velocities, buoyancy, tracers)
+    @inbounds diffusivities.N²[i, j, k] = N²ᶜᶜᶠ(i, j, k, grid, buoyancy, tracers)
+    @inbounds diffusivities.Ri[i, j, k] = Riᶜᶜᶠ(i, j, k, grid, velocities, diffusivities)
 end
 
 @kernel function compute_xinkai_diffusivities!(diffusivities, grid, closure::FlavorOfXKVD,
@@ -167,7 +194,6 @@ end
     _compute_xinkai_diffusivities!(i, j, k, diffusivities, grid, closure,
                                    velocities, tracers, buoyancy, tracer_bcs, clock)
 end
-
 
 @inline function _compute_xinkai_diffusivities!(i, j, k, diffusivities, grid, closure,
                                                 velocities, tracers, buoyancy, tracer_bcs, clock)
@@ -179,36 +205,40 @@ end
     νˢʰ = closure_ij.νˢʰ
     νᶜⁿ = closure_ij.νᶜⁿ
     Cᵉⁿ = closure_ij.Cᵉⁿ
-    Prₜ = closure_ij.Prₜ
+    Pr_convₜ = closure_ij.Pr_convₜ
+    Pr_shearₜ = closure_ij.Pr_shearₜ
     Riᶜ = closure_ij.Riᶜ
     δRi = closure_ij.δRi
     Q₀  = closure_ij.Q₀ 
-    δQ  = closure_ij.δQ 
+    δQ  = closure_ij.δQ
+
+    κ₀  = ν₀  / Pr_shearₜ
+    κˢʰ = νˢʰ / Pr_shearₜ
+    κᶜⁿ = νᶜⁿ / Pr_convₜ
 
     Qᵇ = top_buoyancy_flux(i, j, grid, buoyancy, tracer_bcs, clock, merge(velocities, tracers))
 
-    # Convection and entrainment
-    N² = ∂z_b(i, j, k, grid, buoyancy, tracers)
-    N²_above = ∂z_b(i, j, k+1, grid, buoyancy, tracers)
-
+    # Apply a horizontal filter to Richardson number and stratification
+    Ri_above = ℑxyᶜᶜᵃ(i, j, k + 1, grid, ℑxyᶠᶠᵃ, diffusivities.Ri)
+    Ri       = ℑxyᶜᶜᵃ(i, j, k,     grid, ℑxyᶠᶠᵃ, diffusivities.Ri)
+    N²       = ℑxyᶜᶜᵃ(i, j, k,     grid, ℑxyᶠᶠᵃ, diffusivities.N²)
+    
     # Conditions
-    convecting = N² < 0 # applies regardless of Qᵇ
-    entraining = (N² > 0) & (N²_above < 0) & (Qᵇ > 0)
-
-    # (Potentially) apply a horizontal filter to the Richardson number
-    Ri = ℑxyᶜᶜᵃ(i, j, k, grid, ℑxyᶠᶠᵃ, diffusivities.Ri)
+    convecting = Ri < 0 # applies regardless of Qᵇ
+    entraining = (Ri > 0) & (Ri_above < 0) & (Qᵇ > 0)
 
     # Convective adjustment diffusivity
-    ν_local = ifelse(convecting, - (νᶜⁿ - νˢʰ) / 2 * tanh(Ri / δRi) + νˢʰ, clamp(Riᶜ * Ri + νˢʰ + ν₀, ν₀, νˢʰ))
+    ν_local = ifelse(convecting, (νˢʰ - νᶜⁿ) * tanh(Ri / δRi) + νˢʰ, clamp((ν₀ - νˢʰ) * Ri / Riᶜ + νˢʰ, ν₀, νˢʰ))
+    κ_local = ifelse(convecting, (κˢʰ - κᶜⁿ) * tanh(Ri / δRi) + κˢʰ, clamp((κ₀ - κˢʰ) * Ri / Riᶜ + κˢʰ, κ₀, κˢʰ))
 
     # Entrainment diffusivity
-    νᵉⁿ = ifelse(entraining, Cᵉⁿ * Qᵇ / N², zero(grid))
-    x = Qᵇ / (N² + 1e-11)
-    ν_nonlocal = ifelse(entraining,  Cᵉⁿ * νᵉⁿ * 0.5 * (tanh((x - Q₀) / δQ) + 1), 0)
+    χ = Qᵇ / (N² + 1e-11)
+    ν_nonlocal = ifelse(entraining,  Cᵉⁿ * νᶜⁿ * 0.5 * (tanh((χ - Q₀) / δQ) + 1), zero(grid))
+    κ_nonlocal = ifelse(entraining,  ν_nonlocal / Pr_shearₜ, zero(grid))
 
     # Update by averaging in time
-    @inbounds diffusivities.κᵘ[i, j, k] =  ν_local + ν_nonlocal 
-    @inbounds diffusivities.κᶜ[i, j, k] = (ν_local + ν_nonlocal) / Prₜ 
+    @inbounds diffusivities.κᵘ[i, j, k] = ifelse((k <= 1) | (k >= grid.Nz+1), zero(grid), ν_local + ν_nonlocal)
+    @inbounds diffusivities.κᶜ[i, j, k] = ifelse((k <= 1) | (k >= grid.Nz+1), zero(grid), κ_local + κ_nonlocal)
 
     return nothing
 end
