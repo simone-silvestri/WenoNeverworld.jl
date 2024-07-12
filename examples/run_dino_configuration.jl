@@ -158,9 +158,12 @@ initial_conditions = (T = initial_temperature,
 # mixing_length = CATKEMixingLength(; Cᵇ = 0.01)
 # vertical_diffusivity = CATKEVerticalDiffusivity(; mixing_length)
 
+free_surface = SplitExplicitFreeSurface(grid; cfl = 0.75, fixed_Δt = 900)
+
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
                                               buoyancy,
+                                              free_surface,
                                               tracers = (:T, :S),
                                             #   forcing = (; T = solar_forcing),
                                               initial_conditions,
