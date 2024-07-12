@@ -184,5 +184,5 @@ simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(20))
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"
-# run_simulation!(simulation)
+run!(simulation)
 
