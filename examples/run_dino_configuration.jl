@@ -19,9 +19,6 @@ output_dir    = joinpath(@__DIR__, "./")
 
 arch = GPU()
 
-using CUDA
-CUDA.device!(1)
-
 # The resolution in degrees
 resolution = 1/4
 H = 10 # this should be `max(padding, 7)` (because of advection stencil) 
@@ -155,17 +152,16 @@ initial_conditions = (T = initial_temperature,
                       
 # Add parameterizations
 # horizontal_closure = NNbackscatteringClosure(; architecture = arch, weight_path = "....")
-# mixing_length = CATKEMixingLength(; Cᵇ = 0.01)
-# vertical_diffusivity = CATKEVerticalDiffusivity(; mixing_length)
-
-free_surface = SplitExplicitFreeSurface(grid; cfl = 0.75, fixed_Δt = 900)
+mixing_length = CATKEMixingLength(; Cᵇ = 0.01)
+vertical_diffusivity = CATKEVerticalDiffusivity(; mixing_length)
+free_surface = SplitExplicitFreeSurface(grid; substeps = 72)
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
                                               buoyancy,
                                               free_surface,
-                                              tracers = (:T, :S),
-                                            #   forcing = (; T = solar_forcing),
+                                              vertical_diffusivity,
+                                              tracers = (:T, :S, :e),
                                               initial_conditions,
                                               tracer_boundary_conditions)
                                  
