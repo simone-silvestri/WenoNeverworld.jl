@@ -107,7 +107,7 @@ parameters = (; Tⁿ    = 5.0,         # temperature restoring at northern bound
                 ξᴮ    = 1 / 25)      # extintion length of blue light m⁻¹
 
 temperature_bc = HaneyBoundaryCondition(; restoring_profile = temperature_profile,
-                                        #   flux = solar_flux,
+                                          flux = solar_flux,
                                           varname = Temperature(),
                                           pumping_velocity = 5 / 10days,
                                           parameters)
@@ -162,6 +162,7 @@ simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
                                               free_surface,
                                               vertical_diffusivity,
                                               tracers = (:T, :S, :e),
+                                              focing = (; T = solar_heating),
                                               initial_conditions,
                                               tracer_boundary_conditions)
                                  

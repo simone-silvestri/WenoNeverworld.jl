@@ -69,13 +69,15 @@ end
 
     # First retrieve the prescribed flux
     loc  = field_location(bc.varname)
+
+    # A positive flux is cooling in Oceananigans!
     flux = getvalue(bc.flux, i, j, kᴺ, grid, loc, clock.time, bc.parameters)
 
     # Now we calculate the restoring
     var  = @inbounds fields[i, j, kᴺ, bc.varname] 
     var★ = getvalue(bc.restoring_profile, i, j, kᴺ, grid, loc, clock.time, bc.parameters)
 
-    return bc.pumping_velocity * (var - var★) - flux # - EmP * T * cᵖ in case we add freshwater flux
+    return bc.pumping_velocity * (var - var★) + flux # - EmP * T * cᵖ in case we add freshwater flux
 end
 
 Adapt.adapt_structure(to, b::HaneyBoundaryCondition) = 
