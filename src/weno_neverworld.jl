@@ -18,11 +18,8 @@ using WenoNeverworld.NeverworldBoundaries: u_immersed_bottom_drag, v_immersed_bo
 
 default_vertical_diffusivity = XinKaiVerticalDiffusivity()
 
-default_momentum_advection(grid) = VectorInvariant(vorticity_scheme = WENO(order = 9), 
-                                                  divergence_scheme = WENO(order = 5),
-                                                    vertical_scheme = Centered())
-
-default_tracer_advection(grid) = TracerAdvection(WENO(order = 7), WENO(order = 7), Centered())
+default_momentum_advection(grid) = WENOVectorInvariant()
+default_tracer_advection(grid)   = TracerAdvection(WENO(order = 7), WENO(order = 7), Centered())
 
 """
     function initialize_model!(model, Val(interpolate), initial_conditions, grid, previous_grid, init_file, buoyancymodel)
