@@ -133,15 +133,20 @@ function reduced_outputs!(simulation, output_prefix; overwrite_existing = true,
     model = simulation.model
     grid  = model.grid
 
-    output_fields = merge(model.velocities, model.tracers)
+    output_fields = Dict(
+        "u" => model.velocities.u,
+        "v" => model.velocities.v,
+        "T" => model.tracers.T,
+        "S" => model.tracers.S
+    )
 
-    simulation.output_writers[:snapshots] = JLD2OutputWriter(model, output_fields;
+    simulation.output_writers[:snapshots] = NetCDFOutputWriter(model, output_fields;
                                                                 schedule = TimeInterval(snapshot_time),
                                                                 filename = output_prefix * "_snapshots",
                                                                 overwrite_existing)
    
 
-    simulation.output_writers[:surface_fields] = JLD2OutputWriter(model, output_fields;
+    simulation.output_writers[:surface_fields] = NetCDFOutputWriter(model, output_fields;
                                                                     schedule = TimeInterval(surface_time),
                                                                     filename = output_prefix * "_surface",
                                                                     indices = (:, :, grid.Nz),
