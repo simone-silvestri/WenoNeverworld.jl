@@ -84,7 +84,7 @@ end
 
     solar_heat_flux = p.Q⁰ * cos(π / 180 * (φ - p.δ * cos(π * (day_of_the_year + 189) / 180)))
 
-    return solar_heat_flux * (p.ρ⁰⁻¹ * p.cᵖ⁻¹)
+    return max(solar_heat_flux, zero(solar_heat_flux)) * (p.ρ⁰⁻¹ * p.cᵖ⁻¹)
 end
 
 # Parameters to use in the boundary conditions
