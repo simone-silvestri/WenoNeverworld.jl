@@ -162,7 +162,7 @@ simulation = weno_neverworld_simulation(grid; Δt = starting_Δt, stop_time,
                                               free_surface,
                                               vertical_diffusivity,
                                               tracers = (:T, :S, :e),
-                                              forcing = (; T = solar_heating),
+                                              forcing = (; T = solar_forcing),
                                               initial_conditions,
                                               tracer_boundary_conditions)
                                  
