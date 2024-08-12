@@ -2,36 +2,38 @@ using WenoNeverworld
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
+using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 #using CairoMakie # You have to add this to your global enviroment: `] add CairoMakie`
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/storage4/"
-@show output_prefix = output_dir * "WenoNeverworldData/weno_fourth"
+@show output_prefix = output_dir * "WenoNeverworldData/half_degree/weno_half_larger_viscosity" 
 
 arch = GPU()
 
 # The resolution in degrees
-degree_resolution = 1/4
-new_degree = 1/4
-old_degree = 1/4
+degree_resolution = 1/2
+new_degree = 1/2
+old_degree = 1/2
+
 
 grid = NeverworldGrid(new_degree; arch)
 previous_grid = NeverworldGrid(old_degree; arch)
 
 # Extend the vertical advection scheme
 interp_init = false # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-init_file = "/storage4/WenoNeverworldData/weno_fourth_checkpoint_iteration2102400.jld2" # To restart from a file: `init_file = /path/to/restart`
+init_file = nothing #"/storage4/WenoNeverworldData/half_degree/weno_half_larger_diffusivity_checkpoint_iteration57061417.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 10minutes
+Δt        = 25minutes
 stop_time = 3000years
 
 # Latitudinal wind stress acting on the zonal velocity
 # a piecewise-cubic profile interpolated between
 # x = φs (latitude) and y = τs (stress)
-#φs = (-70.0, -45.0, -15.0,  0.0,  15.0, 45.0, 70.0)
-#τs = (  0.0,   0.2,  -0.1, -0.02, -0.1,  0.1,  0.0)
-#wind_stress = WindStressBoundaryCondition(; φs, τs)
+φs = (-70.0, -45.0, -15.0,  0.0,  15.0, 45.0, 70.0)
+τs = (  0.0,   0.2,  -0.1, -0.02, -0.1,  0.1,  0.0)
+wind_stress = WindStressBoundaryCondition(; φs, τs)
 
 # Buoyancy relaxation profile:
 # a parabolic profile between 0, at the poles, and ΔB = 0.06 at the equator
@@ -43,13 +45,13 @@ stop_time = 3000years
 # buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(seasonal_cosine_scaling; ΔB = 0.06, λ = 7days)    
 
 # Construct the neverworld simulation
-simulation = weno_neverworld_simulation(grid; Δt, stop_time, 
+simulation = weno_neverworld_simulation(grid; previous_grid, Δt, stop_time, 
                                               interp_init,
-                                              init_file)
+                                              init_file, vertical_diffusivity = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-3, κ=1e-4)) #how big change v to?
                                               
 
 # Adaptable time step
-wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 40minutes, min_Δt = 10minutes, max_change = 1.1)
+wizard = TimeStepWizard(; cfl = 0.35, max_Δt = 45minutes, min_Δt = 15minutes, max_change = 1.1)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)

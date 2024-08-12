@@ -2,18 +2,19 @@ using WenoNeverworld
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
+using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 #using CairoMakie # You have to add this to your global enviroment: `] add CairoMakie`
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/storage4/"
-@show output_prefix = output_dir * "WenoNeverworldData/half_degree/weno_half_original" 
+@show output_prefix = output_dir * "WenoNeverworldData/half_degree/weno_half_variable_diff" 
 
 arch = GPU()
 
 # The resolution in degrees
 degree_resolution = 1/2
 new_degree = 1/2
-old_degree = 1
+old_degree = 1/2
 
 
 grid = NeverworldGrid(new_degree; arch)
@@ -21,11 +22,11 @@ previous_grid = NeverworldGrid(old_degree; arch)
 
 # Extend the vertical advection scheme
 interp_init = false # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-init_file = "/storage4/WenoNeverworldData/half_degree/weno_half_original_checkpoint_iteration57438093.jld2" #this is the 3000 year checkpoint To restart from a file: `init_file = /path/to/restart`
+init_file = nothing #"/storage4/WenoNeverworldData/half_degree/weno_half_larger_diffusivity_checkpoint_iteration57061417.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 25minutes
-stop_time = 4000years
+stop_time = 3000years
 
 # Latitudinal wind stress acting on the zonal velocity
 # a piecewise-cubic profile interpolated between
@@ -41,12 +42,30 @@ wind_stress = WindStressBoundaryCondition(; φs, τs)
 
 # Wanna use a different profile? Try this:
 # @inline seasonal_cosine_scaling(y, t) = cos(π * y / 70) * sin(2π * t / 1year)
-# buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(seasonal_cosine_scaling; ΔB = 0.06, λ = 7days)    
+# buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(seasonal_cosine_scaling; ΔB = 0.06, λ = 7days)  
+
+####
+###math for variable diffusivity:
+####    (for l=1km = 1000m, we have h/l = 4000/1000 = 4)
+
+#constants
+h = 4000
+l = 1000 #meters
+κ0 = 3e-5
+κ1 = 1e-4
+a = (κ1 - κ0)/(1-(exp(-h/l))) 
+c = κ1 - a
+
+# add comments about this and also add diffusivity to abernathy channel!
+# κ(z) = a*e(z/1000) + c
+@inline κ(x, y, z, t) = 7.13060152254642e-5 * exp(z / 1000) + 2.8693984774535807e-5
+#@inline κ(x, y, z, t) = 3e-5 #for constant diffusivity
+@inline ν(x, y, z, t) = 1e-4
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; previous_grid, Δt, stop_time, 
                                               interp_init,
-                                              init_file)
+                                              init_file, vertical_diffusivity = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=κ))
                                               
 
 # Adaptable time step

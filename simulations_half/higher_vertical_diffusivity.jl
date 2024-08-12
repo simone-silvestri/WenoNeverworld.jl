@@ -2,18 +2,19 @@ using WenoNeverworld
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
+using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 #using CairoMakie # You have to add this to your global enviroment: `] add CairoMakie`
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/storage4/"
-@show output_prefix = output_dir * "WenoNeverworldData/half_degree/weno_half_original" 
+@show output_prefix = output_dir * "WenoNeverworldData/half_degree/weno_half_larger_diffusivity" 
 
 arch = GPU()
 
 # The resolution in degrees
 degree_resolution = 1/2
 new_degree = 1/2
-old_degree = 1
+old_degree = 1/2
 
 
 grid = NeverworldGrid(new_degree; arch)
@@ -21,7 +22,7 @@ previous_grid = NeverworldGrid(old_degree; arch)
 
 # Extend the vertical advection scheme
 interp_init = false # Do we need to interpolate? (interp_init) If `true` from which file? # If interpolating from a different grid: `interp_init = true`
-init_file = "/storage4/WenoNeverworldData/half_degree/weno_half_original_checkpoint_iteration57438093.jld2" #this is the 3000 year checkpoint To restart from a file: `init_file = /path/to/restart`
+init_file = "/storage4/WenoNeverworldData/half_degree/weno_half_larger_diffusivity_checkpoint_iteration65375543.jld2" #3000 years file To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 25minutes
@@ -46,7 +47,7 @@ wind_stress = WindStressBoundaryCondition(; φs, τs)
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; previous_grid, Δt, stop_time, 
                                               interp_init,
-                                              init_file)
+                                              init_file, vertical_diffusivity = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=1e-4))
                                               
 
 # Adaptable time step
