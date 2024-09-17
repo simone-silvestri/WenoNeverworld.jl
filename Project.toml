@@ -27,7 +27,7 @@ MPIPreferences = "0.1"
 CUDA = "4, 5"
 Printf = "1.9"
 KernelAbstractions = "^0.9"
-Oceananigans = "^0.90"
+Oceananigans = "^0.91"
 julia = "1.9"
 
 [extras]
