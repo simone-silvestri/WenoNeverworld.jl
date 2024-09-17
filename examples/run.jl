@@ -12,7 +12,8 @@ arch = GPU()
 # The resolution in degrees
 degree_resolution = 1/4
 
-grid = NeverworldGrid(degree_resolution; arch)
+z_faces = exponential_z_faces(; Nz = 35, depth = 3000)
+grid = NeverworldGrid(degree_resolution; arch, z_faces)
 
 # Do we need to interpolate? (interp_init) If `true` from which file?
 interp_init = false # If interpolating from a different grid: `interp_init = true`

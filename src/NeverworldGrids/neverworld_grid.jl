@@ -8,21 +8,19 @@ using Oceananigans.DistributedComputations
 generates an array of exponential z faces 
 
 """
-function exponential_z_faces(; Nz = 69, Lz = 4000.0, e_folding = 0.06704463421863584)
-    z_faces   = zeros(Nz + 1)
-    Nconstant = 11
+function exponential_z_faces(; Nz = 69, depth = 4000, h = Nz / 4.5)
 
-    z_faces[1:Nconstant] .= 0:5:50
+    z_faces = exponential_profile.((1:Nz+1); Lz = Nz, h)
 
-    for i in 1:(Nz + 1 - Nconstant)
-        z_faces[i + Nconstant] = z_faces[i - 1 + Nconstant] + 5 * exp(e_folding * i)
-    end
+    # Normalize
+    z_faces .-= z_faces[1]
+    z_faces .*= - depth / z_faces[end]
+    
+    z_faces[1] = 0.0
 
-    z_faces    = - reverse(z_faces)
-    z_faces[1] = - Lz
-
-    return z_faces
+    return reverse(z_faces)
 end
+
 
 """
     function NeverworldGrid(arch, degree, FT::DataType = Float64; H = 7, longitude = (-2, 62), latitude = (-70, 0), bathymetry_params = NeverWorldBathymetryParameters(), longitudinal_extent = 60) 
