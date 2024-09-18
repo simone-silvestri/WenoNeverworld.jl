@@ -1,16 +1,19 @@
 using WenoNeverworld
+using WenoNeverworld.NeverworldGrids
 using Oceananigans
 using Oceananigans.Units
 using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
-using CairoMakie 
+using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
+
 
 output_dir    = joinpath(@__DIR__, "./")
-@show output_prefix = output_dir * "/neverworld_quarter_resolution"
+output_dir = "/storage4/"
+@show output_prefix = output_dir * "WenoNeverworldData/half_degree_new/weno_half_" 
 
-arch = GPU()
+arch = CPU()
 
 # The resolution in degrees
-degree_resolution = 1/4
+degree_resolution = 1
 
 z_faces = exponential_z_faces(; Nz = 35, depth = 3000)
 grid = NeverworldGrid(degree_resolution; arch, z_faces)
@@ -20,8 +23,8 @@ interp_init = false # If interpolating from a different grid: `interp_init = tru
 init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 10minutes
-stop_time = 200years
+Δt        = 1minutes
+stop_time = 30days
 
 # Latitudinal wind stress acting on the zonal velocity
 # a piecewise-cubic profile interpolated between
@@ -44,7 +47,7 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               wind_stress,
                                               buoyancy_relaxation,
                                               interp_init,
-                                              init_file)
+                                              init_file, vertical_diffusivity = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=3e-5))
                                               
 model = simulation.model
 
@@ -65,7 +68,7 @@ lines!(ax, φ, - τ_bcs .* 1000, linewidth = 5) # (we re-convert the wind stress
 ax  = Axis(fig[1, 2], title = L"\text{Restoring buoyancy flux}")
 lines!(ax, φ, - b_bcs, linewidth = 5)
 
-CairoMakie.save("boundary_conditions.png", fig)
+#CairoMakie.save("boundary_conditions.png", fig)
 
 # Let's plot the initial conditions to make sure they are reasonable
 λ = λnodes(cpu_grid.underlying_grid, Center(), Center(), Center())
@@ -81,10 +84,10 @@ hm  = heatmap!(ax, φ, z, b[grid.Nx ÷ 2, :, :], colormap = :thermometer)
 ct  = contour!(ax, φ, z, b[grid.Nx ÷ 2, :, :], levels = range(0, 0.06, length = 10), color = :black)
 cb  = Colorbar(fig[5, 2], hm) 
 
-CairoMakie.save("initial_conditions.png", fig)
+#CairoMakie.save("initial_conditions.png", fig)
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
-checkpoint_outputs!(simulation, output_prefix)
+checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false)
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"
