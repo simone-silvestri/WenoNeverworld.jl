@@ -48,8 +48,8 @@ import Oceananigans.TurbulenceClosures: _compute_ri_based_diffusivities!
     κᵘ★ = ν₀ * τ
 
     # Previous diffusivities
-    κᶜ = diffusivities.κᶜ
-    κᵘ = diffusivities.κᵘ
+    κᶜ = diffusivities.κc
+    κᵘ = diffusivities.κu
 
     # New diffusivities
     κᶜ⁺ = κᶜ★ + κᶜᵃ + κᵉⁿ # 
@@ -62,8 +62,8 @@ import Oceananigans.TurbulenceClosures: _compute_ri_based_diffusivities!
     κᵘ⁺ = ifelse(on_periphery, zero(grid), ifelse(within_inactive, NaN, κᵘ⁺))
 
     # Update by averaging in time
-    @inbounds κᶜ[i, j, k] = (Cᵃᵛ * κᶜ[i, j, k] + κᶜ⁺) / (1 + Cᵃᵛ)
-    @inbounds κᵘ[i, j, k] = (Cᵃᵛ * κᵘ[i, j, k] + κᵘ⁺) / (1 + Cᵃᵛ)
+    @inbounds κc[i, j, k] = (Cᵃᵛ * κᶜ[i, j, k] + κᶜ⁺) / (1 + Cᵃᵛ)
+    @inbounds κu[i, j, k] = (Cᵃᵛ * κᵘ[i, j, k] + κᵘ⁺) / (1 + Cᵃᵛ)
     
     return nothing
 end
