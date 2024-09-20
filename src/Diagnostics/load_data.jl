@@ -1,4 +1,7 @@
 using WenoNeverworld
+using Oceananigans
+using Oceananigans.Grids: AbstractGrid
+using Oceananigans.ImmersedBoundaries: ImmersedBoundaryGrid
 
 """returns a nametuple of (u, v, w, b) from the data in file"""
 function checkpoint_fields(file)
@@ -67,19 +70,36 @@ function all_fieldtimeseries(filename, dir = "./";
             myfiles = myfiles[end-number_files:end]
         end
 
-        @info "loading iterations" numbers
-        grid = try
-	        jldopen(dir * myfiles[1] * "2")["grid"]
-	           catch
-	        NeverworldGrid(jldopen(dir * myfiles[1] * "2")["resolution"])
+        times = zeros(length(numbers))
+
+        for (idx, file) in enumerate(myfiles)
+            @info "time from index $idx" file
+            times[idx] = jldopen(dir * file * "2")["clock"].time
         end
+
+        @info "loading iterations" numbers
+        grid = jldopen(dir * myfiles[1] * "2")["grid"]
+
+	# Fix the grid if we are reconstructing
+	bfield = jldopen(dir * myfiles[1] * "2")["b/data"]
+	Hx = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hx
+	Hy = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hy
+	Hz = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hz
+	Ny = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Ny
+	Nz = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Nz
+        φF = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.φᵃᶠᵃ[1:Ny+1]
+        zF = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.zᵃᵃᶠ[1:Nz+1]
+
+        resolution = (φF[end] - φF[1]) / Ny 
+        
+	grid = grid isa AbstractGrid ? grid : NeverworldGrid(resolution; z_faces = zF)
+
         for var in variables
-            field = FieldTimeSeries{assumed_location(var)...}(grid, numbers)
+            field = FieldTimeSeries{assumed_location(var)...}(grid, times)
             for (idx, file) in enumerate(myfiles)
                 @info "index $idx" file
-                concrete_var = jldopen(dir * file * "2")[var * "/data"]
-                field.times[idx] = jldopen(dir * file * "2")["clock"].time
-                interior(field[idx]) .= concrete_var
+                concrete_var = jldopen(dir * file * "2")[var * "/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+		interior(field[idx]) .= concrete_var
 	    end
 
             fields[Symbol(var)] = field
