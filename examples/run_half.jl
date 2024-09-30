@@ -10,7 +10,7 @@ CUDA.device!(1)
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/storage4/WenoNeverworldData/half_degree_new/"
-@show output_prefix = output_dir * "weno_half_" 
+@show output_prefix = output_dir * "weno_half" 
 
 arch = GPU()
 
@@ -22,7 +22,7 @@ grid = NeverworldGrid(degree_resolution; arch, z_faces)
 
 # Do we need to interpolate? (interp_init) If `true` from which file?
 interp_init = false # If interpolating from a different grid: `interp_init = true`
-init_file   = output_dir * "weno_half_checkpoint_iteration12523680.jld2" # To restart from a file: `init_file = /path/to/restart`
+init_file   = output_dir * "weno_half__checkpoint_iteration13154400.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 25minutes
