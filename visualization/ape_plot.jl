@@ -107,11 +107,11 @@ l7 = lines!(ax, ape_data7, color=:green)
 l7 = lines!(ax, ape_data7, color=:red)
 
 leg = Legend(fig1[1, 2],
-    [l7, l8], ["1/2 κ=1e-3", "1/2 κ=3e-5, new"], position = :right, labelsize = 15)
+    [l7, l8], ["1/2 κ=1e-3", "1/2 κ=3e-5 new"], position = :right, labelsize = 15)
     #["1/2 orginal", "1/2 larger diff", "1/2 larger visc + diff", "1/2 variable diff", "1/4 original", "1/4 larger diff"], position = :right, labelsize = 15)
 
 display(fig1)
-save("plotting/ape_compare_new.png", fig1)
+save("ape_compare_new.png", fig1)
 
 
 #integrated_heat_content = Diagnostics.heat_content(fields[:b]; stride)
