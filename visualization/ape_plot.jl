@@ -5,6 +5,8 @@ using CairoMakie, SixelTerm
 using LaTeXStrings
 using JLD2
 
+CUDA.device!(2)
+
 variables = ("b")
 stride = 20
 #=
