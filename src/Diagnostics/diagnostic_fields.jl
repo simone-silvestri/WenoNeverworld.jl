@@ -89,7 +89,7 @@ function HeightField(grid, loc = (Center, Center, Center))
     Lz = grid.Lz
 
     for k in 1:size(zf, 3)
-        interior(zf, :, :, k) .= Lz + znode(k, grid, loc[3]())
+        interior(zf, :, :, k) .= Lz + znode(k, grid.underlying_grid, loc[3]())
     end
 
     return zf

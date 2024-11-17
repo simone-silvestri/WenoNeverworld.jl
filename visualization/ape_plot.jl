@@ -106,7 +106,7 @@ ape_data6_norm = ape_data6 / maximum(ape_data6)
 #ape_data6_norm = ape_data6 / maximum(ape_data6)
 #l5 = lines!(ax, ape_data5, color=:blue)
 l7 = lines!(ax, ape_data7, color=:green)
-l7 = lines!(ax, ape_data7, color=:red)
+l8 = lines!(ax, ape_data8, color=:red)
 
 leg = Legend(fig1[1, 2],
     [l7, l8], ["1/2 κ=1e-3", "1/2 κ=3e-5 new"], position = :right, labelsize = 15)

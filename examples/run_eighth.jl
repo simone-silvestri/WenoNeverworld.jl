@@ -6,7 +6,6 @@ using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 using CUDA
 
-CUDA.device!(2)
 
 output_dir    = joinpath(@__DIR__, "./")
 output_dir = "/storage4/WenoNeverworldData/eighth_degree_new/"
@@ -16,8 +15,12 @@ arch = GPU()
 
 # The resolution in degrees
 degree_resolution = 1/8
+previous_degree = 1/4
+
+# previous_grid needs to be on another architecture!!!
 
 z_faces = exponential_z_faces(; Nz = 35, depth = 3000)
+previous_grid = NeverworldGrid(previous_degree; arch, z_faces)
 grid = NeverworldGrid(degree_resolution; arch, z_faces)
 
 # Do we need to interpolate? (interp_init) If `true` from which file?
@@ -25,7 +28,7 @@ interp_init = true # If interpolating from a different grid: `interp_init = true
 init_file   = "/storage4/WenoNeverworldData/quarter_degree_new/" * "weno_quarter__checkpoint_iteration70005600.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 5minutes
+Δt        = 1minutes
 stop_time = 60days
 
 # Latitudinal wind stress acting on the zonal velocity
@@ -46,7 +49,8 @@ buoyancy_relaxation = BuoyancyRelaxationBoundaryCondition(ΔB = 0.06, λ = 7days
 
 # Construct the neverworld simulation
 simulation = weno_neverworld_simulation(grid; Δt, stop_time,
-                                              wind_stress,
+                                              wind_stress, 
+                                              previous_grid,
                                               buoyancy_relaxation,
                                               interp_init,
                                               init_file, vertical_diffusivity = VerticalScalarDiffusivity(ExplicitTimeDiscretization(), ν=1e-4, κ=3e-5))
