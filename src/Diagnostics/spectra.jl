@@ -5,13 +5,25 @@ struct Spectrum{S, F}
     freq :: F
 end
 
+import Base
+
+Base.:(+)(s::Spectrum, t::Spectrum) = Spectrum(s.spec .+ t.spec, s.freq)
+Base.:(-)(s::Spectrum, t::Spectrum) = Spectrum(s.spec .- t.spec, s.freq)
+Base.:(*)(s::Spectrum, t::Spectrum) = Spectrum(s.spec .* t.spec, s.freq)
+Base.:(/)(s::Spectrum, t::Int)      = Spectrum(s.spec ./ t, s.freq)
+
+Base.real(s::Spectrum) = Spectrum(real.(s.spec), s.freq)
+Base.abs(s::Spectrum)  = Spectrum( abs.(s.spec), s.freq)
+
 @inline onefunc(args...)  = 1.0
 @inline hann_window(n, N) = sin(π * n / N)^2 
 
-function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 69, spectra = power_spectrum_1d_x, windowing = onefunc)
+function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 34, spectra = power_spectrum_1d_x, windowing = onefunc)
 
-    xdomain = xnodes(var[1])[xlim]
-    ydomain = ynodes(var[1])[ylim]
+    grid = var.grid
+    loc  = location(var)
+    xdomain = grid.λᶜᵃᵃ[xlim]
+    ydomain = grid.φᵃᶜᵃ[ylim]
 
     Nt = length(var.times)
 

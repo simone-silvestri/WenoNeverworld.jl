@@ -14,8 +14,9 @@ output_dir = "/storage4/WenoNeverworldData/eighth_degree_new/"
 @show output_prefix = output_dir * "weno_eighth"
 
 # The resolution in degrees
+
 new_degree = 1/8
-old_degree = 1/4
+old_degree = 1/8
 
 z_faces = exponential_z_faces(; Nz = 35, depth = 3000)
 grid = NeverworldGrid(new_degree; arch, z_faces)
@@ -23,12 +24,12 @@ previous_grid = NeverworldGrid(old_degree; arch, z_faces)
 
 
 # Do we need to interpolate? (interp_init) If `true` from which file?
-interp_init = true # If interpolating from a different grid: `interp_init = true`
-init_file   = "/storage4/WenoNeverworldData/quarter_degree_new/weno_quarter__checkpoint_iteration70005600.jld2" # To restart from a file: `init_file = /path/to/restart`
+interp_init = false # If interpolating from a different grid: `interp_init = true`
+init_file   = "/storage4/WenoNeverworldData/eighth_degree_new/weno_eighth_checkpoint_iteration8169120.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 5minutes
-stop_time = 4000years
+Δt        = 10minutes
+stop_time = 5500years
 
 # Latitudinal wind stress acting on the zonal velocity
 # a piecewise-cubic profile interpolated between
@@ -56,7 +57,7 @@ simulation = weno_neverworld_simulation(grid; previous_grid, Δt, stop_time,
 model = simulation.model
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
-checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 30days)
+checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"

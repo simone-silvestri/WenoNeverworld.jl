@@ -4,8 +4,9 @@ using Oceananigans
 using CairoMakie, SixelTerm
 using LaTeXStrings
 using JLD2
+using CUDA
 
-CUDA.device!(2)
+CUDA.device!(1)
 
 variables = ("b")
 stride = 20
@@ -46,40 +47,50 @@ APE_fourth2 = Diagnostics.integral_available_potential_energy(fields_half5[:b]; 
 filename5 = "ape_fourth2.jld2"
 save(filename5, Dict("APE_fourth2" => APE_fourth2)) #run with stride = 1
 
-prefix_simulation_half6 = "weno_quarter_original_ch"
-dir_half6 = "/storage4/WenoNeverworldData/quarter_degree/"
+
+prefix_simulation_half6 = "weno_quarter__ch"
+dir_half6 = "/storage4/WenoNeverworldData/quarter_degree_new/"
 fields_half6 = all_fieldtimeseries(prefix_simulation_half6, dir_half6; variables, checkpointer = true);
 APE_fourth_new = Diagnostics.integral_available_potential_energy(fields_half6[:b]; stride)
 filename6 = "ape_fourth_new.jld2"
 save(filename6, Dict("APE_fourth_new" => APE_fourth_new))  #run with stride = 1
 
-=#
+
 prefix_simulation_half7 = "weno_half_extreme_diffusivity_ch"
 dir_half7 = "/storage4/WenoNeverworldData/half_degree/"
 fields_half7 = all_fieldtimeseries(prefix_simulation_half7, dir_half7; variables, checkpointer = true);
 APE_half_ex = Diagnostics.integral_available_potential_energy(fields_half7[:b]; stride)
 filename7 = "ape_half_extreme.jld2"
 save(filename7, Dict("APE_half_ex" => APE_half_ex))
-
+=#
 prefix_simulation_half8 = "weno_half_ch"
 dir_half8 = "/storage4/WenoNeverworldData/half_degree_new/"
 fields_half8 = all_fieldtimeseries(prefix_simulation_half8, dir_half8; variables, checkpointer = true);
-APE_half1 = Diagnostics.integral_available_potential_energy(fields_half8[:b]; stride)
-filename8 = "ape_half.jld2"
-save(filename8, Dict("APE_half1" => APE_half1))
+APE_half_new = Diagnostics.integral_available_potential_energy(fields_half8[:b]; stride)
+filename8 = "ape_half_new.jld2"
+save(filename8, Dict("APE_half_new" => APE_half_new))
+#=
+prefix_simulation_eighth = "weno_eighth_ch"
+dir_half9 = "/storage4/WenoNeverworldData/eighth_degree_new/"
+fields_half9 = all_fieldtimeseries(prefix_simulation_eighth, dir_half9; variables, checkpointer = true);
+APE_eighth = Diagnostics.integral_available_potential_energy(fields_half9[:b]; stride)
+filename9 = "ape_eighth_new.jld2"
+save(filename9, Dict("APE_eighth" => APE_eighth)) 
+
+=#
 
 fig1 = Figure(resolution = (1200, 800))
-ax = Axis(fig1[1, 1], xlabel="t", xlabelsize = 20, xticklabelsize = 20, ylabel=L"[m^5/s^2]", ylabelsize = 20,title="APE 1/2 degree", yticklabelsize = 20, titlesize=25 )
+ax = Axis(fig1[1, 1], xlabel="t", xlabelsize = 20, xticklabelsize = 20, ylabel=L"[m^5/s^2]", ylabelsize = 20,title="", yticklabelsize = 20, titlesize=25 )
 
 #hfile1 = jldopen("ape_half_new.jld2", "r")
 #hfile2 = jldopen("ape_half_diff.jld2", "r")
 #hfile3 = jldopen("ape_half_visc.jld2", "r")
 #hfile4 = jldopen("ape_half_vary.jld2", "r")
 #hfile5 = jldopen("ape_fourth2.jld2", "r")
-#hfile6 = jldopen("ape_fourth_new.jld2", "r")
-hfile7 = jldopen("ape_half_extreme.jld2", "r")
-hfile8 = jldopen("ape_half.jld2", "r")
-
+hfile6 = jldopen("ape_fourth_new.jld2", "r")
+#hfile7 = jldopen("ape_half_extreme.jld2", "r")
+hfile8 = jldopen("ape_half_new.jld2", "r")
+hfile9 = jldopen("ape_eighth_new.jld2", "r")
 
 #keys(hfile)
 #ape_data1 = hfile1["APE_half"]          #original setup
@@ -87,9 +98,10 @@ hfile8 = jldopen("ape_half.jld2", "r")
 #ape_data3 = hfile3["APE_half_visc"]     #larger viscosity and diffusivity 
 #ape_data4 = hfile4["APE_half_vary"]     #variable diffusivity profile
 #ape_data5 = hfile5["APE_fourth2"]        #initialized from scratch on satori
-#ape_data6 = hfile6["APE_fourth_new"]     #interpolated from 1/2 degree
-ape_data7 = hfile7["APE_half_ex"]
-ape_data8 = hfile8["APE_half1"] 
+ape_data6 = hfile6["APE_fourth_new"]     #interpolated from 1/2 degree
+#ape_data7 = hfile7["APE_half_ex"]
+ape_data8 = hfile8["APE_half_new"] 
+ape_data9 = hfile9["APE_eighth"] 
 #=
 ape_data1_norm = ape_data1 / maximum(ape_data1)
 ape_data2_norm = ape_data2 / maximum(ape_data2)
@@ -105,15 +117,17 @@ ape_data6_norm = ape_data6 / maximum(ape_data6)
 #ape_data5_norm = ape_data5 / maximum(ape_data5)
 #ape_data6_norm = ape_data6 / maximum(ape_data6)
 #l5 = lines!(ax, ape_data5, color=:blue)
-l7 = lines!(ax, ape_data7, color=:green)
+l6 = lines!(ax, ape_data6, color=:blue)
+#l7 = lines!(ax, ape_data7, color=:green)
 l8 = lines!(ax, ape_data8, color=:red)
+l9 = lines!(ax, ape_data9, color=:purple)
 
 leg = Legend(fig1[1, 2],
-    [l7, l8], ["1/2 κ=1e-3", "1/2 κ=3e-5 new"], position = :right, labelsize = 15)
+    [l6, l8, l9], ["1/4 κ=3e-5", "1/2 κ=3e-5", "1/8 κ=3e-5"], position = :right, labelsize = 15)
     #["1/2 orginal", "1/2 larger diff", "1/2 larger visc + diff", "1/2 variable diff", "1/4 original", "1/4 larger diff"], position = :right, labelsize = 15)
 
 display(fig1)
-save("ape_compare_new.png", fig1)
+save("ape_compare_new2.png", fig1)
 
 
 #integrated_heat_content = Diagnostics.heat_content(fields[:b]; stride)

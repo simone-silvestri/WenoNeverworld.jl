@@ -151,6 +151,7 @@ function regrid_field(old_vector, old_grid, new_grid, loc)
     
     fill_halo_regions!(old_field)
     fill_missing_values!(old_field)
+    fill_halo_regions!(old_field)
 
     new_field = Field(loc, target_grid)
     

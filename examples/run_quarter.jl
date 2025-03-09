@@ -59,4 +59,3 @@ checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, check
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"
 run_simulation!(simulation; interp_init, init_file)
-

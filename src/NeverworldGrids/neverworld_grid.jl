@@ -8,7 +8,7 @@ using Oceananigans.DistributedComputations
 generates an array of exponential z faces 
 
 """
-function exponential_z_faces(; Nz = 69, depth = 4000, h = Nz / 4.5)
+function exponential_z_faces(; Nz = 34, depth = 3000, h = Nz / 4.5)
 
     z_faces = exponential_profile.((1:Nz+1); Lz = Nz, h)
 
