@@ -6,17 +6,17 @@ using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 using CUDA
 
-CUDA.device!(2)
+CUDA.device!(1)
 arch = GPU()
 
 output_dir    = joinpath(@__DIR__, "./")
-output_dir = "/storage4/WenoNeverworldData/eighth_degree_interp/"
-@show output_prefix = output_dir * "weno_eighth"
+output_dir = "/storage4/WenoNeverworldData/sixteenth_degree_new/"
+@show output_prefix = output_dir * "weno_sixteenth"
 
 # The resolution in degrees
 
-new_degree = 1/8
-old_degree = 1/4
+new_degree = 1/16
+old_degree = 1/8
 
 z_faces = exponential_z_faces(; Nz = 35, depth = 3000)
 grid = NeverworldGrid(new_degree; arch, z_faces)
@@ -25,11 +25,11 @@ previous_grid = NeverworldGrid(old_degree; arch, z_faces)
 
 # Do we need to interpolate? (interp_init) If `true` from which file?
 interp_init = true # If interpolating from a different grid: `interp_init = true`
-init_file   = "/storage4/WenoNeverworldData/quarter_degree_new/weno_quarter__checkpoint_iteration70005600.jld2" # To restart from a file: `init_file = /path/to/restart`
+init_file   = "/storage4/WenoNeverworldData/eighth_degree_new/weno_eighth_checkpoint_iteration19206720.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 10minutes
-stop_time = 3000years
+stop_time = 1000years
 
 # Latitudinal wind stress acting on the zonal velocity
 # a piecewise-cubic profile interpolated between
@@ -57,7 +57,7 @@ simulation = weno_neverworld_simulation(grid; previous_grid, Δt, stop_time,
 model = simulation.model
 
 # Add outputs (check other outputs to attach in `src/neverworld_outputs.jl`)
-checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 10years)
+checkpoint_outputs!(simulation, output_prefix; overwrite_existing = false, checkpoint_time = 1years)
 
 # initializing the time for wall_time calculation
 @info "Running with Δt = $(prettytime(simulation.Δt))"
