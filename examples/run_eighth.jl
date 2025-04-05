@@ -16,7 +16,7 @@ output_dir = "/storage4/WenoNeverworldData/eighth_degree_interp/"
 # The resolution in degrees
 
 new_degree = 1/8
-old_degree = 1/4
+old_degree = 1/8
 
 z_faces = exponential_z_faces(; Nz = 35, depth = 3000)
 grid = NeverworldGrid(new_degree; arch, z_faces)
@@ -24,8 +24,8 @@ previous_grid = NeverworldGrid(old_degree; arch, z_faces)
 
 
 # Do we need to interpolate? (interp_init) If `true` from which file?
-interp_init = true # If interpolating from a different grid: `interp_init = true`
-init_file   = "/storage4/WenoNeverworldData/quarter_degree_new/weno_quarter__checkpoint_iteration70005600.jld2" # To restart from a file: `init_file = /path/to/restart`
+interp_init = false# If interpolating from a different grid: `interp_init = true`
+init_file   = "/storage4/WenoNeverworldData/eighth_degree_interp/weno_eighth_checkpoint_iteration0.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 10minutes

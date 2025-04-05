@@ -6,10 +6,15 @@ using Oceananigans.AbstractOperations: materialize_condition!
 using CairoMakie
 using Statistics
 using JLD2
+using FFTW
 
 
+f = all_fieldtimeseries("weno_sixteen_checkpoint_iteration1156320.jld2", "/storage4/WenoNeverworldData/sixteenth_degree_new/"; checkpointer = true)
 
-f = all_fieldtimeseries("weno_eighth_checkpoint_iteration3438720.jld2", "/storage4/WenoNeverworldData/eighth_degree_new/"; checkpointer = true)
+#weno_quarter__checkpoint_iteration70005600.jld2
+#weno_sixteen_checkpoint_iteration1156320.jld2
+#weno_eighth_checkpoint_iteration22885920.jld2
+#weno_half_checkpoint_iteration42167520.jld2
 
 grid = f[:u].grid
 b = f[:b][1];
@@ -50,7 +55,7 @@ xC, yC, _ = nodes(KE)
 xF = xF .- 30
 xC = xC .- 30
 
-
+#=
 fig = Figure(size = (1000, 1000), fontsize = 15)
 ax  = Axis(fig[1, 1],
           ylabel = L"\text{Latitude}",
@@ -64,26 +69,28 @@ cb  = Colorbar(fig[0, 1], hm1, vertical = false, label = L"\text{Surface Kinetic
 hidedecorations!(ax)
 hidespines!(ax)
 display(fig)
-
+CairoMakie.activate!()
+CairoMakie.save("figures/ke_test_quarter.png", fig, px_per_unit = 5)
+=#
 
 fig = Figure(resolution = (1000, 2000))
-ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 40, xticklabelsize = 40, ylabel="Latitude [∘]", ylabelsize = 40,title="1/8∘", yticklabelsize = 40, titlesize=45, aspect=0.5, yticks=-70:20:70, yticksize = 15, xticksize = 15)
+ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 40, xticklabelsize = 40, ylabel="Latitude [∘]", ylabelsize = 40,title="1/16∘", yticklabelsize = 40, titlesize=45, aspect=0.5, yticks=-70:20:70, yticksize = 15, xticksize = 15)
         
-hm1 = heatmap!(ax, xF, yF, interior(ζ, :, :, 1), colormap = :berlin, colorrange = (-6e-5, 6e-5))
+hm1 = heatmap!(ax, xF, yF, interior(ζ, :, :, 1)*10^5, colormap = :berlin, colorrange = (-6, 6))
 #cb  = Colorbar(fig[0, 2], hm1, vertical = false, label = L"\text{Surface Vertical Vorticity [s}^{-1} \cdot 10^{-5}\text{]}", ticks = ([-3e-5, 0, 3e-5], [L"-3", L"0", L"3"]))
-cb = Colorbar(fig[1,2], hm1, width = 30, ticksize = 10, ticklabelsize = 40, height = Relative(3/4))
+cb = Colorbar(fig[1,2], hm1, width = 30, ticksize = 10, label=L"s^{-1}\cdot 10^{-5}", labelsize = 40, ticklabelsize = 40, height = Relative(3/4))
 display(fig)
 using CairoMakie
 CairoMakie.activate!()
-CairoMakie.save("figures/vort_eighth.png", fig, px_per_unit = 5)
+CairoMakie.save("figures/vort_sixteen.png", fig, px_per_unit = 5)
 
 
 fig = Figure(resolution = (1000, 2000))
-ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 40, xticklabelsize = 40, ylabel="Latitude [∘]", ylabelsize = 40,title="1/8∘", yticklabelsize = 40, titlesize=45, aspect=0.5, yticks=-70:20:70, yticksize = 15, xticksize = 15)
+ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 40, xticklabelsize = 40, ylabel="Latitude [∘]", ylabelsize = 40,title="1/16∘", yticklabelsize = 40, titlesize=45, aspect=0.5, yticks=-70:20:70, yticksize = 15, xticksize = 15)
 hm1 = heatmap!(ax, xC, yC, interior(b, :, :, 34) ./ 2e-3, colormap = :thermal, colorrange = (0, 30))
 #cb  = Colorbar(fig[0, 3], hm1, vertical = false, label = L"\text{Surface Temperature [}^\circ\text{C}^{-1}\text{]}", ticks = ([0, 10, 20, 30], [L"0", L"10", L"20", L"30"]))
-cb = Colorbar(fig[1,2], hm1, width = 30, ticksize = 10, ticklabelsize = 40, height = Relative(4/5))
+cb = Colorbar(fig[1,2], hm1, width = 30, height = Relative(3/4), ticksize = 10, label=L"\circ C^{-1}", labelsize = 40, ticklabelsize = 40)
 display(fig)
 using CairoMakie
 CairoMakie.activate!()
-CairoMakie.save("figures/surf_temp_eighth.png", fig, px_per_unit = 5)
+CairoMakie.save("figures/surf_temp_sixteen.png", fig, px_per_unit = 5)

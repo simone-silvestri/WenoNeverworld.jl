@@ -70,7 +70,7 @@ weighted_tke_slice = (u_slice .^ 2 + v_slice .^ 2)
 fig = Figure(resolution = (1000, 2000))
 ax = Axis(fig[1, 1], aspect = 0.5, xlabel="Longitude [∘]", xlabelsize = 40, xticklabelsize = 40, ylabel="Latitude [∘]", ylabelsize = 40,title="1/2∘", yticklabelsize = 40, titlesize=45, yticks=-70:10:70, yticksize = 15, xticksize = 15)
 hm = heatmap!(ax, lon, lat, log10.(weighted_tke_slice .+ eps(1000.0)), colorrange = (-4, 1), colormap = :plasma)
-cbar1 = Colorbar(fig[1,2], hm, width = 60, ticksize = 40, ticklabelsize = 40, height = Relative(3/4))
+#cbar1 = Colorbar(fig[1,2], hm, width = 60, ticksize = 40, ticklabelsize = 40, label=L"m^{2} s^{-2}", labelsize = 40, height = Relative(2/3))
 display(fig)
 #save("plotting/tke_slice_half_colorbar.png", fig)
 
