@@ -77,6 +77,8 @@ function all_fieldtimeseries(filename, dir = "./";
             times[idx] = jldopen(dir * file * "2")["clock"].time
         end
 
+        fields[Symbol("t")] = times
+        
         @info "loading iterations" numbers
         grid = jldopen(dir * myfiles[1] * "2")["grid"]
 

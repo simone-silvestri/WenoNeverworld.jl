@@ -6,10 +6,11 @@ using LaTeXStrings
 using JLD2
 using CUDA
 
-CUDA.device!(1)
+CUDA.device!(2)
 
 variables = ("b")
 stride = 20
+
 #=
 prefix_simulation_half1 = "weno_half_original_ch"
 dir_half1 = "/storage4/WenoNeverworldData/half_degree/"
@@ -127,7 +128,7 @@ leg = Legend(fig1[1, 2],
     #["1/2 orginal", "1/2 larger diff", "1/2 larger visc + diff", "1/2 variable diff", "1/4 original", "1/4 larger diff"], position = :right, labelsize = 15)
 
 display(fig1)
-save("ape_compare_new2.png", fig1)
+#save("ape_compare_new2.png", fig1)
 
 
 #integrated_heat_content = Diagnostics.heat_content(fields[:b]; stride)

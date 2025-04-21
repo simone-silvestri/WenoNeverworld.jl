@@ -6,11 +6,11 @@ using Oceananigans.Grids: φnodes, λnodes, znodes, on_architecture
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
 using CUDA
 
-CUDA.device!(2)
+CUDA.device!(1)
 arch = GPU()
 
 output_dir    = joinpath(@__DIR__, "./")
-output_dir = "/storage4/WenoNeverworldData/eighth_degree_interp/"
+output_dir = "/storage4/WenoNeverworldData/eighth_degree_new/"
 @show output_prefix = output_dir * "weno_eighth"
 
 # The resolution in degrees
@@ -25,7 +25,7 @@ previous_grid = NeverworldGrid(old_degree; arch, z_faces)
 
 # Do we need to interpolate? (interp_init) If `true` from which file?
 interp_init = false# If interpolating from a different grid: `interp_init = true`
-init_file   = "/storage4/WenoNeverworldData/eighth_degree_interp/weno_eighth_checkpoint_iteration0.jld2" # To restart from a file: `init_file = /path/to/restart`
+init_file   = "/storage4/WenoNeverworldData/eighth_degree_new/weno_eighth_checkpoint_iteration22885920.jld2" # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
 Δt        = 10minutes

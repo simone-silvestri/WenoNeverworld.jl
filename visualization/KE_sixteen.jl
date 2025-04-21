@@ -36,22 +36,23 @@ for (i,lon_index) in enumerate(longitudes)
 end
 
 
-
-##
+#########
 # Depth integrated TKE 
 
 m, n, ℓ = size(u)
 Δz = reshape(Δz,  (1,1,ℓ))
 weighted_tke = @. (u^2 + v^2) * Δz
 depth_integrated_tke = sum(weighted_tke, dims=3)[:,:,1]
-##
+
 fig = Figure(resolution = (1000, 2000))
-ax = Axis(fig[1, 1], xlabel="longitude [∘]", xlabelsize = 30, xticklabelsize = 30, ylabel="latitude [∘]", ylabelsize = 30,title="TKE ", yticklabelsize = 30, titlesize=50)
-hm = heatmap!(ax, lon, lat, log10.(depth_integrated_tke .+ eps(1000.0)), colorrange = (-1, 3),colormap = :plasma)
-cbar1 = Colorbar(fig[1,2], hm, width = 30, ticksize = 30)
+ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 40, xticklabelsize = 40, ylabel="Latitude [∘]", ylabelsize = 40,title="1/16∘", yticklabelsize = 40, titlesize=45, aspect=0.5, yticks=-70:10:70, yticksize = 15, xticksize = 15)
+hm = heatmap!(ax, lon, lat, log10.(depth_integrated_tke .+ eps(1000.0)), colorrange = (-1, 3), colormap = :plasma)
+cbar1 = Colorbar(fig[1,2], hm, width = 60, ticksize = 40, ticklabelsize = 40, label=L"m^{2} s^{-2}", labelsize = 40, height = Relative(2/3))
 display(fig)
-#save("plotting/weno_half_tke.png", fig)
-##
+CairoMakie.activate!()
+CairoMakie.save("figures/TKE_sixteen_cb.png", fig, px_per_unit = 5)
+#########
+
 
 #mean(weighted_tke_slice)
 
@@ -72,7 +73,7 @@ ax = Axis(fig[1, 1], aspect = 0.5, xlabel="Longitude [∘]", xlabelsize = 40, xt
 hm = heatmap!(ax, lon, lat, log10.(weighted_tke_slice .+ eps(1000.0)), colorrange = (-4, 1), colormap = :plasma)
 cbar1 = Colorbar(fig[1,2], hm, width = 60, ticksize = 40, ticklabelsize = 40, label=L"m^{2} s^{-2}", labelsize = 40, height = Relative(2/3))
 display(fig)
-#save("plotting/tke_slice_eighth_colorbar.png", fig)
+
 using CairoMakie
 CairoMakie.activate!()
 CairoMakie.save("figures/KE_sixteen_cb.png", fig, px_per_unit = 5)
