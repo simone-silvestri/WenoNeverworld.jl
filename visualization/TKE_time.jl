@@ -6,21 +6,21 @@ using LaTeXStrings
 using JLD2
 using CUDA
 
-# Set the CUDA device
-CUDA.device!(2)
+CUDA.device!(1)
 
 # Define the simulations: (prefix, directory, label)
 simulations = [
     ("weno_half_ch", "/storage4/WenoNeverworldData/half_degree_new/", "1/2∘"),
     ("weno_quarter__ch", "/storage4/WenoNeverworldData/quarter_degree_new/", "1/4∘"),
-    ("weno_eighth_checkpoint_iteration3", "/storage4/WenoNeverworldData/eighth_degree_new/", "1/8∘")
+    ("weno_eighth_checkpoint_iteration", "/storage4/WenoNeverworldData/eighth_degree_new/", "1/8∘")
+    #("weno_sixteen_checkpoint_iteration", "/storage4/WenoNeverworldData/sixteenth_degree_new/", "1/16∘")
 ]
 
 # Define the stride for sampling
-stride = 5
+stride = 10
 
 # Function to load and compute TKE and corresponding time in years
-function load_tke_with_time(prefix, dir; stride=5)
+function load_tke_with_time(prefix, dir; stride=10)
     println("Loading data for: $prefix in $dir")
     fields = all_fieldtimeseries(prefix, dir; variables=("u", "v", "b"), checkpointer=true)
     time_years = Float64[]
@@ -59,6 +59,7 @@ for (prefix, dir, _) in simulations
     println("Saved: $(prefix)_tke_with_time.jld2")
 end
 
+#=
 # Plotting
 fig = Figure(resolution = (1200, 800))
 ax = Axis(fig[1, 1],
@@ -68,6 +69,7 @@ ax = Axis(fig[1, 1],
           ylabelsize = 20,
           xticklabelsize = 20,
           yticklabelsize = 20)
+
 
 # Plot TKE for each simulation
 for (prefix, _, label) in simulations
@@ -89,4 +91,5 @@ axislegend(ax, position = :rb)
 
 # Display and save the figure
 display(fig)
-save("figures/tke_vs_time1.png", fig)
+save("figures/tke_vs_time2.png", fig)
+=#

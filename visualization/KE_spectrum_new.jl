@@ -66,6 +66,7 @@ end
 
 GC.gc(true)
 
+#=
 i  = 4
 xr = xrange[i]
 fields = all_fieldtimeseries(prefixes[i], dirs[i]; variables = ("u", "v"), checkpointer = true, number_files = 1)
@@ -74,8 +75,13 @@ for yr in (y50S[i], y12N[i], y37N[i], y60N[i])
 end
 
 GC.gc(true)
+=#
+using JLD2
 
-
+# file_pth = '/home/lcbrock/repository/WenoNeverworld.jl/visualization/weno_sixteen_spectra.jld2'
+KSPEC16 = jldopen("weno_sixteen_spectra.jld2", "r") do file
+    file["spectra"]
+end
 
 fig = Figure(resolution = (2000, 2000), fontsize = 25)
 
@@ -91,13 +97,13 @@ ax2 = Axis(fig[1, 2], xscale = log10, yscale = log10, yticklabelsize = 25, xtick
 ax3 = Axis(fig[2, 1], xscale = log10, yscale = log10, yticklabelsize = 25, xticklabelsize = 25,
 		      title  = L"50^\circ\text{S}",
           width = 500, height = 500,
-          xlabel = L"k [1/m]",
+          xlabel = L"k \, [ 1/m]",
 		      ylabel = L"\text{KE [m^2 s^{-2}]}")
 
 ax4 = Axis(fig[2, 2], xscale = log10, yscale = log10, yticklabelsize = 25, xticklabelsize = 25,
 		      title  = L"60^\circ\text{N}",
           width = 500, height = 500,
-		      xlabel = L"k [1/m]")        
+		      xlabel = L"k \, [ 1/m]")        
 
 grid     = NeverworldGrid(1)
 delta50S = grid. Δxᶜᶠᵃ[21]
@@ -171,21 +177,21 @@ vlines!(ax4, 1 / 25e3, linestyle = :dash, color = :grey) #need to add correct de
 #leg = Legend(fig[1, 4], ax1)
 axislegend(ax1,
   [l1, l2, l3, l4, l6, l7],
-  ["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", ""], labelsize = 25, position = :rt)
+  ["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :rt)
 axislegend(ax2,
   [l1, l2, l3, l4, l6, l7],
-  ["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", ""], labelsize = 25, position = :rt)
+  ["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :rt)
 axislegend(ax3,
 [l1, l2, l3, l4, l6, l7],
-["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", ""], labelsize = 25, position = :rt)
+["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :rt)
 axislegend(ax4,
   [l1, l2, l3, l4, l6, l7],
-  ["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", ""], labelsize = 25, position = :rt)
+  ["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :rt)
 
 resize_to_layout!(fig)      
 display(fig)
 
 CairoMakie.activate!()
-CairoMakie.save("figures/ke_spectrum4.png", fig, px_per_unit = 3)
+CairoMakie.save("figures/ke_spectrum5.png", fig, px_per_unit = 3)
 # CairoMakie.save("spectra.eps", fig)
 

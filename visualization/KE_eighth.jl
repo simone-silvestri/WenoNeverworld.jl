@@ -3,7 +3,7 @@ using JLD2, Oceananigans, Statistics, CairoMakie
 # Load the data
 @info "Loading data..."
 path = pwd()
-hfile = jldopen("/storage4/WenoNeverworldData/eighth_degree_new/weno_eighth_checkpoint_iteration24462720.jld2", "r")
+hfile = jldopen("/storage4/WenoNeverworldData/eighth_degree_new/weno_eighth_checkpoint_iteration28667520.jld2", "r")
 keys(hfile)
 #initialized from 1/4
 ## grab grid and fields

@@ -9,11 +9,11 @@ using JLD2
 using FFTW
 
 
-f = all_fieldtimeseries("weno_sixteen_checkpoint_iteration1156320.jld2", "/storage4/WenoNeverworldData/sixteenth_degree_new/"; checkpointer = true)
+f = all_fieldtimeseries("weno_eighth_checkpoint_iteration28667520.jld2", "/storage4/WenoNeverworldData/sixteenth_degree_new/"; checkpointer = true)
 
 #weno_quarter__checkpoint_iteration70005600.jld2
 #weno_sixteen_checkpoint_iteration1156320.jld2
-#weno_eighth_checkpoint_iteration22885920.jld2
+#weno_eighth_checkpoint_iteration28667520.jld2
 #weno_half_checkpoint_iteration42167520.jld2
 
 grid = f[:u].grid
