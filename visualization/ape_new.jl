@@ -9,13 +9,13 @@ using CUDA
 CUDA.device!(1)
 
 variables = ("b")
-stride = 5
+stride = 20
 
 # function to load/save APE and time
 using JLD2
 
 
-function load_ape_with_time(prefix, dir, name; stride=5)
+function load_ape_with_time(prefix, dir, name; stride=20)
     println("Loading data for: $prefix", "$dir")
     fields = all_fieldtimeseries(prefix, dir; variables=("b",), checkpointer=true)
     time_years = Float64[]
@@ -59,19 +59,19 @@ end
 
 simulations = [
    #("weno_half_ch", "/storage4/WenoNeverworldData/half_degree_new/", "1/2∘", "weno_half_ch"),
-    #("weno_quarter__ch", "/storage4/WenoNeverworldData/quarter_degree_new/", "1/4∘", "weno_quarter__ch"),
-    ("weno_eighth_checkpoint_iteration2", "/storage4/WenoNeverworldData/eighth_degree_new/", "1/8∘", "eighth2"),
-    ("weno_eighth_checkpoint_iteration", "/storage4/WenoNeverworldData/eighth_degree_interp/", "1/8∘ interp", "eighth_interp"),
-    #("weno_sixteen_checkpoint_iteration", "/storage4/WenoNeverworldData/sixteenth_degree_new/", "1/16∘")
+   # ("weno_quarter__ch", "/storage4/WenoNeverworldData/quarter_degree_new/", "1/4∘", "weno_quarter__ch"),
+    #("weno_eighth_checkpoint_iteration2", "/storage4/WenoNeverworldData/eighth_degree_new/", "1/8∘", "eighth2"),
+    #("weno_eighth_checkpoint_iteration", "/storage4/WenoNeverworldData/eighth_degree_interp/", "1/8∘ interp", "eighth_interp"),
+    ("weno_sixteen_checkpoint_iteration", "/storage4/WenoNeverworldData/sixteenth_degree/", "1/16∘", "sixteenth_interp")
 ]
 
 for (prefix, dir, _, name) in simulations
     println("Processing simulation: $prefix")
-    ape, time_years = load_ape_with_time(prefix, dir, name; stride=5)
+    ape, time_years = load_ape_with_time(prefix, dir, name; stride=20)
     println("Saved: $(name)_ape_with_time.jld2")
 end
 
-
+#=
 #plotting starts here
 
 fig = Figure(resolution = (1200, 800))
@@ -103,4 +103,5 @@ end
 
 axislegend(ax, position = :rb)
 display(fig)
-save("figures/ape_vs_time_eighth1.png", fig)
+save("figures/ape_vs_time_all.png", fig)
+=#

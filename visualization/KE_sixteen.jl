@@ -55,7 +55,7 @@ CairoMakie.save("figures/TKE_sixteen_cb.png", fig, px_per_unit = 5)
 
 
 #mean(weighted_tke_slice)
-
+#=
 ##
 #One slice of KE
 m, n, ℓ = size(u)
@@ -79,3 +79,4 @@ CairoMakie.activate!()
 CairoMakie.save("figures/KE_sixteen_cb.png", fig, px_per_unit = 5)
 ##
 quantile(log10.(weighted_tke_slice .+ eps(1000.0))[:], 0.999)
+=#

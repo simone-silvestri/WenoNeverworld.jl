@@ -7,10 +7,10 @@ using JLD2, Statistics, Printf
 
 # Define simulation configurations
 simulations = [
-    #("half_degree",     "/storage4/WenoNeverworldData/half_degree_new/",     "weno_half_check",     "1/2∘", "weno_half__checkpoint_iteration13154400.jld2"),
-    #("quarter_degree",  "/storage4/WenoNeverworldData/quarter_degree_new/",      "weno_quarter__check",  "1/4∘", "weno_quarter__checkpoint_iteration70005600.jld2"),
+    ("half_degree",     "/storage4/WenoNeverworldData/half_degree_new/",     "weno_half_check",     "1/2∘", "weno_half__checkpoint_iteration13154400.jld2"),
+    ("quarter_degree",  "/storage4/WenoNeverworldData/quarter_degree_new/",      "weno_quarter__check",  "1/4∘", "weno_quarter__checkpoint_iteration70005600.jld2"),
     ("eighth_degree",   "/storage4/WenoNeverworldData/eighth_degree_new/",       "weno_eighth_check",   "1/8∘", "weno_eighth_checkpoint_iteration28667520.jld2"),
-    #("sixteenth_degree","/storage4/WenoNeverworldData/sixteenth_degree_new/",    "weno_sixteenth_check","1/16∘", "weno_sixteen_checkpoint_iteration2417760.jld2")
+    ("sixteenth_degree","/storage4/WenoNeverworldData/sixteenth_degree/",    "weno_sixteen_check","1/16∘", "weno_sixteen_checkpoint_iteration2417760.jld2")
 ]
 
 for (name, dir, prefix, title, file) in simulations
@@ -53,14 +53,16 @@ for (name, dir, prefix, title, file) in simulations
     fig = Figure(resolution=(1000, 2000))
     ax = Axis(fig[1, 1],
               xlabel="Latitude [∘]", ylabel="Depth [m]",
-              xlabelsize=30, ylabelsize=30,
-              yticks=-4000:1000:0, xticklabelsize=30,
-              yticklabelsize=30, xticks=-90:20:1120,
-              title=title, titlesize=40, aspect=2.0)
+              xlabelsize=20, ylabelsize=20,
+              yticks=-4000:1000:0, xticklabelsize=20,
+              yticklabelsize=20, xticks=-70:10:70,
+              title=title, titlesize=20, aspect=2.0)
 
-    heatmap!(ax, lat, z, b_zonal, colormap=:plasma)
-    contour!(ax, lat, z, b_zonal, color=:black, linewidth=3,
+    hm = heatmap!(ax, lat, z, b_zonal, colormap=:plasma)
+    cont = contour!(ax, lat, z, b_zonal, color=:black, linewidth=3,
              levels=contours_log, labels=false)
+    cbar = Colorbar(fig[1, 2], hm, width=25, ticksize=20, ticklabelsize=20,
+             label=L"m s^{-2}", labelsize=20, height=Relative(1/5))
 
     outpath = "figures/zonal_avg_$(name).png"
     save(outpath, fig)
