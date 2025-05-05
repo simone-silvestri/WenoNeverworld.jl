@@ -10,51 +10,40 @@ CUDA.device!(1)
 
 # Define function to compute kinetic energy spectrum
 
-function kinetic_energy_spectrum(fields, xrange, yrange, z_index)
-    Uspec = average_spectra(fields[:u], xrange, yrange, z_index)
-    Vspec = average_spectra(fields[:v], xrange, yrange, z_index)
+function kinetic_energy_spectrum(fields, xrange, yrange, k=34)
+    # Compute kinetic energy field
+    
+    Uspec = average_spectra(fields[:u], xrange, yrange, k=k)
+    Vspec = average_spectra(fields[:v], xrange, yrange, k=k)
+    
     return Uspec + Vspec
 end
 
-z_surface = 2  # 1st index is top boundary, so 2 is the first interior level
-function z500_index(res)
-    grid = NeverworldGrid(res).zᶜᶜ
-    return findfirst(z -> z ≥ 500, znodes(grid))
-end
-
-#z_500m = [z500_index(res) for res in resolutions]
-
 # Load data for different grid resolutions
-prefixes = ["weno_half_ch", "weno_quarter__ch", "weno_eighth_ch", "weno_sixteen_ch", "weno_thirtytwo_comp"]
-dirs = ["/storage4/WenoNeverworldData/half_degree_new/", "/storage4/WenoNeverworldData/quarter_degree_new/", "/storage4/WenoNeverworldData/eighth_degree_new/", "/storage4/WenoNeverworldData/sixteenth_degree_new/", "/storage4/WenoNeverworldData/"]
-resolutions = ["1/2", "1/4", "1/8", "1/16", "1/32"]
-colors = [:red3, :darkorange, :green, :purple, :navy]
+prefixes = ["weno_half_ch", "weno_quarter__ch", "weno_eighth_ch", "weno_eighth_ch", "weno_sixteen_ch"]
+dirs = ["/storage4/WenoNeverworldData/half_degree_new/", "/storage4/WenoNeverworldData/quarter_degree_new/", "/storage4/WenoNeverworldData/eighth_degree_new/", "/storage4/WenoNeverworldData/eighth_degree_interp/", "/storage4/WenoNeverworldData/sixteenth_degree/"]
+resolutions = ["1/2", "1/4", "1/8", "1/8 - int", "1/16",]
+colors = [:red3, :darkorange, :green, :navy, :purple]
 
-
-xrange = [11 : 60 * i - 10  for i in [2, 4, 8, 16, 32]]
-y50S   = [42  * i : 48  * i for i in [1, 2, 4, 8, 16]]  # channel           #index_50S = closest_lat_index(lats, -50) = 21 ---> 21*2 = 42
-y12N   = [160 * i : 170 * i for i in [1, 2, 4, 8, 16]]  #equator            #gives 83 --> 83*2 = 166
-y37N   = [210 * i : 220 * i for i in [1, 2, 4, 8, 16]]  #subpolar gyre      #gives 108
-y60N   = [260 * i : 270 * i for i in [1, 2, 4, 8, 16]]  #subtropical gyre   
+k = 34
+xrange = [11 : 60 * i - 10  for i in [2, 4, 8, 8, 16]]
+y50S   = [42  * i : 48  * i for i in [1, 2, 4, 4,8]]  # channel           #index_50S = closest_lat_index(lats, -50) = 21 ---> 21*2 = 42
+y12N   = [160 * i : 170 * i for i in [1, 2, 4, 4,8]]  #equator            #gives 83 --> 83*2 = 166
+y37N   = [210 * i : 220 * i for i in [1, 2, 4, 4, 8]]  #subpolar gyre      #gives 108
+y60N   = [260 * i : 270 * i for i in [1, 2, 4, 4, 8]]  #subtropical gyre   
 
 
 KSPEC2  = Spectrum[] 
 KSPEC4  = Spectrum[] 
 KSPEC8  = Spectrum[] 
 KSPEC16 = Spectrum[] 
-#KSPEC32 = Spectrum[] 
-
-KSPEC2_500m  = Spectrum[] 
-KSPEC4_500m  = Spectrum[] 
-KSPEC8_500m  = Spectrum[] 
-KSPEC16_500m = Spectrum[] 
+KSPEC8i = Spectrum[] 
 
 i  = 1 
 xr = xrange[i]
 fields = all_fieldtimeseries(prefixes[i], dirs[i]; variables = ("u", "v"), checkpointer = true, number_files = 30)
 for yr in (y50S[i], y12N[i], y37N[i], y60N[i]) 
-  push!(KSPEC2, kinetic_energy_spectrum(fields, xr, yr, z_surface))
-  #push!(KSPEC2_500m,    kinetic_energy_spectrum(fields, xr, yr, z_500m[i]))
+  push!(KSPEC2, kinetic_energy_spectrum(fields, xr, yr, k))
 end
 
 GC.gc(true)
@@ -63,8 +52,7 @@ i  = 2
 xr = xrange[i]
 fields = all_fieldtimeseries(prefixes[i], dirs[i]; variables = ("u", "v"), checkpointer = true, number_files = 30)
 for yr in (y50S[i], y12N[i], y37N[i], y60N[i])
-    push!(KSPEC4, kinetic_energy_spectrum(fields, xr, yr, z_surface))
-    #push!(KSPEC4_500m,    kinetic_energy_spectrum(fields, xr, yr, z_500m[i]))
+  push!(KSPEC4, kinetic_energy_spectrum(fields, xr, yr, k))
 end
 
 GC.gc(true)
@@ -73,8 +61,7 @@ i  = 3
 xr = xrange[i]
 fields = all_fieldtimeseries(prefixes[i], dirs[i]; variables = ("u", "v"), checkpointer = true, number_files = 30)
 for yr in (y50S[i], y12N[i], y37N[i], y60N[i]) 
-    push!(KSPEC8, kinetic_energy_spectrum(fields, xr, yr, z_surface))
-    #push!(KSPEC8_500m,    kinetic_energy_spectrum(fields, xr, yr, z_500m[i]))
+  push!(KSPEC8, kinetic_energy_spectrum(fields, xr, yr, k))
 end
 
 GC.gc(true)
@@ -84,13 +71,27 @@ i  = 4
 xr = xrange[i]
 fields = all_fieldtimeseries(prefixes[i], dirs[i]; variables = ("u", "v"), checkpointer = true, number_files = 20)
 for yr in (y50S[i], y12N[i], y37N[i], y60N[i]) 
-  push!(KSPEC16, kinetic_energy_spectrum(fields, xr, yr, z_surface))
-  #push!(KSPEC16_500m,    kinetic_energy_spectrum(fields, xr, yr, z_500m[i]))
+  push!(KSPEC8i, kinetic_energy_spectrum(fields, xr, yr))
+end
+
+GC.gc(true)
+
+i  = 5
+xr = xrange[i]
+fields = all_fieldtimeseries(prefixes[i], dirs[i]; variables = ("u", "v"), checkpointer = true, number_files = 30)
+for yr in (y50S[i], y12N[i], y37N[i], y60N[i]) 
+  push!(KSPEC16, kinetic_energy_spectrum(fields, xr, yr))
 end
 
 GC.gc(true)
 
 
+using JLD2
+
+# file_pth = '/home/lcbrock/repository/WenoNeverworld.jl/visualization/weno_sixteen_spectra.jld2'
+#KSPEC16 = jldopen("weno_sixteen_spectra.jld2", "r") do file
+#    file["spectra"]
+#end
 
 fig = Figure(resolution = (2000, 2000), fontsize = 25)
 
@@ -124,27 +125,28 @@ delta60N = grid. Δxᶜᶠᵃ[131]
  F4_50S =  KSPEC4[1].freq[2:end] .* 1 ./ delta50S ./ 3.141592 
  F8_50S =  KSPEC8[1].freq[2:end] .* 1 ./ delta50S ./ 3.141592 
  F16_50S = KSPEC16[1].freq[2:end] .* 1 ./ delta50S ./ 3.141592 
-#F32_50S = KSPEC32[1].freq[2:end] .* 1 ./ delta50S ./ 3.141592 
+ F8i_50S = KSPEC8i[1].freq[2:end] .* 1 ./ delta50S ./ 3.141592 
  F2_12N =  KSPEC2[2].freq[2:end] .* 1 ./ delta15N ./ 3.141592 
  F4_12N =  KSPEC4[2].freq[2:end] .* 1 ./ delta15N ./ 3.141592 
  F8_12N =  KSPEC8[2].freq[2:end] .* 1 ./ delta15N ./ 3.141592 
  F16_12N = KSPEC16[2].freq[2:end] .* 1 ./ delta15N ./ 3.141592 
-#F32_15N = KSPEC32[1].freq[2:end] .* 1 ./ delta15N ./ 3.141592 
+ F8i_12N = KSPEC8i[2].freq[2:end] .* 1 ./ delta15N ./ 3.141592 
  F2_37N =  KSPEC2[3].freq[2:end] .* 1 ./ delta50N ./ 3.141592 
  F4_37N =  KSPEC4[3].freq[2:end] .* 1 ./ delta50N ./ 3.141592 
  F8_37N =  KSPEC8[3].freq[2:end] .* 1 ./ delta50N ./ 3.141592 
  F16_37N = KSPEC16[3].freq[2:end] .* 1 ./ delta50N ./ 3.141592 
-#F32_50N = KSPEC32[3].freq[2:end] .* 1 ./ delta50N ./ 3.141592 
+ F8i_37N = KSPEC8i[3].freq[2:end] .* 1 ./ delta50N ./ 3.141592 
 F2_60N =  KSPEC2[4].freq[2:end] .* 1 ./ delta60N ./ 3.141592 
 F4_60N =  KSPEC4[4].freq[2:end] .* 1 ./ delta60N ./ 3.141592 
 F8_60N =  KSPEC8[4].freq[2:end] .* 1 ./ delta60N ./ 3.141592 
 F16_60N =  KSPEC16[4].freq[2:end] .* 1 ./ delta60N ./ 3.141592 
+F8i_60N =  KSPEC8i[4].freq[2:end] .* 1 ./ delta60N ./ 3.141592 
 
 lines!(ax1,  F2_37N,  KSPEC2[3].spec[2:end], color = colors[1], linewidth = 2)
 lines!(ax1,  F4_37N,  KSPEC4[3].spec[2:end], color = colors[2], linewidth = 2)
 lines!(ax1,  F8_37N,  KSPEC8[3].spec[2:end], color = colors[3], linewidth = 2)
-lines!(ax1, F16_37N, KSPEC16[3].spec[2:end], color = colors[4], linewidth = 2)
-#lines!(ax1, F32_50N, KSPEC32[2].spec[2:end], color = colors[5], linewidth = 1.5)
+lines!(ax1, F16_37N, KSPEC16[3].spec[2:end], color = colors[5], linewidth = 2)
+lines!(ax1, F8i_37N, KSPEC8i[3].spec[2:end], color = colors[4], linewidth = 2)
 
 lines!(ax1, F8_37N[20:end-8], F8_37N[20:end-8].^(-3) ./ 10^(17.5), linewidth = 2.5, color = :black)#, linestyle = :bold)
 #lines!(ax3, F16_50N[10:end-18], F16_50N[10:end-18].^(-2) ./ 10^(13.), color = :black, linestyle = :dashdot)
@@ -155,8 +157,8 @@ vlines!(ax1, 1 / 40e3, linestyle = :dash, color = :grey)
 lines!(ax2,  F2_12N,  KSPEC2[2].spec[2:end], color = colors[1], linewidth = 2)
 lines!(ax2,  F4_12N,  KSPEC4[2].spec[2:end], color = colors[2], linewidth = 2)
 lines!(ax2,  F8_12N,  KSPEC8[2].spec[2:end], color = colors[3], linewidth = 2)
-lines!(ax2, F16_12N, KSPEC16[2].spec[2:end], color = colors[4], linewidth = 2)
-#lines!(ax2, F32_15N, KSPEC32[2].spec[2:end], color = colors[5], linewidth = 1.5)
+lines!(ax2, F16_12N, KSPEC16[2].spec[2:end], color = colors[5], linewidth = 2)
+lines!(ax2, F8i_12N, KSPEC8i[2].spec[2:end], color = colors[4], linewidth = 2)
 
 #lines!(ax2, F8_15N[20:end-8], F8_15N[20:end-8].^(-3) ./ 10^(18), color = :red) #, linestyle = :dashdot)
 lines!(ax2, F8_12N[20:end-8], F8_12N[20:end-8].^(-3) ./ 10^(18.5), linewidth = 2.5, color = :black)#, linestyle = :bold)
@@ -166,18 +168,19 @@ vlines!(ax2, 1 / 100e3, linestyle = :dash, color = :grey)
 l1 =lines!(ax3,  F2_50S,  KSPEC2[1].spec[2:end], color = colors[1], linewidth = 2, label = L"1/2-\text{degree resolution}")
 l2 = lines!(ax3,  F4_50S,  KSPEC4[1].spec[2:end], color = colors[2], linewidth = 2, label = L"1/4-\text{degree resolution}")
 l3 = lines!(ax3,  F8_50S,  KSPEC8[1].spec[2:end], color = colors[3], linewidth = 2, label = L"1/8-\text{degree resolution}")
-l4 = lines!(ax3, F16_50S, KSPEC16[1].spec[2:end], color = colors[4], linewidth = 2, label = L"1/16-\text{degree resolution}")
-#l5 = lines!(ax3, F32_50S, KSPEC32[1].spec[2:end], color = colors[5], linewidth = 1.5, label = L"1/32-\text{degree resolution}")
+l5 = lines!(ax3, F16_50S, KSPEC16[1].spec[2:end], color = colors[5], linewidth = 2, label = L"1/16-\text{degree resolution}")
+l4 = lines!(ax3, F8i_50S, KSPEC8i[1].spec[2:end], color = colors[4], linewidth = 2, label = L"1/8-\text{degree resolution (interpolated)}")
+
 l6 = lines!(ax3, F8_50S[20:end-8], F8_50S[20:end-8].^(-3) ./ 10^(17.5), linewidth = 2.5, color = :black)
 
 l7 = vlines!(ax3, 1 / 30e3, linestyle = :dash, color = :grey)
 
 ######## 60N #########
-lines!(ax4,  F2_60N,  KSPEC2[2].spec[2:end], color = colors[1], linewidth = 2)
-lines!(ax4,  F4_60N,  KSPEC4[2].spec[2:end], color = colors[2], linewidth = 2)
-lines!(ax4,  F8_60N,  KSPEC8[2].spec[2:end], color = colors[3], linewidth = 2)
-lines!(ax4, F16_60N, KSPEC16[2].spec[2:end], color = colors[4], linewidth = 2)
-#lines!(ax4, F32_60N, KSPEC32[2].spec[2:end], color = colors[5], linewidth = 1.5)
+lines!(ax4,  F2_60N,  KSPEC2[4].spec[2:end], color = colors[1], linewidth = 2)
+lines!(ax4,  F4_60N,  KSPEC4[4].spec[2:end], color = colors[2], linewidth = 2)
+lines!(ax4,  F8_60N,  KSPEC8[4].spec[2:end], color = colors[3], linewidth = 2)
+lines!(ax4, F16_60N, KSPEC16[4].spec[2:end], color = colors[5], linewidth = 2)
+lines!(ax4, F8i_60N, KSPEC8i[4].spec[2:end], color = colors[4], linewidth = 2)
 lines!(ax4, F8_60N[20:end-8], F8_12N[20:end-8].^(-3) ./ 10^(18.5), linewidth = 2.5, color = :black)
 
 vlines!(ax4, 1 / 25e3, linestyle = :dash, color = :grey) #need to add correct deformation radius here -- I think this is it?
@@ -185,22 +188,24 @@ vlines!(ax4, 1 / 25e3, linestyle = :dash, color = :grey) #need to add correct de
 
 #leg = Legend(fig[1, 4], ax1)
 axislegend(ax1,
-  [l1, l2, l3, l4, l6, l7],
-  ["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :rt)
+  [l1, l2, l3, l4, l5, l6, l7],
+  ["1/2°", "1/4°", "1/8°", "1/8° - int", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
 axislegend(ax2,
-  [l1, l2, l3, l4, l6, l7],
-  ["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :rt)
+  [l1, l2, l3, l4, l5, l6, l7],
+  ["1/2°", "1/4°", "1/8°", "1/8° - int", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
 axislegend(ax3,
-[l1, l2, l3, l4, l6, l7],
-["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :rt)
+[l1, l2, l3, l4, l5, l6, l7],
+["1/2°", "1/4°", "1/8°",  "1/8° - int",  "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
 axislegend(ax4,
-  [l1, l2, l3, l4, l6, l7],
-  ["1/2°", "1/4°", "1/8°", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :rt)
+  [l1, l2, l3, l4, l5, l6, l7],
+  ["1/2°", "1/4°", "1/8°", "1/8° - int", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
+
+
 
 resize_to_layout!(fig)      
 display(fig)
 
 CairoMakie.activate!()
-CairoMakie.save("figures/ke_spectrum_surface1.png", fig, px_per_unit = 3)
+CairoMakie.save("figures/ke_spec_surface"*string(k)*".png", fig, px_per_unit = 3)
 # CairoMakie.save("spectra.eps", fig)
 
