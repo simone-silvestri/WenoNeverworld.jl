@@ -47,9 +47,9 @@ end
 
 # Plotting all resolutions on the same figure
 fig = Figure(resolution = (1200, 800))
-ax = Axis(fig[1,1], xlabel="Latitude [°]", ylabel = L"L_D \; \mathrm{[km]}",
+ax = Axis(fig[1,1], xlabel=L"\mathrm{Latitude [°]}", ylabel = L"L_D \; \mathrm{[km]}",
           xlabelsize=30, ylabelsize=30, titlesize=35,
-          xticklabelsize=25, yticklabelsize=25)
+          xticklabelsize=25, yticklabelsize=25, xticks = -70:20:70)
 
 
 #=

@@ -9,10 +9,10 @@ using JLD2
 using FFTW
 
 
-f = all_fieldtimeseries("weno_eighth_checkpoint_iteration28667520.jld2", "/storage4/WenoNeverworldData/sixteenth_degree_new/"; checkpointer = true)
-
+f = all_fieldtimeseries("weno_sixteen_checkpoint_iteration2864520.jld2", "/storage4/WenoNeverworldData/sixteenth_degree/"; checkpointer = true)
+f = all_fieldtimeseries("weno_eighth_checkpoint_iteration4204801.jld2", "/storage4/WenoNeverworldData/eighth_degree_interp/"; checkpointer = true)
 #weno_quarter__checkpoint_iteration70005600.jld2
-#weno_sixteen_checkpoint_iteration1156320.jld2
+#weno_sixteen_checkpoint_iteration2864520.jld2
 #weno_eighth_checkpoint_iteration28667520.jld2
 #weno_half_checkpoint_iteration42167520.jld2
 
@@ -23,15 +23,15 @@ Nx, Ny, Nz = size(grid)
 u = f[:u][1];
 v = f[:v][1];
 
-KE = KineticEnergy(f, 1; indices = (:, :, 34));
+KE = KineticEnergy(f, 1; indices = (:, :, 2));
 KE_field = Field((Center, Center, Nothing), grid.underlying_grid);
 set!(KE_field, interior(KE, :, :, 1));
 
-ζ  = VerticalVorticity(f, 1; indices = (:, :, 34));
+ζ  = VerticalVorticity(f, 1; indices = (:, :, 2));
 Ld = DeformationRadius(f, 1);
-N² = Stratification(f, 1; indices = (:, :, 34));
+N² = Stratification(f, 1; indices = (:, :, 2));
 N²_mid = Stratification(f, 1; indices = (:, :, 25));
-q  = PotentialVorticity(f, 1; indices = (:, :, 34));
+q  = PotentialVorticity(f, 1; indices = (:, :, 2));
 
 #=
 f1 = all_fieldtimeseries("neverworld_backscatter_checkpoint_iteration288000.jld2"; checkpointer = true)
@@ -82,15 +82,15 @@ cb = Colorbar(fig[1,2], hm1, width = 30, ticksize = 10, label=L"s^{-1}\cdot 10^{
 display(fig)
 using CairoMakie
 CairoMakie.activate!()
-CairoMakie.save("figures/vort_sixteen.png", fig, px_per_unit = 5)
+CairoMakie.save("figures/vort_8interp2.png", fig, px_per_unit = 5)
 
 
 fig = Figure(resolution = (1000, 2000))
 ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize = 40, xticklabelsize = 40, ylabel="Latitude [∘]", ylabelsize = 40,title="1/16∘", yticklabelsize = 40, titlesize=45, aspect=0.5, yticks=-70:20:70, yticksize = 15, xticksize = 15)
-hm1 = heatmap!(ax, xC, yC, interior(b, :, :, 34) ./ 2e-3, colormap = :thermal, colorrange = (0, 30))
+hm1 = heatmap!(ax, xC, yC, interior(b, :, :, 2) ./ 2e-3, colormap = :thermal, colorrange = (0, 30))
 #cb  = Colorbar(fig[0, 3], hm1, vertical = false, label = L"\text{Surface Temperature [}^\circ\text{C}^{-1}\text{]}", ticks = ([0, 10, 20, 30], [L"0", L"10", L"20", L"30"]))
 cb = Colorbar(fig[1,2], hm1, width = 30, height = Relative(3/4), ticksize = 10, label=L"\circ C^{-1}", labelsize = 40, ticklabelsize = 40)
 display(fig)
 using CairoMakie
 CairoMakie.activate!()
-CairoMakie.save("figures/surf_temp_sixteen.png", fig, px_per_unit = 5)
+CairoMakie.save("figures/surf_temp_8interp2.png", fig, px_per_unit = 5)
