@@ -1,6 +1,6 @@
 module Diagnostics
 
-export all_fieldtimeseries, limit_timeseries!, propagate
+export all_fieldtimeseries, all_fieldtimeseries_stride, all_filestimeseries, limit_timeseries!, propagate
 export VolumeField, AreaField, MetricField, time_average
 export KineticEnergy, VerticalVorticity, PotentialVorticity, DeformationRadius, Stratification
 
