@@ -29,6 +29,27 @@ assumed_location(var) = var == "u" ? (Face, Center, Center) :
 
 remove_last_character(s) = s[1:end-1]
 
+
+function all_filestimeseries(filename, dir = "./";
+			     number_files = nothing)
+    
+    files = readdir(dir)
+    files = filter((x) -> length(x) >= length(filename), files)
+    myfiles = filter((x) -> x[1:length(filename)] == filename, files)
+    myfiles = remove_last_character.(myfiles)
+    numbers = parse.(Int, filter.(isdigit, myfiles))
+    perm    = sortperm(numbers)
+    numbers = numbers[perm]
+    myfiles = myfiles[perm]
+
+    if !isnothing(number_files)
+        numbers = numbers[end-number_files:end]
+        myfiles = myfiles[end-number_files:end]
+    end 
+
+    return myfiles, numbers
+end
+
 """
     all_fieldtimeseries(filename, dir = nothing; variables = ("u", "v", "w", "b"), checkpointer = false, number_files = nothing)
 
@@ -82,19 +103,19 @@ function all_fieldtimeseries(filename, dir = "./";
         @info "loading iterations" numbers
         grid = jldopen(dir * myfiles[1] * "2")["grid"]
 
-	# Fix the grid if we are reconstructing
-	bfield = jldopen(dir * myfiles[1] * "2")["b/data"]
-	Hx = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hx
-	Hy = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hy
-	Hz = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hz
-	Ny = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Ny
-	Nz = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Nz
+        # Fix the grid if we are reconstructing
+        bfield = jldopen(dir * myfiles[1] * "2")["b/data"]
+        Hx = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hx
+        Hy = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hy
+        Hz = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hz
+        Ny = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Ny
+        Nz = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Nz
         φF = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.φᵃᶠᵃ[1:Ny+1]
         zF = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.zᵃᵃᶠ[1:Nz+1]
 
         resolution = (φF[end] - φF[1]) / Ny 
         
-	grid = grid isa AbstractGrid ? grid : NeverworldGrid(resolution; z_faces = zF)
+	    grid = grid isa AbstractGrid ? grid : NeverworldGrid(resolution; z_faces = zF)
 
         for var in variables
             field = FieldTimeSeries{assumed_location(var)...}(grid, times)
@@ -103,6 +124,77 @@ function all_fieldtimeseries(filename, dir = "./";
                 concrete_var = jldopen(dir * file * "2")[var * "/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
 		interior(field[idx]) .= concrete_var
 	    end
+
+            fields[Symbol(var)] = field
+        end
+    end
+
+    return fields
+end
+
+function all_fieldtimeseries_stride(filename, dir = "./"; 
+                             variables = ("u", "v", "w", "b"),
+                             checkpointer = false,
+                             start_file = 1,
+                            end_file = nothing,
+			     stride=5)
+
+    fields = Dict()
+
+    if !(checkpointer)
+        for var in variables
+            fields[Symbol(var)] = FieldTimeSeries(dir * filename, var; backend=OnDisk(), architecture=CPU())
+        end
+    else
+        files = readdir(dir)
+        files = filter((x) -> length(x) >= length(filename), files)
+        myfiles = filter((x) -> x[1:length(filename)] == filename, files)
+        myfiles = remove_last_character.(myfiles)
+        numbers = parse.(Int, filter.(isdigit, myfiles))
+        perm    = sortperm(numbers)
+        numbers = numbers[perm]
+        myfiles = myfiles[perm]
+
+        if !isnothing(end_file)
+            numbers = numbers[start_file:end_file]
+            myfiles = myfiles[start_file:end_file]
+        end
+        
+	end_file = length(myfiles)
+	times = Vector{Float64}()
+        for i in 1:stride:end_file
+	    @info "time from index $i" myfiles[i]
+            push!(times, jldopen(dir * myfiles[i] * "2")["clock"].time)
+	end
+
+        fields[Symbol("t")] = times
+
+        @info "loading iterations" numbers
+        grid = jldopen(dir * myfiles[1] * "2")["grid"]
+
+        # Fix the grid if we are reconstructing
+        bfield = jldopen(dir * myfiles[1] * "2")["b/data"]
+        Hx = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hx
+        Hy = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hy
+        Hz = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Hz
+        Ny = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Ny
+        Nz = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.Nz
+        φF = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.φᵃᶠᵃ[1:Ny+1]
+        zF = jldopen(dir * myfiles[1] * "2")["grid"].underlying_grid.zᵃᵃᶠ[1:Nz+1]
+
+        resolution = (φF[end] - φF[1]) / Ny
+
+        grid = grid isa AbstractGrid ? grid : NeverworldGrid(resolution; z_faces = zF)
+
+        for var in variables
+            field = FieldTimeSeries{assumed_location(var)...}(grid, times)
+	    j = 1
+            for i in 1:stride:end_file
+                @info "index $i" myfiles[i]
+                concrete_var = jldopen(dir * myfiles[i] * "2")[var * "/data"][Hx+1:end-Hx, Hy+1:end-Hy, Hz+1:end-Hz]
+                interior(field[j]) .= concrete_var
+		j = j+1
+            end
 
             fields[Symbol(var)] = field
         end
