@@ -60,9 +60,9 @@ end
 simulations = [
    #("weno_half_ch", "/storage4/WenoNeverworldData/half_degree_new/", "1/2∘", "weno_half_ch"),
    # ("weno_quarter__ch", "/storage4/WenoNeverworldData/quarter_degree_new/", "1/4∘", "weno_quarter__ch"),
-    #("weno_eighth_checkpoint_iteration2", "/storage4/WenoNeverworldData/eighth_degree_new/", "1/8∘", "eighth2"),
+    ("weno_eighth_checkpoint_iteration", "/storage4/WenoNeverworldData/eighth_degree_new/", "1/8∘", "eighth"),
     #("weno_eighth_checkpoint_iteration", "/storage4/WenoNeverworldData/eighth_degree_interp/", "1/8∘ interp", "eighth_interp"),
-    ("weno_sixteen_checkpoint_iteration", "/storage4/WenoNeverworldData/sixteenth_degree/", "1/16∘", "sixteenth_interp")
+    #("weno_sixteen_checkpoint_iteration", "/storage4/WenoNeverworldData/sixteenth_degree/", "1/16∘", "sixteenth_interp")
 ]
 
 for (prefix, dir, _, name) in simulations

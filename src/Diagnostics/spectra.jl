@@ -26,9 +26,9 @@ function average_spectra(var::FieldTimeSeries, xlim, ylim; k = 34, spectra = pow
     ydomain = grid.φᵃᶜᵃ[ylim]
 
     Nt = length(var.times)
-
-    spec = spectra(interior(var[1], xlim, ylim, k), xdomain, ydomain; windowing) 
-
+    
+    spec = spectra(interior(var[1], xlim, ylim, k), xdomain, ydomain; windowing)
+    
     for i in 2:Nt
         spec.spec .+= spectra(interior(var[i], xlim, ylim, k), xdomain, ydomain).spec 
     end
