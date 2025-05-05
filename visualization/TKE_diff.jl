@@ -5,7 +5,7 @@ halo = 7
 nfiles = 25  # number of most recent files to average
 
 res_paths = Dict("1/16" => "/storage4/WenoNeverworldData/sixteenth_degree/",
-                 "1/4"  => "/storage4/WenoNeverworldData/quarter_degree_new/")
+                 "1/8"  => "/storage4/WenoNeverworldData/eighth_degree_interp/")
 
 # Get sorted list of latest checkpoint files
 function sorted_checkpoint_files(path::String; nfiles::Int)
@@ -62,12 +62,13 @@ end
 # Main execution
 @info "Computing time-averaged depth-integrated KE for both resolutions..."
 ke_16, lon16, lat = time_averaged_depth_integrated_ke("1/16")
-ke_8, lon, lat = time_averaged_depth_integrated_ke("1/4")
+ke_8, lon, lat = time_averaged_depth_integrated_ke("1/8")
 
-ke_16_downsampled = ke_16[1:4:end, 1:4:end]
-lon_downsampled = lon16[1:4:end]
-lat_downsampled = lat[1:4:end]
 
+ke_16_downsampled = ke_16[1:2:end, 1:2:end]
+lon_downsampled = lon16[1:2:end]
+lat_downsampled = lat[1:2:end]
+##### change this depending on the simulation
 
 # Now compute the difference
 @info "Computing difference..."
@@ -76,7 +77,7 @@ ke_diff = ke_16_downsampled .- ke_8
 
 @info "Plotting difference..."
 fig = Figure(resolution = (1000, 2000))
-ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize=40, xticklabelsize=40, title = "1/16° - 1/4°",
+ax = Axis(fig[1, 1], xlabel="Longitude [∘]", xlabelsize=40, xticklabelsize=40, title = "1/16° - 1/8°",
           ylabel="Latitude [∘]", ylabelsize=40,
           yticklabelsize=40, titlesize=45, aspect=0.5, yticks=-70:10:70,
           yticksize=15, xticksize=15)
@@ -86,4 +87,4 @@ Colorbar(fig[1,2], hm, width=60, ticksize=40, ticklabelsize=40,
          label=L"m^2/s^2", labelsize=40, height=Relative(3/5))
 
 display(fig)
-save("figures/TKE_diff_4.png", fig, px_per_unit=5)
+save("figures/TKE_diff_8_interp.png", fig, px_per_unit=5)

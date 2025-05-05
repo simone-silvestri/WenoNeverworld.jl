@@ -10,15 +10,16 @@ CUDA.device!(1)
 
 # Define the simulations: (prefix, directory, label)
 simulations = [
-    ("weno_half_ch", "/storage4/WenoNeverworldData/half_degree_new/", "1/2∘"),
-    ("weno_quarter__ch", "/storage4/WenoNeverworldData/quarter_degree_new/", "1/4∘"),
-    ("weno_eighth_checkpoint_iteration", "/storage4/WenoNeverworldData/eighth_degree_new/", "1/8∘")
-    #("weno_sixteen_checkpoint_iteration", "/storage4/WenoNeverworldData/sixteenth_degree_new/", "1/16∘")
+   ("weno_half_ch", "", "1/2∘", "weno_half_ch"),
+   ("weno_quarter__ch", "", "1/4∘", "weno_quarter__ch"),
+   ("weno_eighth_checkpoint_iteration", "", "1/8∘", "weno_eighth_ch"),
+   ("weno_eighth_checkpoint_iteration", "", "1/8∘ - int", "eighth_interp"),
+   ("weno_sixteen_checkpoint_iteration", "", "1/16∘ - int", "sixteenth_interp"),
 ]
 
 # Define the stride for sampling
 stride = 10
-
+#=
 # Function to load and compute TKE and corresponding time in years
 function load_tke_with_time(prefix, dir; stride=10)
     println("Loading data for: $prefix in $dir")
@@ -58,38 +59,68 @@ for (prefix, dir, _) in simulations
     tke, time_years = load_tke_with_time(prefix, dir; stride=stride)
     println("Saved: $(prefix)_tke_with_time.jld2")
 end
+=#
 
-#=
 # Plotting
 fig = Figure(resolution = (1200, 800))
 ax = Axis(fig[1, 1],
-          xlabel = "Time [years]",
-          ylabel = L"TKE \; (m^5\,s^{-2})",
-          xlabelsize = 20,
-          ylabelsize = 20,
+          xlabel = L"Time [yrs]",
+          ylabel = L"KE \; (m^5\,s^{-2})",
+          xlabelsize = 25,
+          ylabelsize = 25,
           xticklabelsize = 20,
           yticklabelsize = 20)
 
 
-# Plot TKE for each simulation
-for (prefix, _, label) in simulations
-    filename = "$(prefix)_tke_with_time.jld2"
-    
+# --- First, load last time from quarter-degree simulation
+quarter_filename = "weno_quarter__ch_tke_with_time.jld2"
+quarter_data = load(quarter_filename)
+last_time_quarter = last(quarter_data["time_years"])
+println("Last 1/4° time (years): ", last_time_quarter)
+
+# --- Now, load last time from eighth-degree simulation
+eighth_filename = "eighth_interp_tke_with_time.jld2"
+eighth_data = load(eighth_filename)
+last_time_eighth = last(eighth_data["time_years"])
+println("Last 1/8° time (years): ", last_time_eighth)
+
+colors = [:red3, :darkorange, :green, :navy, :purple]
+lines_collection = []
+
+for ((prefix, _, label, name), color) in zip(simulations, colors)
+    filename = "$(name)_tke_with_time.jld2"
+    println(filename)
     if isfile(filename)
         data = load(filename)
         tke = data["TKE"]
         time_years = data["time_years"]
+
+        # --- Shift 1/8 interpolated time series
+        if name == "eighth_interp"
+            time_years .+= last_time_quarter
+        end
         
-        lines!(ax, time_years, tke, label=label)
+
+         # --- Shift 1/16 interpolated time series
+         if name == "sixteenth_interp"
+            time_years .+= (last_time_eighth + last_time_quarter)
+
+        end
+
+
+        line = lines!(ax, time_years, tke, label=label, linewidth=2.5, color = color)
+        push!(lines_collection, line)
     else
         @warn "File not found: $filename"
     end
 end
 
+
+
+
 # Add legend
-axislegend(ax, position = :rb)
+axislegend(ax, position = :rb, labelsize = 20)
 
 # Display and save the figure
 display(fig)
-save("figures/tke_vs_time2.png", fig)
-=#
+save("figures/tke_vs_time_all.png", fig)
