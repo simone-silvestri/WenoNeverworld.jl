@@ -25,7 +25,7 @@ dirs = ["/storage4/WenoNeverworldData/half_degree_new/", "/storage4/WenoNeverwor
 resolutions = ["1/2", "1/4", "1/8", "1/8 - int", "1/16",]
 colors = [:red3, :darkorange, :green, :navy, :purple]
 
-k = 34
+k = 20
 xrange = [11 : 60 * i - 10  for i in [2, 4, 8, 8, 16]]
 y50S   = [42  * i : 48  * i for i in [1, 2, 4, 4,8]]  # channel           #index_50S = closest_lat_index(lats, -50) = 21 ---> 21*2 = 42
 y12N   = [160 * i : 170 * i for i in [1, 2, 4, 4,8]]  #equator            #gives 83 --> 83*2 = 166

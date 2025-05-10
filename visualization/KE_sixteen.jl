@@ -3,7 +3,7 @@ using JLD2, Oceananigans, Statistics, CairoMakie
 # Load the data
 @info "Loading data..."
 path = pwd()
-hfile = jldopen("/storage4/WenoNeverworldData/sixteenth_degree_new/weno_sixteen_checkpoint_iteration1156320.jld2", "r")
+hfile = jldopen("/storage4/WenoNeverworldData/sixteenth_degree/weno_sixteen_checkpoint_iteration2864520.jld2", "r")
 keys(hfile)
 #initialized from 1/4
 ## grab grid and fields
@@ -38,7 +38,7 @@ end
 
 #########
 # Depth integrated TKE 
-
+#=
 m, n, ℓ = size(u)
 Δz = reshape(Δz,  (1,1,ℓ))
 weighted_tke = @. (u^2 + v^2) * Δz
@@ -52,11 +52,10 @@ display(fig)
 CairoMakie.activate!()
 CairoMakie.save("figures/TKE_sixteen_cb.png", fig, px_per_unit = 5)
 #########
-
+=#
 
 #mean(weighted_tke_slice)
-#=
-##
+
 #One slice of KE
 m, n, ℓ = size(u)
 Δz = reshape(Δz,  (1,1,ℓ))
@@ -76,7 +75,6 @@ display(fig)
 
 using CairoMakie
 CairoMakie.activate!()
-CairoMakie.save("figures/KE_sixteen_cb.png", fig, px_per_unit = 5)
+CairoMakie.save("figures/KE_sixteen_correct.png", fig, px_per_unit = 5)
 ##
 quantile(log10.(weighted_tke_slice .+ eps(1000.0))[:], 0.999)
-=#

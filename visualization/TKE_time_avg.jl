@@ -63,7 +63,7 @@ function plot_ke_map(tke, lon, lat, res_label)
         titlesize=45, title= res_label * "°",
         aspect=0.5, yticks=-70:10:70, yticksize=15, xticksize=15)
 
-    hm = heatmap!(ax, lon, lat, tke, colormap=:plasma)
+    hm = heatmap!(ax, lon, lat, tke, colormap=:plasma, colorrange = (0,1500))
     Colorbar(fig[1, 2], hm, width=60, ticksize=40, ticklabelsize=40,
              label=L"m^2/s^2", labelsize=40, height=Relative(3/5))
 

@@ -119,7 +119,7 @@ end
 
 
 # Add legend
-axislegend(ax, position = :rb, labelsize = 20)
+axislegend(ax, position = :ct, labelsize = 20)
 
 # Display and save the figure
 display(fig)
