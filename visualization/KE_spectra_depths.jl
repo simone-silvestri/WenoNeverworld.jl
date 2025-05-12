@@ -25,7 +25,7 @@ dirs = ["/storage4/WenoNeverworldData/half_degree_new/", "/storage4/WenoNeverwor
 resolutions = ["1/2", "1/4", "1/8", "1/8 - int", "1/16",]
 colors = [:red3, :darkorange, :green, :navy, :purple]
 
-k = 20
+k = 34
 xrange = [11 : 60 * i - 10  for i in [2, 4, 8, 8, 16]]
 y50S   = [42  * i : 48  * i for i in [1, 2, 4, 4,8]]  # channel           #index_50S = closest_lat_index(lats, -50) = 21 ---> 21*2 = 42
 y12N   = [160 * i : 170 * i for i in [1, 2, 4, 4,8]]  #equator            #gives 83 --> 83*2 = 166
@@ -146,59 +146,59 @@ lines!(ax1,  F2_37N,  KSPEC2[3].spec[2:end], color = colors[1], linewidth = 2)
 lines!(ax1,  F4_37N,  KSPEC4[3].spec[2:end], color = colors[2], linewidth = 2)
 lines!(ax1,  F8_37N,  KSPEC8[3].spec[2:end], color = colors[3], linewidth = 2)
 lines!(ax1, F16_37N, KSPEC16[3].spec[2:end], color = colors[5], linewidth = 2)
-lines!(ax1, F8i_37N, KSPEC8i[3].spec[2:end], color = colors[4], linewidth = 2)
+#lines!(ax1, F8i_37N, KSPEC8i[3].spec[2:end], color = colors[4], linewidth = 2)
 
 lines!(ax1, F8_37N[20:end-8], F8_37N[20:end-8].^(-3) ./ 10^(17.5), linewidth = 2.5, color = :black)#, linestyle = :bold)
 #lines!(ax3, F16_50N[10:end-18], F16_50N[10:end-18].^(-2) ./ 10^(13.), color = :black, linestyle = :dashdot)
 
-vlines!(ax1, 1 / 40e3, linestyle = :dash, color = :grey)
+vlines!(ax1, 1 / 40e3, linestyle = :dash, linewidth = 3, color = :grey)
 
 
 lines!(ax2,  F2_12N,  KSPEC2[2].spec[2:end], color = colors[1], linewidth = 2)
 lines!(ax2,  F4_12N,  KSPEC4[2].spec[2:end], color = colors[2], linewidth = 2)
 lines!(ax2,  F8_12N,  KSPEC8[2].spec[2:end], color = colors[3], linewidth = 2)
 lines!(ax2, F16_12N, KSPEC16[2].spec[2:end], color = colors[5], linewidth = 2)
-lines!(ax2, F8i_12N, KSPEC8i[2].spec[2:end], color = colors[4], linewidth = 2)
+#lines!(ax2, F8i_12N, KSPEC8i[2].spec[2:end], color = colors[4], linewidth = 2)
 
 #lines!(ax2, F8_15N[20:end-8], F8_15N[20:end-8].^(-3) ./ 10^(18), color = :red) #, linestyle = :dashdot)
 lines!(ax2, F8_12N[20:end-8], F8_12N[20:end-8].^(-3) ./ 10^(18.5), linewidth = 2.5, color = :black)#, linestyle = :bold)
 
-vlines!(ax2, 1 / 100e3, linestyle = :dash, color = :grey) 
+vlines!(ax2, 1 / 100e3, linestyle = :dash, linewidth = 3, color = :grey) 
 
 l1 =lines!(ax3,  F2_50S,  KSPEC2[1].spec[2:end], color = colors[1], linewidth = 2, label = L"1/2-\text{degree resolution}")
 l2 = lines!(ax3,  F4_50S,  KSPEC4[1].spec[2:end], color = colors[2], linewidth = 2, label = L"1/4-\text{degree resolution}")
 l3 = lines!(ax3,  F8_50S,  KSPEC8[1].spec[2:end], color = colors[3], linewidth = 2, label = L"1/8-\text{degree resolution}")
 l5 = lines!(ax3, F16_50S, KSPEC16[1].spec[2:end], color = colors[5], linewidth = 2, label = L"1/16-\text{degree resolution}")
-l4 = lines!(ax3, F8i_50S, KSPEC8i[1].spec[2:end], color = colors[4], linewidth = 2, label = L"1/8-\text{degree resolution (interpolated)}")
+#l4 = lines!(ax3, F8i_50S, KSPEC8i[1].spec[2:end], color = colors[4], linewidth = 2, label = L"1/8-\text{degree resolution (interpolated)}")
 
 l6 = lines!(ax3, F8_50S[20:end-8], F8_50S[20:end-8].^(-3) ./ 10^(17.5), linewidth = 2.5, color = :black)
 
-l7 = vlines!(ax3, 1 / 30e3, linestyle = :dash, color = :grey)
+l7 = vlines!(ax3, 1 / 30e3, linestyle = :dash, linewidth = 3, color = :grey)
 
 ######## 60N #########
 lines!(ax4,  F2_60N,  KSPEC2[4].spec[2:end], color = colors[1], linewidth = 2)
 lines!(ax4,  F4_60N,  KSPEC4[4].spec[2:end], color = colors[2], linewidth = 2)
 lines!(ax4,  F8_60N,  KSPEC8[4].spec[2:end], color = colors[3], linewidth = 2)
 lines!(ax4, F16_60N, KSPEC16[4].spec[2:end], color = colors[5], linewidth = 2)
-lines!(ax4, F8i_60N, KSPEC8i[4].spec[2:end], color = colors[4], linewidth = 2)
+#lines!(ax4, F8i_60N, KSPEC8i[4].spec[2:end], color = colors[4], linewidth = 2)
 lines!(ax4, F8_60N[20:end-8], F8_12N[20:end-8].^(-3) ./ 10^(18.5), linewidth = 2.5, color = :black)
 
-vlines!(ax4, 1 / 25e3, linestyle = :dash, color = :grey) #need to add correct deformation radius here -- I think this is it?
+vlines!(ax4, 1 / 25e3, linestyle = :dash, linewidth = 3, color = :grey) #need to add correct deformation radius here -- I think this is it?
 
 
 #leg = Legend(fig[1, 4], ax1)
 axislegend(ax1,
-  [l1, l2, l3, l4, l5, l6, l7],
-  ["1/2°", "1/4°", "1/8°", "1/8° - int", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
+  [l1, l2, l3, l5, l6, l7],
+  ["1/2°", "1/4°", "1/8°",  "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
 axislegend(ax2,
-  [l1, l2, l3, l4, l5, l6, l7],
-  ["1/2°", "1/4°", "1/8°", "1/8° - int", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
+  [l1, l2, l3, l5, l6, l7],
+  ["1/2°", "1/4°", "1/8°",  "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
 axislegend(ax3,
-[l1, l2, l3, l4, l5, l6, l7],
-["1/2°", "1/4°", "1/8°",  "1/8° - int",  "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
+[l1, l2, l3, l5, l6, l7],
+["1/2°", "1/4°", "1/8°",   "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
 axislegend(ax4,
-  [l1, l2, l3, l4, l5, l6, l7],
-  ["1/2°", "1/4°", "1/8°", "1/8° - int", "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
+  [l1, l2, l3, l5, l6, l7],
+  ["1/2°", "1/4°", "1/8°",  "1/16°", "-3 slope", L"L_D"], labelsize = 25, position = :lb)
 
 
 
@@ -206,6 +206,6 @@ resize_to_layout!(fig)
 display(fig)
 
 CairoMakie.activate!()
-CairoMakie.save("figures/ke_spec_surface"*string(k)*".png", fig, px_per_unit = 3)
+CairoMakie.save("figures/ke_spec_surface"*string(k)*"v2.png", fig, px_per_unit = 3)
 # CairoMakie.save("spectra.eps", fig)
 
