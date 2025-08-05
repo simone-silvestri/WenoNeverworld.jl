@@ -16,7 +16,7 @@ import Oceananigans.TurbulenceClosures:
         viscous_flux_wy,
         viscous_flux_wz
 
-using Oceananigans.BuoyancyModels: ∂x_b, ∂y_b, ∂z_b 
+using Oceananigans.BuoyancyFormulations: ∂x_b, ∂y_b, ∂z_b 
 
 """
     struct EnergyBackScattering{FT} <: AbstractTurbulenceClosure{ExplicitTimeDiscretization, 3}

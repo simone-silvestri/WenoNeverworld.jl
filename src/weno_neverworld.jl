@@ -5,7 +5,6 @@ using Oceananigans.Operators: ℑxyᶠᶜᵃ, ℑxyᶜᶠᵃ
 using Oceananigans.Operators: Δx, Δy, Az 
 using Oceananigans.TurbulenceClosures
 using Oceananigans.TurbulenceClosures: VerticallyImplicitTimeDiscretization, ExplicitTimeDiscretization
-using Oceananigans.Coriolis: ActiveCellEnstrophyConserving
 
 using WenoNeverworld.Auxiliaries
 
@@ -50,7 +49,7 @@ end
                                         convective_adjustment = default_convective_adjustment,
                                         vertical_diffusivity  = default_vertical_diffusivity,
                                         horizontal_closure    = nothing,
-                                        coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving()),
+                                        coriolis = HydrostaticSphericalCoriolis()),
                                         free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
                                         momentum_advection = default_momentum_advection(grid.underlying_grid),
                                         tracer_advection   = WENO(grid.underlying_grid), 
@@ -81,7 +80,7 @@ Keyword arguments:
 - `convective_adjustment`: the convective adjustment scheme, default: `RiBasedVerticalDiffusivity()`
 - `vertical_diffusivity`: the vertical diffusivity scheme, default: `VerticalScalarDiffusivity(ν=1e-4, κ=3e-5)`
 - `horizontal_closure`: the horizontal closure scheme, default: `nothing`
-- `coriolis`: the coriolis scheme, default: `HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving())`
+- `coriolis`: the coriolis scheme, default: `HydrostaticSphericalCoriolis()`
 - `free_surface`: the free surface scheme, default: SplitExplicitFreeSurface(; grid, cfl = 0.75)
 - `momentum_advection`: the momentum advection scheme, default: `VectorInvariant(vorticity_scheme = WENO(order = 9), vertical_scheme = WENO(grid))`
 - `tracer_advection`: the tracer advection scheme, default: `WENO(grid)`
@@ -102,10 +101,10 @@ function weno_neverworld_simulation(grid;
                                     convective_adjustment = default_convective_adjustment,
                                     vertical_diffusivity  = default_vertical_diffusivity,
                                     horizontal_closure    = nothing,
-                                    coriolis = HydrostaticSphericalCoriolis(scheme = ActiveCellEnstrophyConserving()),
+                                    coriolis = HydrostaticSphericalCoriolis(),
                                     free_surface = SplitExplicitFreeSurface(; grid, cfl = 0.75),
-                                    momentum_advection = default_momentum_advection(grid.underlying_grid),
-				                    tracer_advection   = WENO(grid.underlying_grid), 
+                                    momentum_advection = WENOVectorInvariant(),
+				                    tracer_advection   = WENO(order=7), 
                                     interp_init = false,
                                     init_file = nothing,
                                     Δt = 5minutes,
