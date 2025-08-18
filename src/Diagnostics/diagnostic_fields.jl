@@ -5,8 +5,6 @@ using Oceananigans.ImmersedBoundaries: immersed_cell
 using Oceananigans.Models.HydrostaticFreeSurfaceModels: hydrostatic_fields
 using Oceananigans.Coriolis: fᶠᶠᵃ
 
-import Oceananigans.Models.HydrostaticFreeSurfaceModels: VerticalVorticityField
-
 ##### 
 ##### Usefull diagnostics
 #####

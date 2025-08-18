@@ -19,7 +19,7 @@ interp_init = false # If interpolating from a different grid: `interp_init = tru
 init_file   = nothing # To restart from a file: `init_file = /path/to/restart`
 
 # Simulation parameters
-Δt        = 10minutes
+Δt        = 30minutes
 stop_time = 200years
 
 # Latitudinal wind stress acting on the zonal velocity
@@ -43,6 +43,7 @@ simulation = weno_neverworld_simulation(grid; Δt, stop_time,
                                               wind_stress,
                                               buoyancy_relaxation,
                                               interp_init,
+                                              timestepper = :SplitRungeKutta3,
                                               init_file)
                                               
 model = simulation.model

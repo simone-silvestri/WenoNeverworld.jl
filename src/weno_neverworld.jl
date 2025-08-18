@@ -109,6 +109,7 @@ function weno_neverworld_simulation(grid;
                                     init_file = nothing,
                                     Δt = 5minutes,
                                     stop_time = 10years,
+                                    timestepper = :QuasiAdamsBashforth2,
                                     stop_iteration = Inf,
                                     initial_buoyancy = initial_buoyancy_parabola,
 				                    wind_stress                = WindStressBoundaryCondition(),
@@ -139,6 +140,7 @@ function weno_neverworld_simulation(grid;
                                           tracers, 
                                           momentum_advection, 
                                           tracer_advection, 
+                                          timestepper,
                                           boundary_conditions, 
                                           buoyancy = BuoyancyTracer())
 

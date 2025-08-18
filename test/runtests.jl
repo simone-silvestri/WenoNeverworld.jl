@@ -86,7 +86,7 @@ end
     fine_grid = NeverworldGrid(8; z_faces = fine_z_faces, H = 2, arch)
 
     @info "    Testing 3-dimensional interpolation..."
-    b_fine = regrid_field(b_coarse, coarse_grid, fine_grid, (Center, Center, Center))
+    b_fine = regrid_field(b_coarse, coarse_grid, fine_grid, (Center(), Center(), Center()))
 
     @info "    Testing interpolated restart capabilities..."
     fine_simulation = weno_neverworld_simulation(fine_grid; 

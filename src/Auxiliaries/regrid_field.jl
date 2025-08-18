@@ -1,4 +1,4 @@
-using Oceananigans.Fields: interpolate!
+using Oceananigans.Fields: interpolate!, instantiated_location
 
 # Disclaimer: the `_propagate_field!` implementation is copied from https://github.com/CliMA/ClimaOcean.jl/pull/60
 @kernel function _propagate_field!(field, tmp_field)
@@ -119,13 +119,13 @@ function three_dimensional_regrid!(a, b)
     # Start by regridding in z
     @debug "Regridding in z"
     zgrid   = LatitudeLongitudeGrid(arch, size = zsize, longitude = xs, latitude = ys, z = zt, topology = topo)
-    field_z = Field(location(b), zgrid)
+    field_z = Field{location(b)...}(zgrid)
     interpolate!(field_z, b)
 
     # regrid in y 
     @debug "Regridding in y"
     ygrid   = LatitudeLongitudeGrid(arch, size = ysize, longitude = xs, latitude = yt, z = zt, topology = topo)
-    field_y = Field(location(b), ygrid)
+    field_y = Field{location(b)...}(ygrid)
     interpolate!(field_y, field_z)
 
     # Finally regrid in x
@@ -146,14 +146,14 @@ function regrid_field(old_vector, old_grid, new_grid, loc)
     target_grid = new_grid isa ImmersedBoundaryGrid ? new_grid.underlying_grid : new_grid 
 
     # Old data
-    old_field = Field(loc, source_grid)
+    old_field = Field{loc...}(source_grid)
     set!(old_field, old_vector)
     
     fill_halo_regions!(old_field)
     fill_missing_values!(old_field)
 
-    new_field = Field(loc, target_grid)
-    
+    new_field = Field{loc...}(target_grid)
+
     return three_dimensional_regrid!(new_field, old_field)
 end
 
