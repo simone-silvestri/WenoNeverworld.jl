@@ -2,38 +2,38 @@
 # and a longitude range of 0 ≤ λ ≤ 60
 
 # All quantities in the horizontal direction are specified in degrees and in the vertical in meters
-Base.@kwdef struct ShelfParameters
-    coast_length::Float64 = 0.5
-    side_length::Float64  = 2.5
-    length::Float64       = 2.5
-    depth::Float64        = 200
+Base.@kwdef struct ShelfParameters{FT}
+    coast_length::FT = 0.5
+    side_length::FT  = 2.5
+    length::FT       = 2.5
+    depth::FT        = 200.0
 end
 
-Base.@kwdef struct RidgeParameters
-    side_length::Float64    = 9
-    top_length::Float64     = 2
-    longitude::Float64      = 30
-    south_latitude::Float64 = -30
-    slope_length::Float64   = 20
-    depth::Float64          = 2000
+Base.@kwdef struct RidgeParameters{FT}
+    side_length::FT    = 9.0
+    top_length::FT     = 2.0
+    longitude::FT      = 30.0
+    south_latitude::FT = -30.0
+    slope_length::FT   = 20.0
+    depth::FT          = 2000.0
 end
 
-Base.@kwdef struct ScotiaArcParameters
-    left_inner_radius::Float64  = 8
-    left_outer_radius::Float64  = 9
-    right_inner_radius::Float64 = 11
-    right_outer_radius::Float64 = 12
-    center_latitude::Float64    = 50
-    depth::Float64              = 2000
+Base.@kwdef struct ScotiaArcParameters{FT}
+    left_inner_radius::FT  = 8.0
+    left_outer_radius::FT  = 9.0
+    right_inner_radius::FT = 11.0
+    right_outer_radius::FT = 12.0
+    center_latitude::FT    = 50.0
+    depth::FT              = 2000.0
 end
 
-Base.@kwdef struct NeverWorldBathymetryParameters
-    shelves                     = ShelfParameters()
-    scotia_arc                  = ScotiaArcParameters()
-    channel_south_edge::Float64 = - 59
-    channel_north_edge::Float64 = - 41
-    bottom::Float64             = - 4000
-    ridge                       = nothing
+Base.@kwdef struct NeverWorldBathymetryParameters{S, A, FT, R}
+    shelves::S                    = ShelfParameters()
+    scotia_arc::A                  = ScotiaArcParameters()
+    channel_south_edge::FT = - 59.0
+    channel_north_edge::FT = - 41.0
+    bottom::FT             = - 4000.0
+    ridge::R               = nothing
 end
     
 ## define the coasts
