@@ -28,8 +28,8 @@ Base.@kwdef struct ScotiaArcParameters{FT}
 end
 
 Base.@kwdef struct NeverWorldBathymetryParameters{S, A, FT, R}
-    shelves::S                    = ShelfParameters()
-    scotia_arc::A                  = ScotiaArcParameters()
+    shelves::S             = ShelfParameters()
+    scotia_arc::A          = ScotiaArcParameters()
     channel_south_edge::FT = - 59.0
     channel_north_edge::FT = - 41.0
     bottom::FT             = - 4000.0
