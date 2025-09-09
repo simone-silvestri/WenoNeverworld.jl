@@ -32,7 +32,7 @@ include("regrid_field.jl")
 updates the `clock` of `simulation` with the time in `init_file`	
 """
 function update_simulation_clock!(simulation, init_file)
-    clock = jldopen(init_file)["clock"]
+    clock = jldopen(init_file)["HydrostaticFreeSurfaceModel/clock"]
     simulation.model.clock.time = clock.time	
     simulation.model.clock.iteration = clock.iteration	
 
@@ -59,7 +59,7 @@ function increase_simulation_Δt!(simulation; cutoff_time = 20days, new_Δt = 2m
 
     @eval begin
         $increase_Δt!(simulation) = simulation.Δt = $new_Δt
-        callback = Callback($increase_Δt!, SpecifiedTimes(cutoff_time))
+        callback = Callback($increase_Δt!, SpecifiedTimes($cutoff_time))
     end
 
     simulation.callbacks[increase_Δt!] = callback

@@ -25,7 +25,7 @@ FFTW = "^1"
 KernelAbstractions = "^0.9"
 MPI = "0.20"
 MPIPreferences = "0.1"
-Oceananigans = "0.97"
+Oceananigans = "0.98"
 Printf = "1.9"
 julia = "1.9"
 

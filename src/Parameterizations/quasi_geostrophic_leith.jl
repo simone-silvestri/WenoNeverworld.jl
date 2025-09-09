@@ -26,7 +26,7 @@ QGLeith(FT::DataType=Float64; C=FT(2), min_N²=FT(1e-20), Vscale=FT(1),
         slope_limiter=FluxTapering(1e-2)) =
     QGLeith(C, min_N², Vscale, isopycnal_model, slope_limiter) 
 
-DiffusivityFields(grid, tracer_names, bcs, ::QGLeith) = 
+build_diffusivity_fields(grid, clock, tracer_names, bcs, ::QGLeith) = 
                 (; νₑ = CenterField(grid),
                    qʸ  = ZFaceField(grid),
                    qˣ  = ZFaceField(grid),
